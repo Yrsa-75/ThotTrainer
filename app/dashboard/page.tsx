@@ -145,7 +145,7 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
   useEffect(() => { if (!thinking && !ended && !voiceOn) inputRef.current?.focus() }, [thinking, ended, voiceOn])
   // Charger les voix
-  useEffect(() => { if (typeof window !== 'undefined') { window.speechSynthesis?.getVoices(); window.speechSynthesis?.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [])
+  useEffect(() => { if (typeof window !== 'undefined' && window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [])
   // Cleanup
   useEffect(() => { return () => { window.speechSynthesis?.cancel(); recRef.current?.stop() } }, [])
 
