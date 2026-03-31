@@ -107,7 +107,7 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
   const inputAccRef = useRef('')
   const p = personas.find((x: any) => x.id === sd.personaId); const f = sd.formationId ? formations.find((x: any) => x.id === sd.formationId) : null; const sys = buildSystemPrompt(p, f, sd.level, scoring)
 
-  // TTS — OpenAI avec fallback navigateur
+  // TTS — OpenAI streaming avec fallback navigateur
   const speak = useCallback(async (text: string) => {
     if (typeof window === 'undefined') return
     // Stop any ongoing audio
@@ -116,13 +116,15 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
     setSpeaking(true)
     try {
       const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
-      const data = await res.json()
-      if (data.audio) {
-        // OpenAI TTS — voix naturelle
-        const audio = new Audio('data:audio/mp3;base64,' + data.audio)
+      const ct = res.headers.get('content-type') || ''
+      if (ct.includes('audio')) {
+        // Audio stream direct — commence à jouer immédiatement
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
         audioRef.current = audio
-        audio.onended = () => { setSpeaking(false); audioRef.current = null }
-        audio.onerror = () => { setSpeaking(false); audioRef.current = null }
+        audio.onended = () => { setSpeaking(false); audioRef.current = null; URL.revokeObjectURL(url) }
+        audio.onerror = () => { setSpeaking(false); audioRef.current = null; URL.revokeObjectURL(url) }
         audio.play()
         return
       }

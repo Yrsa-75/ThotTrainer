@@ -1,14 +1,12 @@
-import { NextResponse } from 'next/server'
+export const runtime = 'edge'
 
 export async function POST(request: Request) {
   try {
     const { text } = await request.json()
-    if (!text) return NextResponse.json({ error: "No text" }, { status: 400 })
+    if (!text) return new Response(JSON.stringify({ fallback: true }), { headers: { 'Content-Type': 'application/json' } })
 
     const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ fallback: true }, { status: 200 })
-    }
+    if (!apiKey) return new Response(JSON.stringify({ fallback: true }), { headers: { 'Content-Type': 'application/json' } })
 
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
@@ -25,15 +23,18 @@ export async function POST(request: Request) {
       })
     })
 
-    if (!response.ok) {
-      return NextResponse.json({ fallback: true }, { status: 200 })
+    if (!response.ok || !response.body) {
+      return new Response(JSON.stringify({ fallback: true }), { headers: { 'Content-Type': 'application/json' } })
     }
 
-    const audioBuffer = await response.arrayBuffer()
-    const base64 = Buffer.from(audioBuffer).toString('base64')
-    
-    return NextResponse.json({ audio: base64 })
-  } catch (error) {
-    return NextResponse.json({ fallback: true }, { status: 200 })
+    // Stream l'audio directement depuis OpenAI vers le navigateur
+    return new Response(response.body, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+        'Transfer-Encoding': 'chunked'
+      }
+    })
+  } catch {
+    return new Response(JSON.stringify({ fallback: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 }
