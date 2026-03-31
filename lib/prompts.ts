@@ -266,12 +266,12 @@ Le vendeur de Chronos Emploi va essayer de te guider à travers un processus en 
 Tu ne connais PAS ce processus à l'avance. Tu le découvres au fur et à mesure. Tu réagis naturellement à chaque étape.
 
 === LA FORMATION QUI SERA PROPOSÉE ===
-(Tu ne sais pas encore qu'on va te la proposer. Cette info est pour ton comportement quand le sujet arrive.)
+${formation ? `(Tu ne sais pas encore qu'on va te la proposer. Cette info est pour ton comportement quand le sujet arrive.)
 - Nom : ${formation.name}
 - Description : ${formation.description}
 - Prix : ${formation.price}
 - Arguments du vendeur : ${(formation.key_arguments || formation.arguments || []).join(", ")}
-- Tes objections possibles : ${(formation.common_objections || formation.objections || []).join(", ")}
+- Tes objections possibles : ${(formation.common_objections || formation.objections || []).join(", ")}` : `Aucune formation n'est pré-sélectionnée. Le vendeur doit identifier la compétence la plus pertinente pour toi parmi les formations proposées par Chronos Emploi (Excel, Anglais, Web Marketing, IA). Tu réagis naturellement selon ton profil — certaines compétences t'intéressent plus que d'autres. Tu as des affinités et des résistances cohérentes avec ta situation.`}
 
 === TES RÉACTIONS SPÉCIFIQUES ===
 
@@ -382,7 +382,7 @@ CONTEXTE : Le prospect a été démarché via un setter. Il ne connaît pas Chro
 
 Prospect: ${persona.name} — ${persona.subtitle}, ${persona.age} ans, ${persona.profession}
 Niveau: ${level}/3
-Formation visée: ${formation.name}
+Formation visée: ${formation ? formation.name : "Non pré-sélectionnée (identification par le vendeur)"}
 Durée: ${Math.floor(duration / 60)}min${String(duration % 60).padStart(2, "0")}s
 Résultat: ${result === "signed" ? "Signé" : result === "hung_up" ? "Raccroché" : result === "timeout" ? "Temps écoulé" : "Non signé"}
 
