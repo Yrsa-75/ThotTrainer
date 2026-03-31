@@ -102,55 +102,92 @@ function NewSession({ personas, formations, onStart }: any) {
 function ChatSession({ profile, personas, formations, scoring, sd, supabase, onEnd }: any) {
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(false); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
-  const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null)
+  const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
+  // Ref pour garder le texte accumulé entre les sessions micro
+  const inputAccRef = useRef('')
   const p = personas.find((x: any) => x.id === sd.personaId); const f = sd.formationId ? formations.find((x: any) => x.id === sd.formationId) : null; const sys = buildSystemPrompt(p, f, sd.level, scoring)
 
-  // TTS — lire la réponse du prospect à voix haute
-  const speak = useCallback((text: string) => {
-    if (!voiceOn || typeof window === 'undefined') return
-    window.speechSynthesis.cancel()
+  // TTS — OpenAI avec fallback navigateur
+  const speak = useCallback(async (text: string) => {
+    if (typeof window === 'undefined') return
+    // Stop any ongoing audio
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    window.speechSynthesis?.cancel()
+    setSpeaking(true)
+    try {
+      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+      const data = await res.json()
+      if (data.audio) {
+        // OpenAI TTS — voix naturelle
+        const audio = new Audio('data:audio/mp3;base64,' + data.audio)
+        audioRef.current = audio
+        audio.onended = () => { setSpeaking(false); audioRef.current = null }
+        audio.onerror = () => { setSpeaking(false); audioRef.current = null }
+        audio.play()
+        return
+      }
+    } catch {}
+    // Fallback navigateur
     const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = 'fr-FR'; utter.rate = 1.05; utter.pitch = 1.0
-    // Cherche une voix française
+    utter.lang = 'fr-FR'; utter.rate = 1.1; utter.pitch = 1.0
     const voices = window.speechSynthesis.getVoices()
-    const frVoice = voices.find((v: any) => v.lang.startsWith('fr') && v.name.includes('Female')) || voices.find((v: any) => v.lang.startsWith('fr')) || voices[0]
+    const frVoice = voices.find((v: any) => v.lang.startsWith('fr')) || voices[0]
     if (frVoice) utter.voice = frVoice
-    utter.onstart = () => setSpeaking(true)
     utter.onend = () => setSpeaking(false)
     utter.onerror = () => setSpeaking(false)
     window.speechSynthesis.speak(utter)
-  }, [voiceOn])
+  }, [])
 
-  // STT — écouter le vendeur au micro
+  // STT — micro continu, toggle on/off, append sur re-clic
   const toggleMic = useCallback(() => {
     if (ended || thinking) return
     if (listening) {
-      recRef.current?.stop(); setListening(false); return
+      // STOP — on arrête l'enregistrement, le texte reste dans l'input
+      recRef.current?.stop(); setListening(false)
+      // Mémorise le texte actuel pour append au prochain clic
+      inputAccRef.current = input
+      return
     }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SR) { alert("Ton navigateur ne supporte pas la reconnaissance vocale. Utilise Chrome."); return }
     const rec = new SR()
-    rec.lang = 'fr-FR'; rec.continuous = false; rec.interimResults = true
+    rec.lang = 'fr-FR'
+    rec.continuous = true       // Ne s'arrête PAS quand on fait une pause
+    rec.interimResults = true   // Affiche le texte en temps réel
+
+    // Sauvegarde le texte déjà dans l'input pour append
+    const prefix = input.trim() ? input.trim() + ' ' : ''
+    inputAccRef.current = prefix
+
     rec.onresult = (e: any) => {
-      let transcript = ''
-      for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript
-      setInput(transcript)
+      let interim = ''; let final = ''
+      for (let i = 0; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript
+        if (e.results[i].isFinal) final += t + ' '
+        else interim += t
+      }
+      setInput(inputAccRef.current + final + interim)
     }
-    rec.onend = () => setListening(false)
-    rec.onerror = () => setListening(false)
+    rec.onend = () => {
+      // Si on est encore en mode listening, le navigateur a coupé tout seul — on relance
+      if (recRef.current && listening) {
+        try { recRef.current.start() } catch {}
+      } else {
+        setListening(false)
+      }
+    }
+    rec.onerror = (e: any) => { if (e.error !== 'no-speech') { setListening(false) } }
     recRef.current = rec; rec.start(); setListening(true)
-  }, [listening, ended, thinking])
+  }, [listening, ended, thinking, input])
 
   useEffect(() => { timerRef.current = setInterval(() => { setTimeLeft((prev: number) => { if (prev <= 1) { clearInterval(timerRef.current); setEnded(true); setResult("timeout"); return 0 } return prev - 1 }) }, 1000); return () => clearInterval(timerRef.current) }, [])
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
-  useEffect(() => { if (!thinking && !ended && !voiceOn) inputRef.current?.focus() }, [thinking, ended, voiceOn])
-  // Charger les voix
+  useEffect(() => { if (!thinking && !ended && !listening) inputRef.current?.focus() }, [thinking, ended, listening])
   useEffect(() => { if (typeof window !== 'undefined' && window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [])
-  // Cleanup
-  useEffect(() => { return () => { window.speechSynthesis?.cancel(); recRef.current?.stop() } }, [])
+  useEffect(() => { return () => { window.speechSynthesis?.cancel(); recRef.current?.stop(); if (audioRef.current) audioRef.current.pause() } }, [])
 
   const finish = useCallback(async (m: any[], r: string) => {
-    window.speechSynthesis?.cancel(); recRef.current?.stop()
+    window.speechSynthesis?.cancel(); recRef.current?.stop(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     clearInterval(timerRef.current); const elapsed = Math.round((Date.now() - startRef.current) / 1000); let analysis: any = null, score = 50
     try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
     const ins: any = { vendor_id: profile.id, persona_id: sd.personaId, level: sd.level, result: r, performance_score: score, duration_seconds: elapsed, analysis_data: analysis }
@@ -164,13 +201,14 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
   const send = async () => {
     if (!input.trim() || ended || thinking) return
     recRef.current?.stop(); setListening(false); window.speechSynthesis?.cancel()
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    inputAccRef.current = ''
     const nm = [...msgs, { sender: "vendor", content: input.trim(), time: Date.now() }]; setMsgs(nm); setInput(""); setThinking(true)
     try {
       const reply = await callChat(sys, nm); let content = reply, res: string | null = null
       const match = reply.match(/\[RÉSULTAT:(SIGNÉ|NON_SIGNÉ|RACCROCHÉ)\]/)
       if (match) { content = reply.replace(match[0], "").trim(); res = match[1] === "SIGNÉ" ? "signed" : match[1] === "RACCROCHÉ" ? "hung_up" : "not_signed" }
       setMsgs([...nm, { sender: "prospect", content, time: Date.now() }])
-      // TTS : lire la réponse du prospect
       if (voiceOn && content) speak(content)
       if (res) { setEnded(true); setResult(res) }
     } catch { setMsgs([...nm, { sender: "prospect", content: "...(problème de connexion)", time: Date.now() }]) }
@@ -184,22 +222,22 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 24 }}>{p?.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {sd.level} • {f?.name || "Mode libre"}</div></div></div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button onClick={() => { setVoiceOn(!voiceOn); if (voiceOn) { window.speechSynthesis?.cancel(); recRef.current?.stop(); setListening(false); setSpeaking(false) } }} title={voiceOn ? "Désactiver la voix" : "Activer la voix"} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button>
+        <button onClick={() => { const nv = !voiceOn; setVoiceOn(nv); if (!nv) { window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; setSpeaking(false) } }} title={voiceOn ? "Désactiver la voix" : "Activer la voix"} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button>
         <Timer seconds={timeLeft} maxSeconds={sd.duration} danger={timeLeft < 60} />
       </div>
     </div>
     <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
-      {msgs.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#8b95a5" }}><div style={{ fontSize: 36, marginBottom: 12 }}>📞</div><div style={{ fontSize: 14, fontWeight: 600 }}>Le prospect décroche...</div><div style={{ fontSize: 12, marginTop: 4 }}>C'est à vous de lancer l'échange.{voiceOn ? " Cliquez sur le micro pour parler." : ""}</div></div>}
+      {msgs.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#8b95a5" }}><div style={{ fontSize: 36, marginBottom: 12 }}>📞</div><div style={{ fontSize: 14, fontWeight: 600 }}>Le prospect décroche...</div><div style={{ fontSize: 12, marginTop: 4 }}>C'est à vous de lancer l'échange. Utilisez le micro ou tapez votre message.</div></div>}
       {msgs.map((m: any, i: number) => <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start" }}><div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>{m.content}{m.sender === "prospect" && voiceOn && <button onClick={() => speak(m.content)} style={{ background: "none", border: "none", color: "#8b95a5", cursor: "pointer", marginLeft: 8, padding: 0, verticalAlign: "middle" }} title="Réécouter"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>}</div></div>)}
       {thinking && <div style={{ alignSelf: "flex-start", padding: "12px 16px", background: "#1e2530", borderRadius: 16, borderBottomLeftRadius: 4 }}><div style={{ display: "flex", gap: 4 }}>{[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#8b95a5", animation: `bounce 1.2s ${i * 0.15}s infinite` }} />)}</div></div>}
       {speaking && <div style={{ alignSelf: "flex-start", fontSize: 11, color: "#63c397", padding: "4px 12px" }}>🔊 Le prospect parle...</div>}
       {ended && result && <div style={{ textAlign: "center", padding: 20, background: "#161b24", borderRadius: 14, border: "1px solid #2a2f3a", margin: "12px 0" }}><div style={{ fontSize: 36, marginBottom: 8 }}>{result === "signed" ? "🎉" : result === "hung_up" ? "📵" : result === "timeout" ? "⏰" : "😔"}</div><div style={{ fontWeight: 700, fontSize: 16 }}>{result === "signed" ? "Prospect convaincu !" : result === "hung_up" ? "Le prospect a raccroché" : result === "timeout" ? "Temps écoulé" : "Non convaincu"}</div><div style={{ fontSize: 13, color: "#8b95a5", marginTop: 4 }}>Analyse en cours...</div></div>}
     </div>
     <div style={{ padding: "14px 24px", background: "#111621", borderTop: "1px solid #1e2530" }}>
-      {listening && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", animation: "bounce 1s infinite" }} /> Écoute en cours... parlez puis cliquez Envoyer</div>}
+      {listening && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", animation: "bounce 1s infinite" }} /> Micro actif — parlez librement, cliquez le micro pour arrêter</div>}
       <div style={{ display: "flex", gap: 10 }}>
         <button onClick={toggleMic} disabled={ended || thinking} title={listening ? "Arrêter le micro" : "Parler au micro"} style={{ padding: "12px 14px", background: listening ? "rgba(239,68,68,0.2)" : "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: listening ? "#ef4444" : "#8b95a5", cursor: ended ? "default" : "pointer", display: "flex", alignItems: "center" }}><MicIcon /></button>
-        <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder={ended ? "Session terminée" : listening ? "Parlez..." : "Votre message..."} disabled={ended || thinking} style={{ flex: 1, padding: "12px 16px", background: "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: "#fff", fontSize: 14, outline: "none" }} />
+        <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder={ended ? "Session terminée" : listening ? "🎙️ Parlez..." : "Votre message..."} disabled={ended || thinking} style={{ flex: 1, padding: "12px 16px", background: "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: "#fff", fontSize: 14, outline: "none" }} />
         <button onClick={send} disabled={!input.trim() || ended || thinking} style={{ padding: "12px 18px", background: input.trim() && !ended ? "#2563eb" : "#2a2f3a", border: "none", borderRadius: 12, color: "#fff", cursor: input.trim() && !ended ? "pointer" : "default" }}><I.Send /></button>
       </div>
     </div>
