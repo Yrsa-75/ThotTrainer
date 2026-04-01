@@ -141,12 +141,11 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
   }, [])
 
   // STT — micro continu, toggle on/off, append sur re-clic
+  const sttFinalRef = useRef('')
   const toggleMic = useCallback(() => {
     if (ended || thinking) return
     if (listening) {
-      // STOP — on arrête l'enregistrement, le texte reste dans l'input
       recRef.current?.stop(); setListening(false)
-      // Mémorise le texte actuel pour append au prochain clic
       inputAccRef.current = input
       return
     }
@@ -154,29 +153,30 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
     if (!SR) { alert("Ton navigateur ne supporte pas la reconnaissance vocale. Utilise Chrome."); return }
     const rec = new SR()
     rec.lang = 'fr-FR'
-    rec.continuous = true       // Ne s'arrête PAS quand on fait une pause
-    rec.interimResults = true   // Affiche le texte en temps réel
+    rec.continuous = true
+    rec.interimResults = true
 
-    // Sauvegarde le texte déjà dans l'input pour append
     const prefix = input.trim() ? input.trim() + ' ' : ''
     inputAccRef.current = prefix
+    sttFinalRef.current = ''
 
     rec.onresult = (e: any) => {
-      let interim = ''; let final = ''
+      let finalText = ''
+      let interimText = ''
       for (let i = 0; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript
-        if (e.results[i].isFinal) final += t + ' '
-        else interim += t
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript + ' '
+        } else {
+          // On ne prend que le DERNIER résultat interim
+          interimText = e.results[i][0].transcript
+        }
       }
-      setInput(inputAccRef.current + final + interim)
+      // Mémorise les parties finalisées
+      if (finalText) sttFinalRef.current = finalText
+      setInput(inputAccRef.current + sttFinalRef.current + interimText)
     }
     rec.onend = () => {
-      // Si on est encore en mode listening, le navigateur a coupé tout seul — on relance
-      if (recRef.current && listening) {
-        try { recRef.current.start() } catch {}
-      } else {
-        setListening(false)
-      }
+      setListening(false)
     }
     rec.onerror = (e: any) => { if (e.error !== 'no-speech') { setListening(false) } }
     recRef.current = rec; rec.start(); setListening(true)
