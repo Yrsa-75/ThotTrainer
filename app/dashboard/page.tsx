@@ -140,56 +140,87 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
     window.speechSynthesis.speak(utter)
   }, [])
 
-  // STT — micro continu, toggle on/off, append sur re-clic
+  // STT — micro toggle on/off, compatible mobile
+  // Pas de continuous mode (bugué sur mobile), on relance manuellement entre les pauses
   const sttFinalRef = useRef('')
+  const listeningRef = useRef(false)
   const toggleMic = useCallback(() => {
     if (ended || thinking) return
-    if (listening) {
-      recRef.current?.stop(); setListening(false)
+    if (listeningRef.current) {
+      // STOP
+      listeningRef.current = false
+      recRef.current?.stop()
+      setListening(false)
       inputAccRef.current = input
       return
     }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SR) { alert("Ton navigateur ne supporte pas la reconnaissance vocale. Utilise Chrome."); return }
-    const rec = new SR()
-    rec.lang = 'fr-FR'
-    rec.continuous = true
-    rec.interimResults = true
 
-    const prefix = input.trim() ? input.trim() + ' ' : ''
-    inputAccRef.current = prefix
+    // Texte déjà dans l'input = préfixe à conserver
+    inputAccRef.current = input.trim() ? input.trim() + ' ' : ''
     sttFinalRef.current = ''
+    listeningRef.current = true
+    setListening(true)
 
-    rec.onresult = (e: any) => {
-      let finalText = ''
-      let interimText = ''
-      for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript + ' '
+    const startRec = () => {
+      if (!listeningRef.current) return
+      const rec = new SR()
+      rec.lang = 'fr-FR'
+      rec.continuous = false      // PAS de continuous — plus fiable sur mobile
+      rec.interimResults = true
+
+      let sessionFinal = ''
+
+      rec.onresult = (e: any) => {
+        // On ne prend que le DERNIER résultat
+        const last = e.results[e.results.length - 1]
+        const transcript = last[0].transcript
+        if (last.isFinal) {
+          sessionFinal = transcript
+          // Accumule dans le ref
+          sttFinalRef.current += sessionFinal.trim() + ' '
+          setInput(inputAccRef.current + sttFinalRef.current)
         } else {
-          // On ne prend que le DERNIER résultat interim
-          interimText = e.results[i][0].transcript
+          // Interim : montre le texte accumulé + ce qu'on est en train de dire
+          setInput(inputAccRef.current + sttFinalRef.current + transcript)
         }
       }
-      // Mémorise les parties finalisées
-      if (finalText) sttFinalRef.current = finalText
-      setInput(inputAccRef.current + sttFinalRef.current + interimText)
+
+      rec.onend = () => {
+        // Le navigateur a coupé (pause détectée) — on relance si on est toujours en mode écoute
+        if (listeningRef.current) {
+          setTimeout(() => startRec(), 100)
+        } else {
+          setListening(false)
+        }
+      }
+
+      rec.onerror = (e: any) => {
+        if (e.error === 'no-speech' && listeningRef.current) {
+          // Pas de parole détectée, on relance
+          setTimeout(() => startRec(), 100)
+        } else if (e.error !== 'aborted') {
+          listeningRef.current = false
+          setListening(false)
+        }
+      }
+
+      recRef.current = rec
+      try { rec.start() } catch {}
     }
-    rec.onend = () => {
-      setListening(false)
-    }
-    rec.onerror = (e: any) => { if (e.error !== 'no-speech') { setListening(false) } }
-    recRef.current = rec; rec.start(); setListening(true)
-  }, [listening, ended, thinking, input])
+
+    startRec()
+  }, [ended, thinking, input])
 
   useEffect(() => { timerRef.current = setInterval(() => { setTimeLeft((prev: number) => { if (prev <= 1) { clearInterval(timerRef.current); setEnded(true); setResult("timeout"); return 0 } return prev - 1 }) }, 1000); return () => clearInterval(timerRef.current) }, [])
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
   useEffect(() => { if (!thinking && !ended && !listening) inputRef.current?.focus() }, [thinking, ended, listening])
   useEffect(() => { if (typeof window !== 'undefined' && window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [])
-  useEffect(() => { return () => { window.speechSynthesis?.cancel(); recRef.current?.stop(); if (audioRef.current) audioRef.current.pause() } }, [])
+  useEffect(() => { return () => { window.speechSynthesis?.cancel(); listeningRef.current = false; recRef.current?.stop(); if (audioRef.current) audioRef.current.pause() } }, [])
 
   const finish = useCallback(async (m: any[], r: string) => {
-    window.speechSynthesis?.cancel(); recRef.current?.stop(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    window.speechSynthesis?.cancel(); recRef.current?.stop(); listeningRef.current = false; if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     clearInterval(timerRef.current); const elapsed = Math.round((Date.now() - startRef.current) / 1000); let analysis: any = null, score = 50
     try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
     const ins: any = { vendor_id: profile.id, persona_id: sd.personaId, level: sd.level, result: r, performance_score: score, duration_seconds: elapsed, analysis_data: analysis }
@@ -202,7 +233,7 @@ function ChatSession({ profile, personas, formations, scoring, sd, supabase, onE
 
   const send = async () => {
     if (!input.trim() || ended || thinking) return
-    recRef.current?.stop(); setListening(false); window.speechSynthesis?.cancel()
+    recRef.current?.stop(); listeningRef.current = false; setListening(false); window.speechSynthesis?.cancel()
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     inputAccRef.current = ''
     const nm = [...msgs, { sender: "vendor", content: input.trim(), time: Date.now() }]; setMsgs(nm); setInput(""); setThinking(true)
