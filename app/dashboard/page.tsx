@@ -206,7 +206,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     }
     if (sd.formationId) ins.formation_id = sd.formationId
     const { data: sess } = await supabase.from('sessions').insert(ins).select().single()
-    if (sess) { await supabase.from('messages').insert(m.map((msg: any, i: number) => ({ session_id: sess.id, sender: msg.sender, content: msg.content, sequence_number: i + 1 }))) }
+    if (sess) { const now = new Date().toISOString(); await supabase.from('messages').insert(m.map((msg: any, i: number) => ({ session_id: sess.id, sender: msg.sender, content: msg.content, sequence_number: i + 1, topic: 'simulation', extension: 'text', updated_at: now, inserted_at: now }))) }
     const normalized = normSession(sess)
     normalized.messages = m
     onEnd(normalized)
