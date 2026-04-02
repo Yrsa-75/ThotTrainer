@@ -377,16 +377,7 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
     </div>}
 
     {/* ===== SCORING ===== */}
-    {tab === "scoring" && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
-      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Paramètres de scoring</div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: "#63c397", marginBottom: 8 }}>Points positifs</div>
-      {(scoring.positive || []).map((r: any, i: number) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}><span style={{ fontSize: 12, color: "#8b95a5", flex: 1 }}>{r.label}</span><span style={{ fontSize: 13, fontWeight: 700, color: "#63c397" }}>+{r.points}</span></div>)}
-      <div style={{ fontSize: 13, fontWeight: 700, color: "#ef4444", marginBottom: 8, marginTop: 16 }}>Points négatifs</div>
-      {(scoring.negative || []).map((r: any, i: number) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}><span style={{ fontSize: 12, color: "#8b95a5", flex: 1 }}>{r.label}</span><span style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>{r.points}</span></div>)}
-      <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b", marginBottom: 8, marginTop: 16 }}>Bonus structure RDV</div>
-      {(scoring.phase_bonus || []).map((r: any, i: number) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}><span style={{ fontSize: 12, color: "#8b95a5", flex: 1 }}>{r.label}</span><span style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>+{r.points}</span></div>)}
-      <div style={{ marginTop: 16, padding: 12, background: "#1a1e27", borderRadius: 8, fontSize: 12, color: "#8b95a5" }}>Modifiable dans Supabase → scoring_rules (champs JSONB)</div>
-    </div>}
+    {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
 
     {/* ===== API KEYS (BYOK) ===== */}
     {tab === "keys" && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
@@ -405,5 +396,89 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
         <div style={{ fontSize: 11, color: config.client_openai_key ? "#63c397" : "#f59e0b" }}>{config.client_openai_key ? "✅ Clé configurée" : "⚠️ Utilise la clé par défaut (voix navigateur si absente)"}</div>
       </div>
     </div>}
+  </div>)
+}
+
+// ============================================
+// SCORING EDITOR — CRUD complet
+// ============================================
+function ScoringEditor({ supabase, scoring, onRefresh }: any) {
+  const [pos, setPos] = useState<any[]>(scoring.positive || [])
+  const [neg, setNeg] = useState<any[]>(scoring.negative || [])
+  const [bonus, setBonus] = useState<any[]>(scoring.phase_bonus || [])
+  const [thresholds, setThresholds] = useState(scoring.thresholds || { level1: 30, level2: 55, level3: 80 })
+  const [startScores, setStartScores] = useState(scoring.startScores || { level1: 20, level2: 5, level3: -15 })
+  const [saving, setSaving] = useState(false)
+
+  const save = async (updates: any) => {
+    setSaving(true)
+    await supabase.from('scoring_rules').update(updates).eq('is_active', true)
+    onRefresh()
+    setSaving(false)
+  }
+
+  const updateItem = (arr: any[], setArr: any, field: string, idx: number, key: string, val: any) => {
+    const n = [...arr]; n[idx] = { ...n[idx], [key]: val }; setArr(n); save({ [field]: n })
+  }
+  const addItem = (arr: any[], setArr: any, field: string, pts: number) => {
+    const n = [...arr, { key: "new_" + Date.now(), label: "Nouveau critère", points: pts }]; setArr(n); save({ [field]: n })
+  }
+  const removeItem = (arr: any[], setArr: any, field: string, idx: number) => {
+    const n = arr.filter((_: any, i: number) => i !== idx); setArr(n); save({ [field]: n })
+  }
+
+  const CriteriaRow = ({ item, idx, arr, setArr, field, color }: any) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "8px 12px", background: "#1a1e27", borderRadius: 8 }}>
+      <input value={item.label} onChange={e => updateItem(arr, setArr, field, idx, 'label', e.target.value)} style={{ flex: 1, padding: "6px 10px", background: "#111621", border: "1px solid #2a2f3a", borderRadius: 6, color: "#fff", fontSize: 12, outline: "none" }} />
+      <input type="number" value={item.points} onChange={e => updateItem(arr, setArr, field, idx, 'points', parseInt(e.target.value) || 0)} style={{ width: 60, padding: "6px 10px", background: "#111621", border: "1px solid #2a2f3a", borderRadius: 6, color, fontSize: 13, fontWeight: 700, textAlign: "center", outline: "none" }} />
+      <button onClick={() => removeItem(arr, setArr, field, idx)} style={bS("#ef4444")}><I.Trash /></button>
+    </div>
+  )
+
+  return (<div>
+    {/* Thresholds & Start scores */}
+    <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Seuils par niveau</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+        {(["level1", "level2", "level3"] as const).map((l, i) => (
+          <div key={l} style={{ padding: 14, background: "#1a1e27", borderRadius: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: "#63c397" }}>Niveau {i + 1}</div>
+            <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>Score de départ</div>
+            <input type="number" value={startScores[l]} onChange={e => { const ns = { ...startScores, [l]: parseInt(e.target.value) || 0 }; setStartScores(ns); save({ level1_start_score: ns.level1, level2_start_score: ns.level2, level3_start_score: ns.level3 }) }} style={{ width: "100%", padding: "6px 10px", background: "#111621", border: "1px solid #2a2f3a", borderRadius: 6, color: "#fff", fontSize: 13, outline: "none", marginBottom: 8, boxSizing: "border-box" as any }} />
+            <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>Seuil signature</div>
+            <input type="number" value={thresholds[l]} onChange={e => { const nt = { ...thresholds, [l]: parseInt(e.target.value) || 0 }; setThresholds(nt); save({ level1_threshold: nt.level1, level2_threshold: nt.level2, level3_threshold: nt.level3 }) }} style={{ width: "100%", padding: "6px 10px", background: "#111621", border: "1px solid #2a2f3a", borderRadius: 6, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" as any }} />
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Positive criteria */}
+    <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#63c397" }}>Points positifs</div>
+        <button onClick={() => addItem(pos, setPos, 'positive', 5)} style={bS("#63c397")}><I.Plus /> Ajouter</button>
+      </div>
+      {pos.map((r: any, i: number) => <CriteriaRow key={i} item={r} idx={i} arr={pos} setArr={setPos} field="positive" color="#63c397" />)}
+    </div>
+
+    {/* Negative criteria */}
+    <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>Points négatifs</div>
+        <button onClick={() => addItem(neg, setNeg, 'negative', -5)} style={bS("#ef4444")}><I.Plus /> Ajouter</button>
+      </div>
+      {neg.map((r: any, i: number) => <CriteriaRow key={i} item={r} idx={i} arr={neg} setArr={setNeg} field="negative" color="#ef4444" />)}
+    </div>
+
+    {/* Phase bonus */}
+    <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#f59e0b" }}>Bonus structure RDV</div>
+        <button onClick={() => addItem(bonus, setBonus, 'phase_bonus', 5)} style={bS("#f59e0b")}><I.Plus /> Ajouter</button>
+      </div>
+      {bonus.map((r: any, i: number) => <CriteriaRow key={i} item={r} idx={i} arr={bonus} setArr={setBonus} field="phase_bonus" color="#f59e0b" />)}
+    </div>
+
+    {saving && <div style={{ fontSize: 11, color: "#63c397", marginTop: 8, textAlign: "center" }}>Sauvegarde...</div>}
   </div>)
 }

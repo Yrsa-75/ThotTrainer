@@ -44,7 +44,7 @@ export default function LoginPage() {
             <rect x="8" y="14" width="12" height="2" rx="1" fill="rgba(255,255,255,0.5)"/>
           </svg>
           <div style={{ marginTop: 12, fontSize: 24, fontWeight: 800, color: '#fff' }}>Thot Trainer</div>
-          <div style={{ fontSize: 13, color: '#8b95a5', marginTop: 4 }}>Entraînement Chronos Emploi</div>
+          <div style={{ fontSize: 13, color: '#8b95a5', marginTop: 4 }}>Plateforme d'entraînement commercial</div>
         </div>
 
         {error && (

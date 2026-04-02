@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Thot Trainer — Chronos Emploi',
+  title: 'Thot Trainer',
   description: 'Plateforme d\'entraînement commercial IA',
 }
 
