@@ -7,6 +7,27 @@ import { DEFAULT_PERSONAS, DEFAULT_FORMATIONS, DEFAULT_SCORING, DEFAULT_CONFIG, 
 async function callChat(system: string, messages: any[]) { const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system, messages }) }); return (await r.json()).text || '...' }
 async function callAnalyze(prompt: string) { const r = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) }); return (await r.json()).text || '{}' }
 
+// Normalise une session DB → format UI
+function normSession(s: any): any {
+  if (!s) return s
+  return {
+    ...s,
+    level: s.difficulty_level || s.level,
+    performance_score: s.performance_score || 0,
+    analysis_data: s.analysis_data || {
+      score: s.performance_score || 0,
+      summary: s.analysis_summary || '',
+      strengths: s.analysis_strengths || [],
+      improvements: s.analysis_improvements || [],
+      objections: s.analysis_objections || [],
+      skills: s.analysis_skills || {},
+      main_advice: s.analysis_main_advice || '',
+      phase_coverage: s.analysis_next_recommendation || {}
+    }
+  }
+}
+function normSessions(arr: any[]): any[] { return (arr || []).map(normSession) }
+
 const I = {
   Play: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
   Send: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
@@ -37,7 +58,7 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) { router.push('/'); return }
     const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single(); if (!p) { router.push('/'); return }; setProfile(p)
-    const { data: sess } = p.role === 'admin' ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(sess || [])
+    const { data: sess } = p.role === 'admin' ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(normSessions(sess))
     if (p.role === 'admin') {
       const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
     } else {
@@ -174,11 +195,21 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     window.speechSynthesis?.cancel(); recRef.current?.stop(); listeningRef.current = false; if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     clearInterval(timerRef.current); const elapsed = Math.round((Date.now() - startRef.current) / 1000); let analysis: any = null, score = 50
     try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r, config)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
-    const ins: any = { vendor_id: profile.id, persona_id: sd.personaId, level: sd.level, result: r, performance_score: score, duration_seconds: elapsed, analysis_data: analysis }
+    const ins: any = {
+      vendor_id: profile.id, user_id: profile.id, persona_id: sd.personaId,
+      difficulty_level: sd.level, result: r, performance_score: score,
+      actual_duration_seconds: elapsed, duration_limit_seconds: sd.duration || 0,
+      analysis_summary: analysis?.summary || '', analysis_strengths: analysis?.strengths || [],
+      analysis_improvements: analysis?.improvements || [], analysis_objections: analysis?.objections || [],
+      analysis_skills: analysis?.skills || {}, analysis_main_advice: analysis?.main_advice || '',
+      analysis_next_recommendation: analysis?.phase_coverage || {}
+    }
     if (sd.formationId) ins.formation_id = sd.formationId
     const { data: sess } = await supabase.from('sessions').insert(ins).select().single()
     if (sess) { await supabase.from('messages').insert(m.map((msg: any, i: number) => ({ session_id: sess.id, sender: msg.sender, content: msg.content, sequence_number: i + 1 }))) }
-    onEnd({ ...sess, messages: m, analysis: analysis || { score, summary: "Analyse non disponible" } })
+    const normalized = normSession(sess)
+    normalized.messages = m
+    onEnd(normalized)
   }, [profile, sd, p, f, config, supabase, onEnd])
   useEffect(() => { if (ended && result) finish(msgs, result) }, [ended, result])
 
