@@ -87,7 +87,8 @@ export default function DashboardPage() {
         {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { setSessionData(sd); setScreen("chat") }} />}
         {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onEnd={async (sess: any) => { setSessions(prev => [sess, ...prev]); setViewSession(sess); setScreen("analysis") }} />}
         {screen === "analysis" && viewSession && <Analysis session={viewSession} personas={personas} formations={formations} config={config} goBack={() => setScreen("dashboard")} />}
-        {screen === "history" && <HistoryScreen profile={profile} sessions={sessions} personas={personas} formations={formations} profiles={profiles} onView={(s: any) => { setViewSession(s); setScreen("analysis") }} />}
+        {screen === "history" && <HistoryScreen profile={profile} sessions={sessions} personas={personas} formations={formations} profiles={profiles} supabase={supabase} onView={(s: any) => { setViewSession(s); setScreen("analysis") }} onReplay={(s: any) => { setViewSession(s); setScreen("replay") }} />}
+        {screen === "replay" && viewSession && <Replay session={viewSession} personas={personas} formations={formations} profiles={profiles} goBack={() => setScreen("history")} />}
         {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
         {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
@@ -209,9 +210,23 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const sys = buildSystemPrompt(p, f, sd.level, scoring, config)
   const isUnlimited = sd.duration === 0
 
+  const ttsAvailRef = useRef<boolean | null>(null)
   const speak = useCallback(async (text: string) => {
-    if (typeof window === 'undefined') return; if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; window.speechSynthesis?.cancel(); setSpeaking(true)
-    try { const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); if ((res.headers.get('content-type') || '').includes('audio')) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const audio = new Audio(url); audioRef.current = audio; audio.onended = () => { setSpeaking(false); audioRef.current = null; URL.revokeObjectURL(url) }; audio.onerror = () => { setSpeaking(false); audioRef.current = null; URL.revokeObjectURL(url) }; audio.play(); return } } catch {}
+    if (typeof window === 'undefined') return
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    window.speechSynthesis?.cancel(); setSpeaking(true)
+    // Check si TTS dispo (une seule fois)
+    if (ttsAvailRef.current === null) {
+      try { const r = await fetch('/api/tts', { method: 'POST' }); const d = await r.json(); ttsAvailRef.current = !!d.available } catch { ttsAvailRef.current = false }
+    }
+    if (ttsAvailRef.current) {
+      const audio = new Audio('/api/tts?t=' + encodeURIComponent(text))
+      audioRef.current = audio
+      audio.onended = () => { setSpeaking(false); audioRef.current = null }
+      audio.onerror = () => { setSpeaking(false); audioRef.current = null }
+      audio.play().catch(() => setSpeaking(false))
+      return
+    }
     const utter = new SpeechSynthesisUtterance(text); utter.lang = 'fr-FR'; utter.rate = 1.1; const voices = window.speechSynthesis.getVoices(); const fr = voices.find((v: any) => v.lang.startsWith('fr')) || voices[0]; if (fr) utter.voice = fr; utter.onend = () => setSpeaking(false); utter.onerror = () => setSpeaking(false); window.speechSynthesis.speak(utter)
   }, [])
 
@@ -296,10 +311,97 @@ function Analysis({ session, personas, formations, config, goBack }: any) {
   </div>)
 }
 
-function HistoryScreen({ profile, sessions, personas, formations, profiles, onView }: any) {
+function HistoryScreen({ profile, sessions, personas, formations, profiles, supabase, onView, onReplay }: any) {
   const isAdmin = profile.role === 'admin'
+  const loadReplay = async (s: any) => {
+    const { data: msgs } = await supabase.from('messages').select('*').eq('session_id', s.id).order('sequence_number', { ascending: true })
+    onReplay({ ...s, messages: msgs || [] })
+  }
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Historique{isAdmin ? " (toutes)" : ""}</div>
-    {sessions.filter((s: any) => s.result !== 'in_progress').length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : sessions.filter((s: any) => s.result !== 'in_progress').map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = profiles.find((x: any) => x.id === s.vendor_id); return <div key={s.id} onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8, cursor: "pointer" }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 22 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} • ` : ""}Niv {s.level} • {s.result === "signed" ? "✅" : s.result === "hung_up" ? "📵" : s.result === "timeout" ? "⏰" : "❌"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 20, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "—"}</span><I.ChevronRight /></div></div> })}</div>)
+    {sessions.filter((s: any) => s.result !== 'in_progress').length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : sessions.filter((s: any) => s.result !== 'in_progress').map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = profiles.find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}>
+      <div onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer" }}><span style={{ fontSize: 22 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} • ` : ""}Niv {s.level} • {s.result === "signed" ? "✅" : s.result === "hung_up" ? "📵" : s.result === "timeout" ? "⏰" : "❌"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {isAdmin && <button onClick={(e) => { e.stopPropagation(); loadReplay(s) }} style={{ padding: "5px 10px", background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: 6, color: "#60a5fa", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><I.Play /> Replay</button>}
+        <span style={{ fontSize: 20, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "—"}</span>
+        <I.ChevronRight />
+      </div>
+    </div> })}</div>)
+}
+
+function Replay({ session, personas, formations, profiles, goBack }: any) {
+  const [visibleCount, setVisibleCount] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [speed, setSpeed] = useState(1)
+  const timerRef = useRef<any>(null)
+  const chatRef = useRef<HTMLDivElement>(null)
+  const p = personas.find((x: any) => x.id === session.persona_id)
+  const f = formations.find((x: any) => x.id === session.formation_id)
+  const u = (profiles || []).find((x: any) => x.id === session.vendor_id)
+  const msgs = session.messages || []
+
+  useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [visibleCount])
+  useEffect(() => { return () => clearInterval(timerRef.current) }, [])
+
+  const play = () => {
+    if (visibleCount >= msgs.length) { setVisibleCount(0) }
+    setPlaying(true)
+    let idx = visibleCount
+    timerRef.current = setInterval(() => {
+      idx++
+      setVisibleCount(idx)
+      if (idx >= msgs.length) { clearInterval(timerRef.current); setPlaying(false) }
+    }, 1500 / speed)
+  }
+  const pause = () => { clearInterval(timerRef.current); setPlaying(false) }
+  const reset = () => { clearInterval(timerRef.current); setPlaying(false); setVisibleCount(0) }
+  const showAll = () => { clearInterval(timerRef.current); setPlaying(false); setVisibleCount(msgs.length) }
+
+  return (<div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    {/* Header */}
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer" }}>← Retour</button>
+        <span style={{ fontSize: 20 }}>{p?.emoji}</span>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>{u?.full_name || "?"} → {p?.name} — {p?.subtitle}</div>
+          <div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {session.level} • {f?.name || "Libre"} • {session.result === "signed" ? "✅ Signé" : session.result === "hung_up" ? "📵 Raccroché" : session.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"} • Score: {session.performance_score || "—"}</div>
+        </div>
+      </div>
+      <div style={{ fontSize: 12, color: "#8b95a5" }}>{visibleCount}/{msgs.length} messages</div>
+    </div>
+
+    {/* Messages */}
+    <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+      {msgs.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucun message enregistré pour cette session</div>}
+      {msgs.slice(0, visibleCount).map((m: any, i: number) => (
+        <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start", animation: "fadeIn 0.3s ease" }}>
+          <div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 9, color: m.sender === "vendor" ? "rgba(255,255,255,0.5)" : "#555", marginBottom: 4 }}>{m.sender === "vendor" ? (u?.full_name || "Vendeur") : (p?.name || "Prospect")}</div>
+            {m.content}
+          </div>
+        </div>
+      ))}
+      {playing && visibleCount < msgs.length && <div style={{ alignSelf: msgs[visibleCount]?.sender === "vendor" ? "flex-end" : "flex-start", padding: "12px 16px", background: "#1e2530", borderRadius: 16, borderBottomLeftRadius: 4 }}><div style={{ display: "flex", gap: 4 }}>{[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#8b95a5", animation: `bounce 1.2s ${i * 0.15}s infinite` }} />)}</div></div>}
+    </div>
+
+    {/* Controls */}
+    <div style={{ padding: "14px 24px", background: "#111621", borderTop: "1px solid #1e2530" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <button onClick={reset} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>⏮ Début</button>
+        {playing ? (
+          <button onClick={pause} style={{ padding: "10px 24px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, color: "#ef4444", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>⏸ Pause</button>
+        ) : (
+          <button onClick={play} style={{ padding: "10px 24px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{visibleCount >= msgs.length ? "⏮ Rejouer" : "▶ Lecture"}</button>
+        )}
+        <button onClick={showAll} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>⏭ Tout</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 12 }}>
+          <span style={{ fontSize: 11, color: "#8b95a5" }}>Vitesse:</span>
+          {[0.5, 1, 2, 4].map(s => <button key={s} onClick={() => setSpeed(s)} style={{ padding: "4px 8px", background: speed === s ? "rgba(99,195,151,0.15)" : "transparent", border: `1px solid ${speed === s ? "#63c397" : "#2a2f3a"}`, borderRadius: 6, color: speed === s ? "#63c397" : "#8b95a5", fontSize: 11, cursor: "pointer" }}>x{s}</button>)}
+        </div>
+      </div>
+    </div>
+    <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}`}</style>
+  </div>)
 }
 function Leaderboard({ sessions, profiles, userId }: any) {
   const stats = profiles.map((u: any) => { const s = sessions.filter((x: any) => x.vendor_id === u.id && x.result !== 'in_progress'); return { ...u, sessions: s.length, avg: s.length ? Math.round(s.reduce((a: number, x: any) => a + (x.performance_score || 0), 0) / s.length) : 0, signed: s.filter((x: any) => x.result === 'signed').length, rate: s.length ? Math.round((s.filter((x: any) => x.result === 'signed').length / s.length) * 100) : 0 } }).filter((u: any) => u.sessions > 0).sort((a: any, b: any) => b.avg - a.avg)
