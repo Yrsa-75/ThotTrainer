@@ -38,7 +38,11 @@ export default function DashboardPage() {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) { router.push('/'); return }
     const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single(); if (!p) { router.push('/'); return }; setProfile(p)
     const { data: sess } = p.role === 'admin' ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(sess || [])
-    if (p.role === 'admin') { const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || []) }
+    if (p.role === 'admin') {
+      const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
+    } else {
+      const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
+    }
     const { data: f } = await supabase.from('formations').select('*').eq('is_active', true); setFormations(f?.length ? f : DEFAULT_FORMATIONS)
     const { data: pers } = await supabase.from('personas').select('*').eq('is_active', true); setPersonas(pers?.length ? pers : DEFAULT_PERSONAS)
     const { data: sc } = await supabase.from('scoring_rules').select('*').eq('is_active', true).single(); if (sc) setScoring(normalizeScoring(sc))

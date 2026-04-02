@@ -192,6 +192,7 @@ Bonus structure : ${(sr.phase_bonus || []).map((r: any) => `${r.label}(+${r.poin
 3. Ne sors JAMAIS de ton rôle
 4. Ne donne JAMAIS de conseils au vendeur
 5. Tu peux poser des questions, exprimer des émotions, être silencieux ("...")
+6. N'utilise JAMAIS d'indications de ton, d'humeur, d'actions ou de didascalies entre astérisques (*...*) ou entre parenthèses. Tu ne fais QUE parler. Pas de "*soupire*", pas de "*hésite*", pas de "*rit*", pas de descriptions d'état. Tu exprimes tout par tes MOTS uniquement.
 ${cfg.custom_instructions ? `\n=== INSTRUCTIONS SUPPLÉMENTAIRES ===\n${cfg.custom_instructions}` : ''}
 
 === PREMIÈRE RÉPONSE ===
