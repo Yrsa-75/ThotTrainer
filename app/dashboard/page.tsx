@@ -196,7 +196,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     clearInterval(timerRef.current); const elapsed = Math.round((Date.now() - startRef.current) / 1000); let analysis: any = null, score = 50
     try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r, config)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
     const ins: any = {
-      vendor_id: profile.id, user_id: profile.id, persona_id: sd.personaId,
+      vendor_id: profile.id, persona_id: sd.personaId,
       difficulty_level: sd.level, result: r, performance_score: score,
       actual_duration_seconds: elapsed, duration_limit_seconds: sd.duration || 0,
       analysis_summary: analysis?.summary || '', analysis_strengths: analysis?.strengths || [],
