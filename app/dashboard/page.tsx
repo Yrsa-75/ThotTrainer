@@ -71,6 +71,29 @@ export default function DashboardPage() {
     setLoading(false)
   }, [supabase, router])
   useEffect(() => { loadData() }, [])
+
+  // Realtime — écoute les nouvelles sessions et mises à jour
+  const profileRef = useRef<any>(null)
+  useEffect(() => { profileRef.current = profile }, [profile])
+  useEffect(() => {
+    const channel = supabase.channel('sessions-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, async (payload: any) => {
+        const p = profileRef.current
+        if (!p) return
+        if (payload.eventType === 'INSERT') {
+          const newSess = normSession(payload.new)
+          // Admin voit tout, vendeur voit que les siennes
+          if (p.role === 'admin' || newSess.vendor_id === p.id) {
+            setSessions(prev => [newSess, ...prev.filter((s: any) => s.id !== newSess.id)])
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = normSession(payload.new)
+          setSessions(prev => prev.map((s: any) => s.id === updated.id ? updated : s))
+        }
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [supabase])
   if (loading || !profile) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0f1219", color: "#fff", fontFamily: "'Segoe UI', system-ui, sans-serif" }}><div style={{ textAlign: "center" }}><Logo size={56} /><div style={{ marginTop: 16, fontSize: 20, fontWeight: 700 }}>Thot Trainer</div><div style={{ marginTop: 4, fontSize: 12, color: "#8b95a5" }}>Chargement...</div></div></div>
   const isAdmin = profile.role === 'admin'; const initials = profile.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'
   return (
