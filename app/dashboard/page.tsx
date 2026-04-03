@@ -210,17 +210,28 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const sys = buildSystemPrompt(p, f, sd.level, scoring, config)
   const isUnlimited = sd.duration === 0
 
+  // Détecte si le persona est féminin (emoji ou nom)
+  const isFemale = useCallback((persona: any) => {
+    if (!persona) return true
+    const emoji = persona.emoji || ''
+    if (emoji.includes('👩') || emoji.includes('👧') || emoji.includes('🙍‍♀') || emoji.includes('💁‍♀')) return true
+    if (emoji.includes('👨') || emoji.includes('👦') || emoji.includes('🙍‍♂') || emoji.includes('💁‍♂')) return false
+    const femaleNames = ['marie','françoise','amina','sophie','julie','nathalie','isabelle','céline','sarah','laura','emma','léa','camille','claire','hélène','valérie','sandrine','christine','patricia','fatima','aïcha','karine']
+    return femaleNames.includes((persona.name || '').toLowerCase())
+  }, [])
+  // nova = femme, onyx = homme
+  const voiceId = isFemale(p) ? 'nova' : 'onyx'
+
   const ttsAvailRef = useRef<boolean | null>(null)
   const speak = useCallback(async (text: string) => {
     if (typeof window === 'undefined') return
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     window.speechSynthesis?.cancel(); setSpeaking(true)
-    // Check si TTS dispo (une seule fois)
     if (ttsAvailRef.current === null) {
       try { const r = await fetch('/api/tts', { method: 'POST' }); const d = await r.json(); ttsAvailRef.current = !!d.available } catch { ttsAvailRef.current = false }
     }
     if (ttsAvailRef.current) {
-      const audio = new Audio('/api/tts?t=' + encodeURIComponent(text))
+      const audio = new Audio('/api/tts?t=' + encodeURIComponent(text) + '&v=' + voiceId)
       audioRef.current = audio
       audio.onended = () => { setSpeaking(false); audioRef.current = null }
       audio.onerror = () => { setSpeaking(false); audioRef.current = null }
@@ -228,7 +239,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
       return
     }
     const utter = new SpeechSynthesisUtterance(text); utter.lang = 'fr-FR'; utter.rate = 1.1; const voices = window.speechSynthesis.getVoices(); const fr = voices.find((v: any) => v.lang.startsWith('fr')) || voices[0]; if (fr) utter.voice = fr; utter.onend = () => setSpeaking(false); utter.onerror = () => setSpeaking(false); window.speechSynthesis.speak(utter)
-  }, [])
+  }, [voiceId])
 
   const toggleMic = useCallback(() => {
     if (ended || thinking) return

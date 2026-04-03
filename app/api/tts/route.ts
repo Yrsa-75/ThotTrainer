@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url)
     const text = url.searchParams.get('t')
+    const voice = url.searchParams.get('v') || 'nova'
     if (!text) return new Response('Missing text', { status: 400 })
 
     const keys = await getApiKeys()
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
       headers: { "Authorization": `Bearer ${keys.openai}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "tts-1", input: text, voice: "nova", response_format: "mp3", speed: 1.05 })
+      body: JSON.stringify({ model: "tts-1", input: text, voice: voice, response_format: "mp3", speed: 1.05 })
     })
 
     if (!response.ok || !response.body) return new Response('TTS failed', { status: 500 })
