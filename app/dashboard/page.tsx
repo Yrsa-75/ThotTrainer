@@ -7,6 +7,152 @@ import { DEFAULT_PERSONAS, DEFAULT_FORMATIONS, DEFAULT_SCORING, DEFAULT_CONFIG, 
 async function callChat(system: string, messages: any[]) { const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system, messages }) }); return (await r.json()).text || '...' }
 async function callAnalyze(prompt: string) { const r = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) }); return (await r.json()).text || '{}' }
 
+// ============================================
+// BADGES
+// ============================================
+const BADGES = [
+  // Démarrage
+  { id:'first_session', name:'Premier pas', icon:'🎯', tier:'bronze', cat:'Démarrage', desc:'Terminer sa première session' },
+  { id:'first_mic', name:'Voix active', icon:'🎙️', tier:'bronze', cat:'Démarrage', desc:'Utiliser le micro pour la première fois' },
+  { id:'first_analysis', name:'Curieux', icon:'📊', tier:'bronze', cat:'Démarrage', desc:'Consulter son analyse complète' },
+  // Volume
+  { id:'sessions_5', name:'Échauffement', icon:'🔥', tier:'bronze', cat:'Volume', desc:'5 sessions terminées' },
+  { id:'sessions_15', name:'En rythme', icon:'⚡', tier:'silver', cat:'Volume', desc:'15 sessions terminées' },
+  { id:'sessions_50', name:'Machine', icon:'🏋️', tier:'gold', cat:'Volume', desc:'50 sessions terminées' },
+  { id:'sessions_100', name:'Vétéran', icon:'💎', tier:'diamond', cat:'Volume', desc:'100 sessions terminées' },
+  // Performance
+  { id:'score_70', name:'1re étoile', icon:'⭐', tier:'silver', cat:'Performance', desc:'Obtenir un score de 70+' },
+  { id:'score_85', name:'Étoile montante', icon:'🌟', tier:'gold', cat:'Performance', desc:'Obtenir un score de 85+' },
+  { id:'score_95', name:'Perfection', icon:'👑', tier:'legendary', cat:'Performance', desc:'Obtenir un score de 95+' },
+  { id:'progression', name:'Progression', icon:'📈', tier:'emerald', cat:'Performance', desc:'+15 pts sur les 5 dernières sessions' },
+  // Signatures
+  { id:'signed_1', name:'1re signature', icon:'✍️', tier:'bronze', cat:'Signatures', desc:'Faire signer un prospect' },
+  { id:'signed_5', name:'Closer', icon:'🎉', tier:'silver', cat:'Signatures', desc:'5 signatures' },
+  { id:'signed_20', name:'Top closer', icon:'🏆', tier:'gold', cat:'Signatures', desc:'20 signatures' },
+  { id:'signed_rate_60', name:'Légende', icon:'💼', tier:'legendary', cat:'Signatures', desc:'Taux de signature > 60% (min 10 sessions)' },
+  // Difficulté
+  { id:'level3_done', name:'Courageux', icon:'🛡️', tier:'silver', cat:'Difficulté', desc:'Terminer une session en niveau 3' },
+  { id:'level3_signed', name:'Dompteur', icon:'🔓', tier:'gold', cat:'Difficulté', desc:'Faire signer en niveau 3' },
+  { id:'all_personas', name:'Caméléon', icon:'🎭', tier:'diamond', cat:'Difficulté', desc:'Faire signer chaque persona' },
+  // Régularité
+  { id:'streak_3', name:'Régulier', icon:'📅', tier:'bronze', cat:'Régularité', desc:"S'entraîner 3 jours de suite" },
+  { id:'streak_7', name:'En feu', icon:'🔥', tier:'silver', cat:'Régularité', desc:"S'entraîner 7 jours de suite" },
+  { id:'days_20', name:'Discipline', icon:'🗓️', tier:'gold', cat:'Régularité', desc:"S'entraîner 20 jours sur un mois" },
+  // Spéciaux
+  { id:'mystery_5', name:'Aventurier', icon:'🎲', tier:'emerald', cat:'Spéciaux', desc:'5 sessions en prospect mystère' },
+  { id:'marathon', name:'Marathon', icon:'♾️', tier:'diamond', cat:'Spéciaux', desc:'Session illimitée de +20 min' },
+  { id:'rank_1', name:'Numéro 1', icon:'🥇', tier:'legendary', cat:'Spéciaux', desc:'Être premier au classement' },
+]
+
+const TIER_COLORS: any = { bronze:'#cd7f32', silver:'#a8b2c1', gold:'#ffd700', emerald:'#34d399', diamond:'#22d3ee', legendary:'#e879f9' }
+const TIER_BG: any = { bronze:'rgba(205,127,50,0.1)', silver:'rgba(168,178,193,0.1)', gold:'rgba(255,215,0,0.1)', emerald:'rgba(52,211,153,0.1)', diamond:'rgba(34,211,238,0.1)', legendary:'rgba(232,121,249,0.1)' }
+
+function computeBadges(sessions: any[], personas: any[], userId: string, allSessions?: any[]): { earned: string[], progress: any } {
+  const my = sessions.filter((s: any) => s.vendor_id === userId && s.result !== 'in_progress')
+  const signed = my.filter((s: any) => s.result === 'signed')
+  const earned: string[] = []
+  const progress: any = {}
+
+  // Volume
+  const total = my.length
+  if (total >= 1) earned.push('first_session')
+  if (total >= 1) earned.push('first_analysis')
+  if (total >= 5) earned.push('sessions_5')
+  if (total >= 15) earned.push('sessions_15')
+  if (total >= 50) earned.push('sessions_50')
+  if (total >= 100) earned.push('sessions_100')
+  progress.sessions_5 = { current: Math.min(total, 5), target: 5 }
+  progress.sessions_15 = { current: Math.min(total, 15), target: 15 }
+  progress.sessions_50 = { current: Math.min(total, 50), target: 50 }
+  progress.sessions_100 = { current: Math.min(total, 100), target: 100 }
+
+  // Performance
+  const scores = my.map((s: any) => s.performance_score || 0)
+  const maxScore = scores.length ? Math.max(...scores) : 0
+  if (maxScore >= 70) earned.push('score_70')
+  if (maxScore >= 85) earned.push('score_85')
+  if (maxScore >= 95) earned.push('score_95')
+  progress.score_70 = { current: Math.min(maxScore, 70), target: 70 }
+  progress.score_85 = { current: Math.min(maxScore, 85), target: 85 }
+  progress.score_95 = { current: Math.min(maxScore, 95), target: 95 }
+
+  // Progression — +15 pts sur les 5 dernières
+  if (my.length >= 5) {
+    const last5 = my.slice(0, 5).map((s: any) => s.performance_score || 0)
+    const prev5 = my.slice(5, 10).map((s: any) => s.performance_score || 0)
+    if (prev5.length > 0) {
+      const avgLast = last5.reduce((a: number, b: number) => a + b, 0) / last5.length
+      const avgPrev = prev5.reduce((a: number, b: number) => a + b, 0) / prev5.length
+      if (avgLast - avgPrev >= 15) earned.push('progression')
+      progress.progression = { current: Math.round(avgLast - avgPrev), target: 15 }
+    }
+  }
+
+  // Signatures
+  const signedCount = signed.length
+  if (signedCount >= 1) earned.push('signed_1')
+  if (signedCount >= 5) earned.push('signed_5')
+  if (signedCount >= 20) earned.push('signed_20')
+  progress.signed_5 = { current: Math.min(signedCount, 5), target: 5 }
+  progress.signed_20 = { current: Math.min(signedCount, 20), target: 20 }
+  if (total >= 10) {
+    const rate = Math.round((signedCount / total) * 100)
+    if (rate > 60) earned.push('signed_rate_60')
+    progress.signed_rate_60 = { current: rate, target: 60 }
+  }
+
+  // Difficulté
+  const l3 = my.filter((s: any) => (s.difficulty_level || s.level) === 3)
+  if (l3.length > 0) earned.push('level3_done')
+  if (l3.some((s: any) => s.result === 'signed')) earned.push('level3_signed')
+  const signedPersonaIds = new Set(signed.map((s: any) => s.persona_id))
+  const totalPersonas = personas.length
+  progress.all_personas = { current: signedPersonaIds.size, target: totalPersonas }
+  if (totalPersonas > 0 && signedPersonaIds.size >= totalPersonas) earned.push('all_personas')
+
+  // Régularité — streaks
+  const dates = [...new Set(my.map((s: any) => new Date(s.created_at).toISOString().slice(0, 10)))].sort().reverse()
+  let streak = 1
+  for (let i = 1; i < dates.length; i++) {
+    const d1 = new Date(dates[i - 1]); const d2 = new Date(dates[i])
+    const diff = (d1.getTime() - d2.getTime()) / 86400000
+    if (diff === 1) streak++; else break
+  }
+  if (streak >= 3) earned.push('streak_3')
+  if (streak >= 7) earned.push('streak_7')
+  progress.streak_3 = { current: Math.min(streak, 3), target: 3 }
+  progress.streak_7 = { current: Math.min(streak, 7), target: 7 }
+
+  // Discipline — 20 jours ce mois
+  const now = new Date()
+  const thisMonth = dates.filter(d => d.startsWith(now.toISOString().slice(0, 7)))
+  if (thisMonth.length >= 20) earned.push('days_20')
+  progress.days_20 = { current: thisMonth.length, target: 20 }
+
+  // Spéciaux
+  const micSessions = my.filter((s: any) => s.used_mic)
+  if (micSessions.length > 0) earned.push('first_mic')
+  const mysterySessions = my.filter((s: any) => s.is_mystery)
+  if (mysterySessions.length >= 5) earned.push('mystery_5')
+  progress.mystery_5 = { current: Math.min(mysterySessions.length, 5), target: 5 }
+  const marathon = my.some((s: any) => (s.duration_limit_seconds === 0 || s.duration_limit_seconds === null) && (s.actual_duration_seconds || 0) >= 1200)
+  if (marathon) earned.push('marathon')
+
+  // Rank 1
+  if (allSessions) {
+    const vendorScores: any = {}
+    allSessions.filter((s: any) => s.result !== 'in_progress').forEach((s: any) => {
+      if (!vendorScores[s.vendor_id]) vendorScores[s.vendor_id] = { total: 0, count: 0 }
+      vendorScores[s.vendor_id].total += (s.performance_score || 0)
+      vendorScores[s.vendor_id].count++
+    })
+    const avgs = Object.entries(vendorScores).filter(([_, v]: any) => v.count > 0).map(([id, v]: any) => ({ id, avg: v.total / v.count })).sort((a: any, b: any) => b.avg - a.avg)
+    if (avgs.length > 0 && avgs[0].id === userId) earned.push('rank_1')
+  }
+
+  return { earned, progress }
+}
+
 // Normalise une session DB → format UI
 function normSession(s: any): any {
   if (!s) return s
@@ -101,18 +247,32 @@ export default function DashboardPage() {
       <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100 }}>
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #1e2530" }}><Logo size={28} /><div><div style={{ fontSize: 15, fontWeight: 700 }}>Thot Trainer</div><div style={{ fontSize: 10, color: "#63c397" }}>{config.company_name || 'Plateforme'}</div></div></div>
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-          {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "leaderboard", icon: <I.Award />, label: "Classement" }, ...(isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
+          {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
       <div style={{ marginLeft: 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
         {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { setSessionData(sd); setScreen("chat") }} />}
-        {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onEnd={async (sess: any) => { setSessions(prev => [sess, ...prev]); setViewSession(sess); setScreen("analysis") }} />}
+        {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onEnd={async (sess: any) => {
+          const newSessions = [sess, ...sessions]
+          setSessions(newSessions)
+          // Compute and save badges
+          const { earned } = computeBadges(newSessions, personas, profile.id, newSessions)
+          const oldBadges: string[] = profile.badges || []
+          const newBadges = earned.filter((b: string) => !oldBadges.includes(b))
+          if (earned.length !== oldBadges.length) {
+            await supabase.from('profiles').update({ badges: earned }).eq('id', profile.id)
+            setProfile((p: any) => ({ ...p, badges: earned }))
+          }
+          setViewSession({ ...sess, newBadges })
+          setScreen("analysis")
+        }} />}
         {screen === "analysis" && viewSession && <Analysis session={viewSession} personas={personas} formations={formations} config={config} goBack={() => setScreen("dashboard")} />}
         {screen === "history" && <HistoryScreen profile={profile} sessions={sessions} personas={personas} formations={formations} profiles={profiles} supabase={supabase} onView={(s: any) => { setViewSession(s); setScreen("analysis") }} onReplay={(s: any) => { setViewSession(s); setScreen("replay") }} />}
         {screen === "replay" && viewSession && <Replay session={viewSession} personas={personas} formations={formations} profiles={profiles} goBack={() => setScreen("history")} />}
         {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
+        {screen === "badges" && <BadgesScreen sessions={sessions} personas={personas} profile={profile} allSessions={sessions} />}
         {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
     </div>
@@ -184,7 +344,7 @@ function NewSession({ personas, formations, config, onStart }: any) {
     if (!pId) return
     let actualPId = pId
     if (isRandom) actualPId = personas[Math.floor(Math.random() * personas.length)].id
-    onStart({ formationId: fId, personaId: actualPId, level, duration: unlimited ? 0 : durMin * 60 })
+    onStart({ formationId: fId, personaId: actualPId, level, duration: unlimited ? 0 : durMin * 60, isMystery: isRandom })
   }
 
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
@@ -228,7 +388,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(false); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
-  const inputAccRef = useRef(''); const sttFinalRef = useRef(''); const listeningRef = useRef(false)
+  const inputAccRef = useRef(''); const sttFinalRef = useRef(''); const listeningRef = useRef(false); const usedMicRef = useRef(false)
   const p = personas.find((x: any) => x.id === sd.personaId); const f = sd.formationId ? formations.find((x: any) => x.id === sd.formationId) : null
   const sys = buildSystemPrompt(p, f, sd.level, scoring, config)
   const isUnlimited = sd.duration === 0
@@ -268,7 +428,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     if (ended || thinking) return
     if (listeningRef.current) { listeningRef.current = false; recRef.current?.stop(); setListening(false); inputAccRef.current = input; return }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition; if (!SR) { alert("Utilise Chrome pour le micro."); return }
-    inputAccRef.current = input.trim() ? input.trim() + ' ' : ''; sttFinalRef.current = ''; listeningRef.current = true; setListening(true)
+    inputAccRef.current = input.trim() ? input.trim() + ' ' : ''; sttFinalRef.current = ''; listeningRef.current = true; usedMicRef.current = true; setListening(true)
     const startRec = () => { if (!listeningRef.current) return; const rec = new SR(); rec.lang = 'fr-FR'; rec.continuous = false; rec.interimResults = true
       rec.onresult = (e: any) => { const last = e.results[e.results.length - 1]; const t = last[0].transcript; if (last.isFinal) { sttFinalRef.current += t.trim() + ' '; setInput(inputAccRef.current + sttFinalRef.current) } else { setInput(inputAccRef.current + sttFinalRef.current + t) } }
       rec.onend = () => { if (listeningRef.current) setTimeout(() => startRec(), 100); else setListening(false) }
@@ -291,6 +451,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
       vendor_id: profile.id, persona_id: sd.personaId,
       difficulty_level: sd.level, result: r, performance_score: score,
       actual_duration_seconds: elapsed, duration_limit_seconds: sd.duration || 0,
+      used_mic: usedMicRef.current, is_mystery: sd.isMystery || false,
       analysis_summary: analysis?.summary || '', analysis_strengths: analysis?.strengths || [],
       analysis_improvements: analysis?.improvements || [], analysis_objections: analysis?.objections || [],
       analysis_skills: analysis?.skills || {}, analysis_main_advice: analysis?.main_advice || '',
@@ -342,6 +503,17 @@ function Analysis({ session, personas, formations, config, goBack }: any) {
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}><div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#63c397", marginBottom: 12 }}>Points forts</div>{(a.strengths || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 13, color: "#ccc", marginBottom: 8, lineHeight: 1.4 }}>✅ {s}</div>)}</div><div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#f59e0b", marginBottom: 12 }}>À améliorer</div>{(a.improvements || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 13, color: "#ccc", marginBottom: 8, lineHeight: 1.4 }}>⚠️ {s}</div>)}</div></div>
     {a.objections?.length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Gestion des objections</div>{a.objections.map((o: any, i: number) => <div key={i} style={{ padding: "12px 14px", background: "#1a1e27", borderRadius: 10, marginBottom: 8 }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>"{o.objection}"</div><div style={{ fontSize: 12, color: o.response_quality === "bien_traitée" ? "#63c397" : o.response_quality === "partiellement_traitée" ? "#f59e0b" : "#ef4444", marginBottom: 4 }}>{o.response_quality === "bien_traitée" ? "✅ Bien traitée" : o.response_quality === "partiellement_traitée" ? "⚠️ Partiellement" : "❌ Ignorée"}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{o.suggestion}</div></div>)}</div>}
     {a.main_advice && <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.2)", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#63c397", marginBottom: 8 }}>Conseil principal</div><div style={{ fontSize: 14, color: "#ccc", lineHeight: 1.5 }}>{a.main_advice}</div></div>}
+    {session.newBadges?.length > 0 && <div style={{ background: "rgba(255,215,0,0.05)", borderRadius: 14, border: "1px solid rgba(255,215,0,0.2)", padding: 24, marginTop: 20, textAlign: "center" }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: "#ffd700", marginBottom: 16 }}>Nouveaux badges débloqués !</div>
+      <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+        {session.newBadges.map((bid: string) => { const b = BADGES.find(x => x.id === bid); if (!b) return null; return <div key={bid} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px 20px", background: TIER_BG[b.tier], borderRadius: 14, border: `1px solid ${TIER_COLORS[b.tier]}33`, animation: "badgePop 0.6s cubic-bezier(0.16,1,0.3,1)" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: TIER_BG[b.tier], border: `2px solid ${TIER_COLORS[b.tier]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>{b.icon}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: TIER_COLORS[b.tier] }}>{b.name}</div>
+          <div style={{ fontSize: 11, color: "#8b95a5" }}>{b.desc}</div>
+        </div> })}
+      </div>
+      <style>{`@keyframes badgePop{from{opacity:0;transform:scale(0.5) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
+    </div>}
   </div>)
 }
 
@@ -440,6 +612,47 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
 function Leaderboard({ sessions, profiles, userId }: any) {
   const stats = profiles.map((u: any) => { const s = sessions.filter((x: any) => x.vendor_id === u.id && x.result !== 'in_progress'); return { ...u, sessions: s.length, avg: s.length ? Math.round(s.reduce((a: number, x: any) => a + (x.performance_score || 0), 0) / s.length) : 0, signed: s.filter((x: any) => x.result === 'signed').length, rate: s.length ? Math.round((s.filter((x: any) => x.result === 'signed').length / s.length) * 100) : 0 } }).filter((u: any) => u.sessions > 0).sort((a: any, b: any) => b.avg - a.avg)
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Classement</div>{stats.length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : stats.map((u: any, i: number) => <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", background: u.id === userId ? "rgba(99,195,151,0.05)" : "#111621", borderRadius: 12, border: `1px solid ${u.id === userId ? "rgba(99,195,151,0.3)" : "#1e2530"}`, marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 14 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: i < 3 ? `rgba(${i === 0 ? "255,215,0" : i === 1 ? "192,192,192" : "205,127,50"},0.2)` : "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: i === 0 ? "#ffd700" : i === 1 ? "#c0c0c0" : i === 2 ? "#cd7f32" : "#8b95a5" }}>{i + 1}</div><div><div style={{ fontSize: 14, fontWeight: 600 }}>{u.full_name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{u.sessions} sessions • {u.signed} signés • {u.rate}%</div></div></div><div style={{ fontSize: 22, fontWeight: 800, color: u.avg >= 70 ? "#63c397" : u.avg >= 45 ? "#f59e0b" : "#ef4444" }}>{u.avg}</div></div>)}</div>)
+}
+
+// ============================================
+// BADGES SCREEN
+// ============================================
+function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
+  const { earned, progress } = computeBadges(sessions, personas, profile.id, allSessions)
+  const categories = [...new Set(BADGES.map(b => b.cat))]
+
+  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ fontSize: 22, fontWeight: 800 }}>Badges</div>
+      <div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{earned.length} / {BADGES.length} débloqués</div>
+      <div style={{ marginTop: 12, height: 6, background: "#1a1e27", borderRadius: 3, overflow: "hidden" }}>
+        <div style={{ width: `${(earned.length / BADGES.length) * 100}%`, height: "100%", background: "linear-gradient(90deg, #34d399, #22d3ee)", borderRadius: 3, transition: "width 0.5s" }} />
+      </div>
+    </div>
+
+    {categories.map(cat => (
+      <div key={cat} style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#8b95a5", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid #1e2530" }}>{cat}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+          {BADGES.filter(b => b.cat === cat).map(b => {
+            const unlocked = earned.includes(b.id)
+            const prog = progress[b.id]
+            return <div key={b.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "18px 12px", borderRadius: 14, background: unlocked ? TIER_BG[b.tier] : "#111621", border: `1px solid ${unlocked ? TIER_COLORS[b.tier] + '33' : '#1e2530'}`, opacity: unlocked ? 1 : 0.4, transition: "all 0.3s" }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: unlocked ? TIER_BG[b.tier] : "#1a1e27", border: `2px solid ${unlocked ? TIER_COLORS[b.tier] : '#2a2f3a'}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, filter: unlocked ? "none" : "grayscale(1)" }}>{b.icon}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, textAlign: "center", color: unlocked ? TIER_COLORS[b.tier] : "#555" }}>{b.name}</div>
+              <div style={{ fontSize: 10, color: "#8b95a5", textAlign: "center", lineHeight: 1.3 }}>{b.desc}</div>
+              {!unlocked && prog && <div style={{ width: "100%", marginTop: 4 }}>
+                <div style={{ height: 4, background: "#1a1e27", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ width: `${Math.min(100, (prog.current / prog.target) * 100)}%`, height: "100%", background: TIER_COLORS[b.tier], borderRadius: 2, opacity: 0.5 }} />
+                </div>
+                <div style={{ fontSize: 9, color: "#555", textAlign: "center", marginTop: 3 }}>{prog.current}/{prog.target}</div>
+              </div>}
+            </div>
+          })}
+        </div>
+      </div>
+    ))}
+  </div>)
 }
 
 // ============================================
