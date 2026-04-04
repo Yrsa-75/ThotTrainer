@@ -111,7 +111,7 @@ function computeBadges(sessions: any[], personas: any[], userId: string, allSess
   if (totalPersonas > 0 && signedPersonaIds.size >= totalPersonas) earned.push('all_personas')
 
   // Régularité — streaks
-  const dates = [...new Set(my.map((s: any) => new Date(s.created_at).toISOString().slice(0, 10)))].sort().reverse()
+  const dates = Array.from(new Set(my.map((s: any) => new Date(s.created_at).toISOString().slice(0, 10)))).sort().reverse()
   let streak = 1
   for (let i = 1; i < dates.length; i++) {
     const d1 = new Date(dates[i - 1]); const d2 = new Date(dates[i])
@@ -619,7 +619,7 @@ function Leaderboard({ sessions, profiles, userId }: any) {
 // ============================================
 function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
   const { earned, progress } = computeBadges(sessions, personas, profile.id, allSessions)
-  const categories = [...new Set(BADGES.map(b => b.cat))]
+  const categories = Array.from(new Set(BADGES.map(b => b.cat)))
 
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
     <div style={{ marginBottom: 28 }}>
