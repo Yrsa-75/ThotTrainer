@@ -43,8 +43,8 @@ export default function LoginPage() {
             <text x="14" y="20" fontFamily="Georgia, serif" fontSize="16" fontWeight="bold" fill="rgba(255,255,255,0.7)">T</text>
             <rect x="8" y="14" width="12" height="2" rx="1" fill="rgba(255,255,255,0.5)"/>
           </svg>
-          <div style={{ marginTop: 12, fontSize: 24, fontWeight: 800, color: '#fff' }}>Thot Trainer</div>
-          <div style={{ fontSize: 13, color: '#8b95a5', marginTop: 4 }}>Plateforme d'entraînement commercial</div>
+          <div style={{ marginTop: 12, fontSize: 24, fontWeight: 800, color: '#fff' }}>Thot</div>
+          <div style={{ fontSize: 13, color: '#8b95a5', marginTop: 4 }}>Plateforme d'entraÃ®nement commercial</div>
         </div>
 
         {error && (
@@ -65,7 +65,7 @@ export default function LoginPage() {
 
         <div style={{ textAlign: 'center', marginTop: 16 }}>
           <a href="/forgot-password" style={{ color: '#63c397', fontSize: 13, textDecoration: 'none' }}>
-            Mot de passe oublié ?
+            Mot de passe oubliÃ© ?
           </a>
         </div>
       </div>
