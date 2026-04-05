@@ -11,37 +11,37 @@ async function callAnalyze(prompt: string) { const r = await fetch('/api/analyze
 // BADGES
 // ============================================
 const BADGES = [
-  // DÃ©marrage
-  { id:'first_session', name:'Premier pas', icon:'ð¯', tier:'bronze', cat:'DÃ©marrage', desc:'Terminer sa premiÃ¨re session' },
-  { id:'first_mic', name:'Voix active', icon:'ðï¸', tier:'bronze', cat:'DÃ©marrage', desc:'Utiliser le micro pour la premiÃ¨re fois' },
-  { id:'first_analysis', name:'Curieux', icon:'ð', tier:'bronze', cat:'DÃ©marrage', desc:'Consulter son analyse complÃ¨te' },
+  // Démarrage
+  { id:'first_session', name:'Premier pas', icon:'🎯', tier:'bronze', cat:'Démarrage', desc:'Terminer sa première session' },
+  { id:'first_mic', name:'Voix active', icon:'🎙️', tier:'bronze', cat:'Démarrage', desc:'Utiliser le micro pour la première fois' },
+  { id:'first_analysis', name:'Curieux', icon:'📊', tier:'bronze', cat:'Démarrage', desc:'Consulter son analyse complète' },
   // Volume
-  { id:'sessions_5', name:'Ãchauffement', icon:'ð¥', tier:'bronze', cat:'Volume', desc:'5 sessions terminÃ©es' },
-  { id:'sessions_15', name:'En rythme', icon:'â¡', tier:'silver', cat:'Volume', desc:'15 sessions terminÃ©es' },
-  { id:'sessions_50', name:'Machine', icon:'ðï¸', tier:'gold', cat:'Volume', desc:'50 sessions terminÃ©es' },
-  { id:'sessions_100', name:'VÃ©tÃ©ran', icon:'ð', tier:'diamond', cat:'Volume', desc:'100 sessions terminÃ©es' },
+  { id:'sessions_5', name:'Échauffement', icon:'🔥', tier:'bronze', cat:'Volume', desc:'5 sessions terminées' },
+  { id:'sessions_15', name:'En rythme', icon:'⚡', tier:'silver', cat:'Volume', desc:'15 sessions terminées' },
+  { id:'sessions_50', name:'Machine', icon:'🏋️', tier:'gold', cat:'Volume', desc:'50 sessions terminées' },
+  { id:'sessions_100', name:'Vétéran', icon:'💎', tier:'diamond', cat:'Volume', desc:'100 sessions terminées' },
   // Performance
-  { id:'score_70', name:'1re Ã©toile', icon:'â­', tier:'silver', cat:'Performance', desc:'Obtenir un score de 70+' },
-  { id:'score_85', name:'Ãtoile montante', icon:'ð', tier:'gold', cat:'Performance', desc:'Obtenir un score de 85+' },
-  { id:'score_95', name:'Perfection', icon:'ð', tier:'legendary', cat:'Performance', desc:'Obtenir un score de 95+' },
-  { id:'progression', name:'Progression', icon:'ð', tier:'emerald', cat:'Performance', desc:'+15 pts sur les 5 derniÃ¨res sessions' },
+  { id:'score_70', name:'1re étoile', icon:'⭐', tier:'silver', cat:'Performance', desc:'Obtenir un score de 70+' },
+  { id:'score_85', name:'Étoile montante', icon:'🌟', tier:'gold', cat:'Performance', desc:'Obtenir un score de 85+' },
+  { id:'score_95', name:'Perfection', icon:'👑', tier:'legendary', cat:'Performance', desc:'Obtenir un score de 95+' },
+  { id:'progression', name:'Progression', icon:'📈', tier:'emerald', cat:'Performance', desc:'+15 pts sur les 5 dernières sessions' },
   // Signatures
-  { id:'signed_1', name:'1re signature', icon:'âï¸', tier:'bronze', cat:'Signatures', desc:'Faire signer un prospect' },
-  { id:'signed_5', name:'Closer', icon:'ð', tier:'silver', cat:'Signatures', desc:'5 signatures' },
-  { id:'signed_20', name:'Top closer', icon:'ð', tier:'gold', cat:'Signatures', desc:'20 signatures' },
-  { id:'signed_rate_60', name:'LÃ©gende', icon:'ð¼', tier:'legendary', cat:'Signatures', desc:'Taux de signature > 60% (min 10 sessions)' },
-  // DifficultÃ©
-  { id:'level3_done', name:'Courageux', icon:'ð¡ï¸', tier:'silver', cat:'DifficultÃ©', desc:'Terminer une session en niveau 3' },
-  { id:'level3_signed', name:'Dompteur', icon:'ð', tier:'gold', cat:'DifficultÃ©', desc:'Faire signer en niveau 3' },
-  { id:'all_personas', name:'CamÃ©lÃ©on', icon:'ð­', tier:'diamond', cat:'DifficultÃ©', desc:'Faire signer chaque persona' },
-  // RÃ©gularitÃ©
-  { id:'streak_3', name:'RÃ©gulier', icon:'ð', tier:'bronze', cat:'RÃ©gularitÃ©', desc:"S'entraÃ®ner 3 jours de suite" },
-  { id:'streak_7', name:'En feu', icon:'ð¥', tier:'silver', cat:'RÃ©gularitÃ©', desc:"S'entraÃ®ner 7 jours de suite" },
-  { id:'days_20', name:'Discipline', icon:'ðï¸', tier:'gold', cat:'RÃ©gularitÃ©', desc:"S'entraÃ®ner 20 jours sur un mois" },
-  // SpÃ©ciaux
-  { id:'mystery_5', name:'Aventurier', icon:'ð²', tier:'emerald', cat:'SpÃ©ciaux', desc:'5 sessions en prospect mystÃ¨re' },
-  { id:'marathon', name:'Marathon', icon:'â¾ï¸', tier:'diamond', cat:'SpÃ©ciaux', desc:'Session illimitÃ©e de +20 min' },
-  { id:'rank_1', name:'NumÃ©ro 1', icon:'ð¥', tier:'legendary', cat:'SpÃ©ciaux', desc:'Ãtre premier au classement' },
+  { id:'signed_1', name:'1re signature', icon:'✍️', tier:'bronze', cat:'Signatures', desc:'Faire signer un prospect' },
+  { id:'signed_5', name:'Closer', icon:'🎉', tier:'silver', cat:'Signatures', desc:'5 signatures' },
+  { id:'signed_20', name:'Top closer', icon:'🏆', tier:'gold', cat:'Signatures', desc:'20 signatures' },
+  { id:'signed_rate_60', name:'Légende', icon:'💼', tier:'legendary', cat:'Signatures', desc:'Taux de signature > 60% (min 10 sessions)' },
+  // Difficulté
+  { id:'level3_done', name:'Courageux', icon:'🛡️', tier:'silver', cat:'Difficulté', desc:'Terminer une session en niveau 3' },
+  { id:'level3_signed', name:'Dompteur', icon:'🔓', tier:'gold', cat:'Difficulté', desc:'Faire signer en niveau 3' },
+  { id:'all_personas', name:'Caméléon', icon:'🎭', tier:'diamond', cat:'Difficulté', desc:'Faire signer chaque persona' },
+  // Régularité
+  { id:'streak_3', name:'Régulier', icon:'📅', tier:'bronze', cat:'Régularité', desc:"S'entraîner 3 jours de suite" },
+  { id:'streak_7', name:'En feu', icon:'🔥', tier:'silver', cat:'Régularité', desc:"S'entraîner 7 jours de suite" },
+  { id:'days_20', name:'Discipline', icon:'🗓️', tier:'gold', cat:'Régularité', desc:"S'entraîner 20 jours sur un mois" },
+  // Spéciaux
+  { id:'mystery_5', name:'Aventurier', icon:'🎲', tier:'emerald', cat:'Spéciaux', desc:'5 sessions en prospect mystère' },
+  { id:'marathon', name:'Marathon', icon:'♾️', tier:'diamond', cat:'Spéciaux', desc:'Session illimitée de +20 min' },
+  { id:'rank_1', name:'Numéro 1', icon:'🥇', tier:'legendary', cat:'Spéciaux', desc:'Être premier au classement' },
 ]
 
 const TIER_COLORS: any = { bronze:'#cd7f32', silver:'#a8b2c1', gold:'#ffd700', emerald:'#34d399', diamond:'#22d3ee', legendary:'#e879f9' }
@@ -76,7 +76,7 @@ function computeBadges(sessions: any[], personas: any[], userId: string, allSess
   progress.score_85 = { current: Math.min(maxScore, 85), target: 85 }
   progress.score_95 = { current: Math.min(maxScore, 95), target: 95 }
 
-  // Progression â +15 pts sur les 5 derniÃ¨res
+  // Progression — +15 pts sur les 5 dernières
   if (my.length >= 5) {
     const last5 = my.slice(0, 5).map((s: any) => s.performance_score || 0)
     const prev5 = my.slice(5, 10).map((s: any) => s.performance_score || 0)
@@ -101,7 +101,7 @@ function computeBadges(sessions: any[], personas: any[], userId: string, allSess
     progress.signed_rate_60 = { current: rate, target: 60 }
   }
 
-  // DifficultÃ©
+  // Difficulté
   const l3 = my.filter((s: any) => (s.difficulty_level || s.level) === 3)
   if (l3.length > 0) earned.push('level3_done')
   if (l3.some((s: any) => s.result === 'signed')) earned.push('level3_signed')
@@ -110,7 +110,7 @@ function computeBadges(sessions: any[], personas: any[], userId: string, allSess
   progress.all_personas = { current: signedPersonaIds.size, target: totalPersonas }
   if (totalPersonas > 0 && signedPersonaIds.size >= totalPersonas) earned.push('all_personas')
 
-  // RÃ©gularitÃ© â streaks
+  // Régularité — streaks
   const dates = Array.from(new Set(my.map((s: any) => new Date(s.created_at).toISOString().slice(0, 10)))).sort().reverse()
   let streak = 1
   for (let i = 1; i < dates.length; i++) {
@@ -123,13 +123,13 @@ function computeBadges(sessions: any[], personas: any[], userId: string, allSess
   progress.streak_3 = { current: Math.min(streak, 3), target: 3 }
   progress.streak_7 = { current: Math.min(streak, 7), target: 7 }
 
-  // Discipline â 20 jours ce mois
+  // Discipline — 20 jours ce mois
   const now = new Date()
   const thisMonth = dates.filter(d => d.startsWith(now.toISOString().slice(0, 7)))
   if (thisMonth.length >= 20) earned.push('days_20')
   progress.days_20 = { current: thisMonth.length, target: 20 }
 
-  // SpÃ©ciaux
+  // Spéciaux
   const micSessions = my.filter((s: any) => s.used_mic)
   if (micSessions.length > 0) earned.push('first_mic')
   const mysterySessions = my.filter((s: any) => s.is_mystery)
@@ -153,7 +153,7 @@ function computeBadges(sessions: any[], personas: any[], userId: string, allSess
   return { earned, progress }
 }
 
-// Normalise une session DB â format UI
+// Normalise une session DB → format UI
 function normSession(s: any): any {
   if (!s) return s
   return {
@@ -194,7 +194,7 @@ const I = {
   Wand: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 4V2m0 14v-2M8 9H6m12 0h-2m-4.2 5.8L3 22 2 21l7.2-8.8"/><path d="M15 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>,
 }
 function Logo({ size = 28 }: { size?: number }) { return <svg width={size} height={size} viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#63c397"/><text x="5" y="20" fontFamily="Georgia, serif" fontSize="16" fontWeight="bold" fill="white">T</text><text x="14" y="20" fontFamily="Georgia, serif" fontSize="16" fontWeight="bold" fill="rgba(255,255,255,0.7)">T</text><rect x="8" y="14" width="12" height="2" rx="1" fill="rgba(255,255,255,0.5)"/></svg> }
-function Timer({ seconds, maxSeconds, danger }: any) { if (seconds < 0) return <div style={{ padding: "6px 14px", background: "#1a1e27", borderRadius: 10, border: "1px solid #2a2f3a", color: "#63c397", fontSize: 13, fontWeight: 600 }}>â IllimitÃ©</div>; const mins = Math.floor(seconds / 60), secs = seconds % 60; const pct = maxSeconds > 0 ? (seconds / maxSeconds) * 100 : 100; const color = danger ? "#ef4444" : pct < 30 ? "#f59e0b" : "#63c397"; return <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", background: danger ? "rgba(239,68,68,0.1)" : "#1a1e27", borderRadius: 10, border: `1px solid ${danger ? "rgba(239,68,68,0.3)" : "#2a2f3a"}` }}><I.Clock /><span style={{ fontVariantNumeric: "tabular-nums", fontSize: 18, fontWeight: 700, color, fontFamily: "monospace" }}>{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}</span></div> }
+function Timer({ seconds, maxSeconds, danger }: any) { if (seconds < 0) return <div style={{ padding: "6px 14px", background: "#1a1e27", borderRadius: 10, border: "1px solid #2a2f3a", color: "#63c397", fontSize: 13, fontWeight: 600 }}>∞ Illimité</div>; const mins = Math.floor(seconds / 60), secs = seconds % 60; const pct = maxSeconds > 0 ? (seconds / maxSeconds) * 100 : 100; const color = danger ? "#ef4444" : pct < 30 ? "#f59e0b" : "#63c397"; return <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", background: danger ? "rgba(239,68,68,0.1)" : "#1a1e27", borderRadius: 10, border: `1px solid ${danger ? "rgba(239,68,68,0.3)" : "#2a2f3a"}` }}><I.Clock /><span style={{ fontVariantNumeric: "tabular-nums", fontSize: 18, fontWeight: 700, color, fontFamily: "monospace" }}>{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}</span></div> }
 const iS: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none", marginBottom: 8, boxSizing: "border-box" as any }
 const bS = (c: string): React.CSSProperties => ({ padding: "5px 12px", background: "none", border: `1px solid ${c}33`, borderRadius: 6, color: c, fontSize: 11, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 })
 
@@ -218,7 +218,7 @@ export default function DashboardPage() {
   }, [supabase, router])
   useEffect(() => { loadData() }, [])
 
-  // Realtime â Ã©coute les nouvelles sessions et mises Ã  jour
+  // Realtime — écoute les nouvelles sessions et mises à jour
   const profileRef = useRef<any>(null)
   useEffect(() => { profileRef.current = profile }, [profile])
   useEffect(() => {
@@ -249,7 +249,7 @@ export default function DashboardPage() {
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
         </div>
-        <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> DÃ©connexion</button></div>
+        <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
       <div style={{ marginLeft: 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
@@ -292,7 +292,7 @@ function Dashboard({ profile, sessions, personas, formations, config, profiles, 
   }) : []
 
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
-    <div style={{ marginBottom: 32 }}><div style={{ fontSize: 24, fontWeight: 800 }}>Bienvenue, {profile.full_name?.split(' ')[0]}</div><div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{isAdmin ? `Vue d'ensemble â ${config.company_name || 'Plateforme'}` : `EntraÃ®ne-toi Ã  convertir des prospects pour ${config.company_name || 'ton entreprise'}`}</div></div>
+    <div style={{ marginBottom: 32 }}><div style={{ fontSize: 24, fontWeight: 800 }}>Bienvenue, {profile.full_name?.split(' ')[0]}</div><div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{isAdmin ? `Vue d'ensemble — ${config.company_name || 'Plateforme'}` : `Entraîne-toi à convertir des prospects pour ${config.company_name || 'ton entreprise'}`}</div></div>
 
     {isAdmin ? (<>
       {/* Admin: stats par vendeur */}
@@ -316,19 +316,19 @@ function Dashboard({ profile, sessions, personas, formations, config, profiles, 
           </div> : <div style={{ fontSize: 12, color: "#555" }}>Aucune session</div>}
         </div>
       })}
-      {/* DerniÃ¨res sessions globales */}
-      {allDone.length > 0 && <div style={{ marginTop: 24 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>DerniÃ¨res sessions</div>{allDone.slice(0, 8).map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = (profiles || []).find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#111621", borderRadius: 10, border: "1px solid #1e2530", marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 20 }}>{p?.emoji || "ð¤"}</span><div><div style={{ fontSize: 13, fontWeight: 600 }}>{u?.full_name || "?"} â {p?.name || "?"} â {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {s.level} â¢ {s.result === "signed" ? "â SignÃ©" : s.result === "hung_up" ? "ðµ RaccrochÃ©" : s.result === "timeout" ? "â° Temps Ã©coulÃ©" : "â Non signÃ©"}</div></div></div><div style={{ fontSize: 18, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "â"}</div></div> })}</div>}
+      {/* Dernières sessions globales */}
+      {allDone.length > 0 && <div style={{ marginTop: 24 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Dernières sessions</div>{allDone.slice(0, 8).map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = (profiles || []).find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#111621", borderRadius: 10, border: "1px solid #1e2530", marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 20 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 13, fontWeight: 600 }}>{u?.full_name || "?"} → {p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {s.level} • {s.result === "signed" ? "✅ Signé" : s.result === "hung_up" ? "📵 Raccroché" : s.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"}</div></div></div><div style={{ fontSize: 18, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "—"}</div></div> })}</div>}
     </>) : (<>
       {/* Vendeur: ses propres stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>{[{ label: "Sessions", value: total, color: "#63c397" }, { label: "Taux de signature", value: rate + "%", color: rate >= 50 ? "#63c397" : rate >= 30 ? "#f59e0b" : "#ef4444" }, { label: "Score moyen", value: avg + "/100", color: avg >= 70 ? "#63c397" : avg >= 45 ? "#f59e0b" : "#ef4444" }].map((s, i) => <div key={i} style={{ padding: 24, background: "#111621", borderRadius: 14, border: "1px solid #1e2530" }}><div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 8 }}>{s.label}</div><div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value}</div></div>)}</div>
       <button onClick={() => setScreen("new_session")} style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 32px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 14, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px rgba(99,195,151,0.3)" }}><I.Play /> Commencer une session</button>
-      {my.length > 0 && <div style={{ marginTop: 32 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Sessions rÃ©centes</div>{my.slice(0, 5).map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#111621", borderRadius: 10, border: "1px solid #1e2530", marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 20 }}>{p?.emoji || "ð¤"}</span><div><div style={{ fontSize: 13, fontWeight: 600 }}>{p?.name || "?"} â {f?.name || "Mode libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {s.level} â¢ {s.result === "signed" ? "â SignÃ©" : s.result === "hung_up" ? "ðµ RaccrochÃ©" : s.result === "timeout" ? "â° Temps Ã©coulÃ©" : "â Non signÃ©"}</div></div></div><div style={{ fontSize: 18, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "â"}</div></div> })}</div>}
+      {my.length > 0 && <div style={{ marginTop: 32 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Sessions récentes</div>{my.slice(0, 5).map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#111621", borderRadius: 10, border: "1px solid #1e2530", marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 20 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 13, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Mode libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {s.level} • {s.result === "signed" ? "✅ Signé" : s.result === "hung_up" ? "📵 Raccroché" : s.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"}</div></div></div><div style={{ fontSize: 18, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "—"}</div></div> })}</div>}
     </>)}
   </div>)
 }
 
 // ============================================
-// NEW SESSION â Random mystÃ¨re, profil conditionnel, durÃ©e custom/illimitÃ©e
+// NEW SESSION — Random mystère, profil conditionnel, durée custom/illimitée
 // ============================================
 function NewSession({ personas, formations, config, onStart }: any) {
   const [pId, setPId] = useState<string | null>(null); const [fId, setFId] = useState<string | null>(null); const [level, setLevel] = useState(2)
@@ -349,18 +349,18 @@ function NewSession({ personas, formations, config, onStart }: any) {
 
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Nouvelle session</div><div style={{ fontSize: 13, color: "#8b95a5", marginBottom: 28 }}>Choisis un prospect et optionnellement un produit/service cible</div>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Prospect Ã  convaincre</div><button onClick={pickRandom} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: isRandom ? "rgba(99,195,151,0.15)" : "rgba(99,195,151,0.1)", border: `1px solid ${isRandom ? "#63c397" : "rgba(99,195,151,0.3)"}`, borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Shuffle /> AlÃ©atoire</button></div>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Prospect à convaincre</div><button onClick={pickRandom} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: isRandom ? "rgba(99,195,151,0.15)" : "rgba(99,195,151,0.1)", border: `1px solid ${isRandom ? "#63c397" : "rgba(99,195,151,0.3)"}`, borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Shuffle /> Aléatoire</button></div>
 
     {isRandom ? (
       <div style={{ padding: 24, background: "#111621", borderRadius: 14, border: "1px solid #63c397", marginBottom: 24, textAlign: "center" }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>ð²</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#63c397" }}>Prospect mystÃ¨re</div>
-        <div style={{ fontSize: 13, color: "#8b95a5", marginTop: 8 }}>Le prospect sera choisi au hasard au lancement de la session. Vous ne saurez pas Ã  qui vous avez affaire.</div>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>🎲</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: "#63c397" }}>Prospect mystère</div>
+        <div style={{ fontSize: 13, color: "#8b95a5", marginTop: 8 }}>Le prospect sera choisi au hasard au lancement de la session. Vous ne saurez pas à qui vous avez affaire.</div>
       </div>
     ) : (
       <>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>{personas.map((p: any) => <button key={p.id} onClick={() => pickSpecific(p.id)} style={{ padding: "14px 16px", background: pId === p.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${pId === p.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 20 }}>{p.emoji}</span><div><div style={{ fontSize: 14, fontWeight: 700 }}>{p.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{p.subtitle}</div></div></div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 6, lineHeight: 1.4 }}>{p.age} ans â¢ {p.profession}</div></button>)}</div>
-        {sel && showFull && <div style={{ padding: 18, background: "#111621", borderRadius: 14, border: "1px solid #63c397", marginBottom: 24 }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}><span style={{ fontSize: 28 }}>{sel.emoji}</span><div><div style={{ fontSize: 16, fontWeight: 800 }}>{sel.name} â {sel.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{sel.age} ans â¢ {sel.profession}</div></div></div><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{[{ l: "Situation", v: sel.situation }, { l: "PersonnalitÃ©", v: sel.personality }, { l: "Motivations", v: sel.motivations }, { l: "Freins", v: sel.obstacles }, { l: "Style", v: sel.communication_style || sel.style }].map((x, i) => <div key={i} style={{ padding: 10, background: "#1a1e27", borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 700, color: "#63c397", marginBottom: 4, textTransform: "uppercase" }}>{x.l}</div><div style={{ fontSize: 12, color: "#ccc", lineHeight: 1.4 }}>{x.v}</div></div>)}</div></div>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>{personas.map((p: any) => <button key={p.id} onClick={() => pickSpecific(p.id)} style={{ padding: "14px 16px", background: pId === p.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${pId === p.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 20 }}>{p.emoji}</span><div><div style={{ fontSize: 14, fontWeight: 700 }}>{p.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{p.subtitle}</div></div></div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 6, lineHeight: 1.4 }}>{p.age} ans • {p.profession}</div></button>)}</div>
+        {sel && showFull && <div style={{ padding: 18, background: "#111621", borderRadius: 14, border: "1px solid #63c397", marginBottom: 24 }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}><span style={{ fontSize: 28 }}>{sel.emoji}</span><div><div style={{ fontSize: 16, fontWeight: 800 }}>{sel.name} — {sel.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{sel.age} ans • {sel.profession}</div></div></div><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{[{ l: "Situation", v: sel.situation }, { l: "Personnalité", v: sel.personality }, { l: "Motivations", v: sel.motivations }, { l: "Freins", v: sel.obstacles }, { l: "Style", v: sel.communication_style || sel.style }].map((x, i) => <div key={i} style={{ padding: 10, background: "#1a1e27", borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 700, color: "#63c397", marginBottom: 4, textTransform: "uppercase" }}>{x.l}</div><div style={{ fontSize: 12, color: "#ccc", lineHeight: 1.4 }}>{x.v}</div></div>)}</div></div>}
       </>
     )}
 
@@ -369,20 +369,20 @@ function NewSession({ personas, formations, config, onStart }: any) {
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Niveau</div><div style={{ display: "flex", gap: 8 }}>{[{ v: 1, l: "Ouvert" }, { v: 2, l: "Sceptique" }, { v: 3, l: "Hostile" }].map(d => <button key={d.v} onClick={() => setLevel(d.v)} style={{ flex: 1, padding: "10px 8px", background: level === d.v ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${level === d.v ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: level === d.v ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{d.l}</button>)}</div></div>
-      <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>DurÃ©e</div>
+      <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Durée</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <input type="number" value={durMin} onChange={e => { setDurMin(Math.max(1, parseInt(e.target.value) || 1)); setUnlimited(false) }} disabled={unlimited} style={{ width: 70, padding: "10px 12px", background: unlimited ? "#1a1e27" : "#111621", border: `1px solid ${!unlimited ? "#63c397" : "#2a2f3a"}`, borderRadius: 10, color: unlimited ? "#555" : "#63c397", fontSize: 14, fontWeight: 700, textAlign: "center", outline: "none" }} />
           <span style={{ fontSize: 12, color: "#8b95a5" }}>min</span>
-          <button onClick={() => setUnlimited(!unlimited)} style={{ marginLeft: 8, padding: "10px 16px", background: unlimited ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${unlimited ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: unlimited ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>â IllimitÃ©</button>
+          <button onClick={() => setUnlimited(!unlimited)} style={{ marginLeft: 8, padding: "10px 16px", background: unlimited ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${unlimited ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: unlimited ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>∞ Illimité</button>
         </div>
       </div>
     </div>
-    <button onClick={handleStart} disabled={!pId} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", padding: 16, background: pId ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 14, color: pId ? "#fff" : "#555", fontSize: 16, fontWeight: 700, cursor: pId ? "pointer" : "default" }}><I.Target /> {isRandom ? "Lancer (prospect mystÃ¨re)" : fId ? "Commencer la simulation" : "Commencer en mode libre"}</button>
+    <button onClick={handleStart} disabled={!pId} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", padding: 16, background: pId ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 14, color: pId ? "#fff" : "#555", fontSize: 16, fontWeight: 700, cursor: pId ? "pointer" : "default" }}><I.Target /> {isRandom ? "Lancer (prospect mystère)" : fId ? "Commencer la simulation" : "Commencer en mode libre"}</button>
   </div>)
 }
 
 // ============================================
-// CHAT SESSION â Voix + config dynamique
+// CHAT SESSION — Voix + config dynamique
 // ============================================
 function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd }: any) {
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
@@ -393,13 +393,13 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const sys = buildSystemPrompt(p, f, sd.level, scoring, config)
   const isUnlimited = sd.duration === 0
 
-  // DÃ©tecte si le persona est fÃ©minin (emoji ou nom)
+  // Détecte si le persona est féminin (emoji ou nom)
   const isFemale = useCallback((persona: any) => {
     if (!persona) return true
     const emoji = persona.emoji || ''
-    if (emoji.includes('ð©') || emoji.includes('ð§') || emoji.includes('ðââ') || emoji.includes('ðââ')) return true
-    if (emoji.includes('ð¨') || emoji.includes('ð¦') || emoji.includes('ðââ') || emoji.includes('ðââ')) return false
-    const femaleNames = ['marie','franÃ§oise','amina','sophie','julie','nathalie','isabelle','cÃ©line','sarah','laura','emma','lÃ©a','camille','claire','hÃ©lÃ¨ne','valÃ©rie','sandrine','christine','patricia','fatima','aÃ¯cha','karine']
+    if (emoji.includes('👩') || emoji.includes('👧') || emoji.includes('🙍‍♀') || emoji.includes('💁‍♀')) return true
+    if (emoji.includes('👨') || emoji.includes('👦') || emoji.includes('🙍‍♂') || emoji.includes('💁‍♂')) return false
+    const femaleNames = ['marie','françoise','amina','sophie','julie','nathalie','isabelle','céline','sarah','laura','emma','léa','camille','claire','hélène','valérie','sandrine','christine','patricia','fatima','aïcha','karine']
     return femaleNames.includes((persona.name || '').toLowerCase())
   }, [])
   // nova = femme, onyx = homme
@@ -469,23 +469,23 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const send = async () => {
     if (!input.trim() || ended || thinking) return; recRef.current?.stop(); listeningRef.current = false; setListening(false); window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; inputAccRef.current = ''
     const nm = [...msgs, { sender: "vendor", content: input.trim(), time: Date.now() }]; setMsgs(nm); setInput(""); setThinking(true)
-    try { const reply = await callChat(sys, nm); let content = reply, res: string | null = null; const match = reply.match(/\[RÃSULTAT:(SIGNÃ|NON_SIGNÃ|RACCROCHÃ)\]/); if (match) { content = reply.replace(match[0], "").trim(); res = match[1] === "SIGNÃ" ? "signed" : match[1] === "RACCROCHÃ" ? "hung_up" : "not_signed" }; setMsgs([...nm, { sender: "prospect", content, time: Date.now() }]); if (voiceOn && content) speak(content); if (res) { setEnded(true); setResult(res) } } catch { setMsgs([...nm, { sender: "prospect", content: "...(problÃ¨me de connexion)", time: Date.now() }]) }
+    try { const reply = await callChat(sys, nm); let content = reply, res: string | null = null; const match = reply.match(/\[RÉSULTAT:(SIGNÉ|NON_SIGNÉ|RACCROCHÉ)\]/); if (match) { content = reply.replace(match[0], "").trim(); res = match[1] === "SIGNÉ" ? "signed" : match[1] === "RACCROCHÉ" ? "hung_up" : "not_signed" }; setMsgs([...nm, { sender: "prospect", content, time: Date.now() }]); if (voiceOn && content) speak(content); if (res) { setEnded(true); setResult(res) } } catch { setMsgs([...nm, { sender: "prospect", content: "...(problème de connexion)", time: Date.now() }]) }
     setThinking(false)
   }
   const MicIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill={listening ? "#ef4444" : "currentColor"} stroke={listening ? "#ef4444" : "currentColor"} strokeWidth="1"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" fill="none" strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" fill="none" strokeWidth="2"/></svg>
   const VolumeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14" opacity={voiceOn ? 1 : 0.3}/><path d="M15.54 8.46a5 5 0 0 1 0 7.07" opacity={voiceOn ? 1 : 0.3}/></svg>
   return (<div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 24 }}>{p?.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p?.name} â {p?.subtitle}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {sd.level} â¢ {f?.name || "Mode libre"}</div></div></div><div style={{ display: "flex", alignItems: "center", gap: 12 }}><button onClick={() => { const nv = !voiceOn; setVoiceOn(nv); if (!nv) { window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; setSpeaking(false) } }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button><Timer seconds={timeLeft} maxSeconds={sd.duration} danger={!isUnlimited && timeLeft < 60} /></div></div>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 24 }}>{p?.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {sd.level} • {f?.name || "Mode libre"}</div></div></div><div style={{ display: "flex", alignItems: "center", gap: 12 }}><button onClick={() => { const nv = !voiceOn; setVoiceOn(nv); if (!nv) { window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; setSpeaking(false) } }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button><Timer seconds={timeLeft} maxSeconds={sd.duration} danger={!isUnlimited && timeLeft < 60} /></div></div>
     <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
-      {msgs.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#8b95a5" }}><div style={{ fontSize: 36, marginBottom: 12 }}>ð</div><div style={{ fontSize: 14, fontWeight: 600 }}>Le prospect dÃ©croche...</div><div style={{ fontSize: 12, marginTop: 4 }}>C'est Ã  vous de lancer l'Ã©change.</div></div>}
-      {msgs.map((m: any, i: number) => <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start" }}><div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>{m.content}{m.sender === "prospect" && voiceOn && <button onClick={() => speak(m.content)} style={{ background: "none", border: "none", color: "#8b95a5", cursor: "pointer", marginLeft: 8, padding: 0, verticalAlign: "middle" }} title="RÃ©Ã©couter"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>}</div></div>)}
+      {msgs.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#8b95a5" }}><div style={{ fontSize: 36, marginBottom: 12 }}>📞</div><div style={{ fontSize: 14, fontWeight: 600 }}>Le prospect décroche...</div><div style={{ fontSize: 12, marginTop: 4 }}>C'est à vous de lancer l'échange.</div></div>}
+      {msgs.map((m: any, i: number) => <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start" }}><div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>{m.content}{m.sender === "prospect" && voiceOn && <button onClick={() => speak(m.content)} style={{ background: "none", border: "none", color: "#8b95a5", cursor: "pointer", marginLeft: 8, padding: 0, verticalAlign: "middle" }} title="Réécouter"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>}</div></div>)}
       {thinking && <div style={{ alignSelf: "flex-start", padding: "12px 16px", background: "#1e2530", borderRadius: 16, borderBottomLeftRadius: 4 }}><div style={{ display: "flex", gap: 4 }}>{[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#8b95a5", animation: `bounce 1.2s ${i * 0.15}s infinite` }} />)}</div></div>}
-      {speaking && <div style={{ alignSelf: "flex-start", fontSize: 11, color: "#63c397", padding: "4px 12px" }}>ð Le prospect parle...</div>}
-      {ended && result && <div style={{ textAlign: "center", padding: 20, background: "#161b24", borderRadius: 14, border: "1px solid #2a2f3a", margin: "12px 0" }}><div style={{ fontSize: 36, marginBottom: 8 }}>{result === "signed" ? "ð" : result === "hung_up" ? "ðµ" : result === "timeout" ? "â°" : "ð"}</div><div style={{ fontWeight: 700, fontSize: 16 }}>{result === "signed" ? "Prospect convaincu !" : result === "hung_up" ? "Le prospect a raccrochÃ©" : result === "timeout" ? "Temps Ã©coulÃ©" : "Non convaincu"}</div><div style={{ fontSize: 13, color: "#8b95a5", marginTop: 4 }}>Analyse en cours...</div></div>}
+      {speaking && <div style={{ alignSelf: "flex-start", fontSize: 11, color: "#63c397", padding: "4px 12px" }}>🔊 Le prospect parle...</div>}
+      {ended && result && <div style={{ textAlign: "center", padding: 20, background: "#161b24", borderRadius: 14, border: "1px solid #2a2f3a", margin: "12px 0" }}><div style={{ fontSize: 36, marginBottom: 8 }}>{result === "signed" ? "🎉" : result === "hung_up" ? "📵" : result === "timeout" ? "⏰" : "😔"}</div><div style={{ fontWeight: 700, fontSize: 16 }}>{result === "signed" ? "Prospect convaincu !" : result === "hung_up" ? "Le prospect a raccroché" : result === "timeout" ? "Temps écoulé" : "Non convaincu"}</div><div style={{ fontSize: 13, color: "#8b95a5", marginTop: 4 }}>Analyse en cours...</div></div>}
     </div>
     <div style={{ padding: "14px 24px", background: "#111621", borderTop: "1px solid #1e2530" }}>
-      {listening && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", animation: "bounce 1s infinite" }} /> Micro actif â parlez librement</div>}
-      <div style={{ display: "flex", gap: 10 }}><button onClick={toggleMic} disabled={ended || thinking} style={{ padding: "12px 14px", background: listening ? "rgba(239,68,68,0.2)" : "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: listening ? "#ef4444" : "#8b95a5", cursor: ended ? "default" : "pointer", display: "flex", alignItems: "center" }}><MicIcon /></button><input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder={ended ? "Session terminÃ©e" : listening ? "ðï¸ Parlez..." : "Votre message..."} disabled={ended || thinking} style={{ flex: 1, padding: "12px 16px", background: "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: "#fff", fontSize: 14, outline: "none" }} /><button onClick={send} disabled={!input.trim() || ended || thinking} style={{ padding: "12px 18px", background: input.trim() && !ended ? "#2563eb" : "#2a2f3a", border: "none", borderRadius: 12, color: "#fff", cursor: input.trim() && !ended ? "pointer" : "default" }}><I.Send /></button></div>
+      {listening && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", animation: "bounce 1s infinite" }} /> Micro actif — parlez librement</div>}
+      <div style={{ display: "flex", gap: 10 }}><button onClick={toggleMic} disabled={ended || thinking} style={{ padding: "12px 14px", background: listening ? "rgba(239,68,68,0.2)" : "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: listening ? "#ef4444" : "#8b95a5", cursor: ended ? "default" : "pointer", display: "flex", alignItems: "center" }}><MicIcon /></button><input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder={ended ? "Session terminée" : listening ? "🎙️ Parlez..." : "Votre message..."} disabled={ended || thinking} style={{ flex: 1, padding: "12px 16px", background: "#1a1e27", border: `1px solid ${listening ? "#ef4444" : "#2a2f3a"}`, borderRadius: 12, color: "#fff", fontSize: 14, outline: "none" }} /><button onClick={send} disabled={!input.trim() || ended || thinking} style={{ padding: "12px 18px", background: input.trim() && !ended ? "#2563eb" : "#2a2f3a", border: "none", borderRadius: 12, color: "#fff", cursor: input.trim() && !ended ? "pointer" : "default" }}><I.Send /></button></div>
     </div>
     <style>{`@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}`}</style>
   </div>)
@@ -496,15 +496,15 @@ function Analysis({ session, personas, formations, config, goBack }: any) {
   if (!a) return <div style={{ padding: 40, color: "#8b95a5" }}>Analyse non disponible</div>
   const sc = a.score >= 70 ? "#63c397" : a.score >= 45 ? "#f59e0b" : "#ef4444"; const phases = a.phase_coverage || {}
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
-    <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer", marginBottom: 20 }}>â Retour</button>
-    <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28 }}><div style={{ minWidth: 80, width: 80, height: 80, borderRadius: "50%", background: "#111621", border: `3px solid ${sc}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: sc, flexShrink: 0 }}>{a.score}</div><div><div style={{ fontSize: 20, fontWeight: 800 }}>{p?.name} â {p?.subtitle}</div><div style={{ fontSize: 13, color: "#8b95a5" }}>Niveau {session.level} â¢ {f?.name || "Mode libre"} â¢ {session.result === "signed" ? "â SignÃ©" : session.result === "hung_up" ? "ðµ RaccrochÃ©" : session.result === "timeout" ? "â° Temps Ã©coulÃ©" : "â Non signÃ©"}</div><div style={{ fontSize: 14, color: "#ccc", marginTop: 8, lineHeight: 1.5 }}>{a.summary}</div></div></div>
+    <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer", marginBottom: 20 }}>← Retour</button>
+    <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28 }}><div style={{ minWidth: 80, width: 80, height: 80, borderRadius: "50%", background: "#111621", border: `3px solid ${sc}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: sc, flexShrink: 0 }}>{a.score}</div><div><div style={{ fontSize: 20, fontWeight: 800 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 13, color: "#8b95a5" }}>Niveau {session.level} • {f?.name || "Mode libre"} • {session.result === "signed" ? "✅ Signé" : session.result === "hung_up" ? "📵 Raccroché" : session.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"}</div><div style={{ fontSize: 14, color: "#ccc", marginTop: 8, lineHeight: 1.5 }}>{a.summary}</div></div></div>
     {Object.keys(phases).length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Couverture des phases du RDV</div><div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>{Object.entries(phases).map(([key, ph]: [string, any]) => { const cov = ph?.covered; const q = ph?.quality; const qc = q === "bien" ? "#63c397" : q === "moyen" ? "#f59e0b" : "#ef4444"; return <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#1a1e27", borderRadius: 10, border: `1px solid ${cov ? "rgba(99,195,151,0.2)" : "#2a2f3a"}` }}><div style={{ width: 20, height: 20, borderRadius: "50%", background: cov ? "rgba(99,195,151,0.2)" : "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>{cov ? <I.Check /> : <I.X />}</div><div style={{ flex: 1 }}><div style={{ fontSize: 12, fontWeight: 600, color: cov ? "#fff" : "#555" }}>{key.replace(/_/g, ' ')}</div>{ph?.note && <div style={{ fontSize: 10, color: "#8b95a5", marginTop: 2 }}>{ph.note}</div>}</div>{cov && <span style={{ fontSize: 10, fontWeight: 700, color: qc, textTransform: "uppercase" }}>{q}</span>}</div> })}</div></div>}
-    {a.skills && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>CompÃ©tences</div><div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>{Object.entries(a.skills).map(([k, val]: [string, any]) => { const v = typeof val === "number" ? val : 0; const c = v >= 7 ? "#63c397" : v >= 4 ? "#f59e0b" : "#ef4444"; return <div key={k} style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 100, fontSize: 11, color: "#8b95a5" }}>{k.replace(/_/g, ' ')}</div><div style={{ flex: 1, height: 6, background: "#1a1e27", borderRadius: 3 }}><div style={{ width: `${v * 10}%`, height: "100%", background: c, borderRadius: 3 }} /></div><div style={{ fontSize: 12, fontWeight: 700, color: c, width: 24, textAlign: "right" }}>{v}</div></div> })}</div></div>}
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}><div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#63c397", marginBottom: 12 }}>Points forts</div>{(a.strengths || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 13, color: "#ccc", marginBottom: 8, lineHeight: 1.4 }}>â {s}</div>)}</div><div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#f59e0b", marginBottom: 12 }}>Ã amÃ©liorer</div>{(a.improvements || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 13, color: "#ccc", marginBottom: 8, lineHeight: 1.4 }}>â ï¸ {s}</div>)}</div></div>
-    {a.objections?.length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Gestion des objections</div>{a.objections.map((o: any, i: number) => <div key={i} style={{ padding: "12px 14px", background: "#1a1e27", borderRadius: 10, marginBottom: 8 }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>"{o.objection}"</div><div style={{ fontSize: 12, color: o.response_quality === "bien_traitÃ©e" ? "#63c397" : o.response_quality === "partiellement_traitÃ©e" ? "#f59e0b" : "#ef4444", marginBottom: 4 }}>{o.response_quality === "bien_traitÃ©e" ? "â Bien traitÃ©e" : o.response_quality === "partiellement_traitÃ©e" ? "â ï¸ Partiellement" : "â IgnorÃ©e"}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{o.suggestion}</div></div>)}</div>}
+    {a.skills && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Compétences</div><div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>{Object.entries(a.skills).map(([k, val]: [string, any]) => { const v = typeof val === "number" ? val : 0; const c = v >= 7 ? "#63c397" : v >= 4 ? "#f59e0b" : "#ef4444"; return <div key={k} style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 100, fontSize: 11, color: "#8b95a5" }}>{k.replace(/_/g, ' ')}</div><div style={{ flex: 1, height: 6, background: "#1a1e27", borderRadius: 3 }}><div style={{ width: `${v * 10}%`, height: "100%", background: c, borderRadius: 3 }} /></div><div style={{ fontSize: 12, fontWeight: 700, color: c, width: 24, textAlign: "right" }}>{v}</div></div> })}</div></div>}
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}><div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#63c397", marginBottom: 12 }}>Points forts</div>{(a.strengths || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 13, color: "#ccc", marginBottom: 8, lineHeight: 1.4 }}>✅ {s}</div>)}</div><div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#f59e0b", marginBottom: 12 }}>À améliorer</div>{(a.improvements || []).map((s: string, i: number) => <div key={i} style={{ fontSize: 13, color: "#ccc", marginBottom: 8, lineHeight: 1.4 }}>⚠️ {s}</div>)}</div></div>
+    {a.objections?.length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Gestion des objections</div>{a.objections.map((o: any, i: number) => <div key={i} style={{ padding: "12px 14px", background: "#1a1e27", borderRadius: 10, marginBottom: 8 }}><div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>"{o.objection}"</div><div style={{ fontSize: 12, color: o.response_quality === "bien_traitée" ? "#63c397" : o.response_quality === "partiellement_traitée" ? "#f59e0b" : "#ef4444", marginBottom: 4 }}>{o.response_quality === "bien_traitée" ? "✅ Bien traitée" : o.response_quality === "partiellement_traitée" ? "⚠️ Partiellement" : "❌ Ignorée"}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{o.suggestion}</div></div>)}</div>}
     {a.main_advice && <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.2)", padding: 24 }}><div style={{ fontSize: 14, fontWeight: 700, color: "#63c397", marginBottom: 8 }}>Conseil principal</div><div style={{ fontSize: 14, color: "#ccc", lineHeight: 1.5 }}>{a.main_advice}</div></div>}
     {session.newBadges?.length > 0 && <div style={{ background: "rgba(255,215,0,0.05)", borderRadius: 14, border: "1px solid rgba(255,215,0,0.2)", padding: 24, marginTop: 20, textAlign: "center" }}>
-      <div style={{ fontSize: 16, fontWeight: 700, color: "#ffd700", marginBottom: 16 }}>Nouveaux badges dÃ©bloquÃ©s !</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: "#ffd700", marginBottom: 16 }}>Nouveaux badges débloqués !</div>
       <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
         {session.newBadges.map((bid: string) => { const b = BADGES.find(x => x.id === bid); if (!b) return null; return <div key={bid} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px 20px", background: TIER_BG[b.tier], borderRadius: 14, border: `1px solid ${TIER_COLORS[b.tier]}33`, animation: "badgePop 0.6s cubic-bezier(0.16,1,0.3,1)" }}>
           <div style={{ width: 56, height: 56, borderRadius: "50%", background: TIER_BG[b.tier], border: `2px solid ${TIER_COLORS[b.tier]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>{b.icon}</div>
@@ -525,10 +525,10 @@ function HistoryScreen({ profile, sessions, personas, formations, profiles, supa
   }
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Historique{isAdmin ? " (toutes)" : ""}</div>
     {sessions.filter((s: any) => s.result !== 'in_progress').length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : sessions.filter((s: any) => s.result !== 'in_progress').map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = profiles.find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}>
-      <div onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer" }}><span style={{ fontSize: 22 }}>{p?.emoji || "ð¤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} â {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} â¢ ` : ""}Niv {s.level} â¢ {s.result === "signed" ? "â" : s.result === "hung_up" ? "ðµ" : s.result === "timeout" ? "â°" : "â"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div>
+      <div onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer" }}><span style={{ fontSize: 22 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} • ` : ""}Niv {s.level} • {s.result === "signed" ? "✅" : s.result === "hung_up" ? "📵" : s.result === "timeout" ? "⏰" : "❌"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {isAdmin && <button onClick={(e) => { e.stopPropagation(); loadReplay(s) }} style={{ padding: "5px 10px", background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: 6, color: "#60a5fa", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><I.Play /> Replay</button>}
-        <span style={{ fontSize: 20, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "â"}</span>
+        <span style={{ fontSize: 20, fontWeight: 800, color: (s.performance_score || 0) >= 70 ? "#63c397" : (s.performance_score || 0) >= 45 ? "#f59e0b" : "#ef4444" }}>{s.performance_score || "—"}</span>
         <I.ChevronRight />
       </div>
     </div> })}</div>)
@@ -566,11 +566,11 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
     {/* Header */}
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer" }}>â Retour</button>
+        <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer" }}>← Retour</button>
         <span style={{ fontSize: 20 }}>{p?.emoji}</span>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{u?.full_name || "?"} â {p?.name} â {p?.subtitle}</div>
-          <div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {session.level} â¢ {f?.name || "Libre"} â¢ {session.result === "signed" ? "â SignÃ©" : session.result === "hung_up" ? "ðµ RaccrochÃ©" : session.result === "timeout" ? "â° Temps Ã©coulÃ©" : "â Non signÃ©"} â¢ Score: {session.performance_score || "â"}</div>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>{u?.full_name || "?"} → {p?.name} — {p?.subtitle}</div>
+          <div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {session.level} • {f?.name || "Libre"} • {session.result === "signed" ? "✅ Signé" : session.result === "hung_up" ? "📵 Raccroché" : session.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"} • Score: {session.performance_score || "—"}</div>
         </div>
       </div>
       <div style={{ fontSize: 12, color: "#8b95a5" }}>{visibleCount}/{msgs.length} messages</div>
@@ -578,7 +578,7 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
 
     {/* Messages */}
     <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
-      {msgs.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucun message enregistrÃ© pour cette session</div>}
+      {msgs.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucun message enregistré pour cette session</div>}
       {msgs.slice(0, visibleCount).map((m: any, i: number) => (
         <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start", animation: "fadeIn 0.3s ease" }}>
           <div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>
@@ -593,13 +593,13 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
     {/* Controls */}
     <div style={{ padding: "14px 24px", background: "#111621", borderTop: "1px solid #1e2530" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-        <button onClick={reset} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>â® DÃ©but</button>
+        <button onClick={reset} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>⏮ Début</button>
         {playing ? (
-          <button onClick={pause} style={{ padding: "10px 24px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, color: "#ef4444", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>â¸ Pause</button>
+          <button onClick={pause} style={{ padding: "10px 24px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, color: "#ef4444", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>⏸ Pause</button>
         ) : (
-          <button onClick={play} style={{ padding: "10px 24px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{visibleCount >= msgs.length ? "â® Rejouer" : "â¶ Lecture"}</button>
+          <button onClick={play} style={{ padding: "10px 24px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{visibleCount >= msgs.length ? "⏮ Rejouer" : "▶ Lecture"}</button>
         )}
-        <button onClick={showAll} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>â­ Tout</button>
+        <button onClick={showAll} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>⏭ Tout</button>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 12 }}>
           <span style={{ fontSize: 11, color: "#8b95a5" }}>Vitesse:</span>
           {[0.5, 1, 2, 4].map(s => <button key={s} onClick={() => setSpeed(s)} style={{ padding: "4px 8px", background: speed === s ? "rgba(99,195,151,0.15)" : "transparent", border: `1px solid ${speed === s ? "#63c397" : "#2a2f3a"}`, borderRadius: 6, color: speed === s ? "#63c397" : "#8b95a5", fontSize: 11, cursor: "pointer" }}>x{s}</button>)}
@@ -611,7 +611,7 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
 }
 function Leaderboard({ sessions, profiles, userId }: any) {
   const stats = profiles.map((u: any) => { const s = sessions.filter((x: any) => x.vendor_id === u.id && x.result !== 'in_progress'); return { ...u, sessions: s.length, avg: s.length ? Math.round(s.reduce((a: number, x: any) => a + (x.performance_score || 0), 0) / s.length) : 0, signed: s.filter((x: any) => x.result === 'signed').length, rate: s.length ? Math.round((s.filter((x: any) => x.result === 'signed').length / s.length) * 100) : 0 } }).filter((u: any) => u.sessions > 0).sort((a: any, b: any) => b.avg - a.avg)
-  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Classement</div>{stats.length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : stats.map((u: any, i: number) => <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", background: u.id === userId ? "rgba(99,195,151,0.05)" : "#111621", borderRadius: 12, border: `1px solid ${u.id === userId ? "rgba(99,195,151,0.3)" : "#1e2530"}`, marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 14 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: i < 3 ? `rgba(${i === 0 ? "255,215,0" : i === 1 ? "192,192,192" : "205,127,50"},0.2)` : "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: i === 0 ? "#ffd700" : i === 1 ? "#c0c0c0" : i === 2 ? "#cd7f32" : "#8b95a5" }}>{i + 1}</div><div><div style={{ fontSize: 14, fontWeight: 600 }}>{u.full_name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{u.sessions} sessions â¢ {u.signed} signÃ©s â¢ {u.rate}%</div></div></div><div style={{ fontSize: 22, fontWeight: 800, color: u.avg >= 70 ? "#63c397" : u.avg >= 45 ? "#f59e0b" : "#ef4444" }}>{u.avg}</div></div>)}</div>)
+  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Classement</div>{stats.length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : stats.map((u: any, i: number) => <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", background: u.id === userId ? "rgba(99,195,151,0.05)" : "#111621", borderRadius: 12, border: `1px solid ${u.id === userId ? "rgba(99,195,151,0.3)" : "#1e2530"}`, marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 14 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: i < 3 ? `rgba(${i === 0 ? "255,215,0" : i === 1 ? "192,192,192" : "205,127,50"},0.2)` : "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: i === 0 ? "#ffd700" : i === 1 ? "#c0c0c0" : i === 2 ? "#cd7f32" : "#8b95a5" }}>{i + 1}</div><div><div style={{ fontSize: 14, fontWeight: 600 }}>{u.full_name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{u.sessions} sessions • {u.signed} signés • {u.rate}%</div></div></div><div style={{ fontSize: 22, fontWeight: 800, color: u.avg >= 70 ? "#63c397" : u.avg >= 45 ? "#f59e0b" : "#ef4444" }}>{u.avg}</div></div>)}</div>)
 }
 
 // ============================================
@@ -624,7 +624,7 @@ function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
     <div style={{ marginBottom: 28 }}>
       <div style={{ fontSize: 22, fontWeight: 800 }}>Badges</div>
-      <div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{earned.length} / {BADGES.length} dÃ©bloquÃ©s</div>
+      <div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{earned.length} / {BADGES.length} débloqués</div>
       <div style={{ marginTop: 12, height: 6, background: "#1a1e27", borderRadius: 3, overflow: "hidden" }}>
         <div style={{ width: `${(earned.length / BADGES.length) * 100}%`, height: "100%", background: "linear-gradient(90deg, #34d399, #22d3ee)", borderRadius: 3, transition: "width 0.5s" }} />
       </div>
@@ -656,7 +656,7 @@ function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
 }
 
 // ============================================
-// ADMIN â CRUD + ParamÃ©trage global + BYOK
+// ADMIN — CRUD + Paramétrage global + BYOK
 // ============================================
 function AdminPanel({ supabase, personas, formations, scoring, config, profiles, onRefresh }: any) {
   const [tab, setTab] = useState("context"); const [editId, setEditId] = useState<string | null>(null)
@@ -710,51 +710,51 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
 
   return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
-    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "âï¸ ParamÃ©trage" }, { id: "team", l: "ð¥ Ãquipe" }, { id: "personas", l: "ð­ Prospects" }, { id: "formations", l: "ð¦ Produits/Services" }, { id: "scoring", l: "ð Scoring" }, { id: "keys", l: "ð ClÃ©s API" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
+    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }, { id: "keys", l: "🔑 Clés API" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
     {/* ===== CONTEXT ===== */}
     {tab === "context" && <div>
       {/* AI Generation */}
       <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.2)", padding: 24, marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}><I.Wand /><div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>GÃ©nÃ©rer avec l'IA</div></div>
-        <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 12 }}>DÃ©crivez votre entreprise, votre processus de vente et vos prospects en langage naturel. L'IA gÃ©nÃ©rera une configuration complÃ¨te (contexte, personas, produits).</div>
-        <textarea value={genDesc} onChange={e => setGenDesc(e.target.value)} placeholder="Ex: Je suis directeur commercial dans une agence immobiliÃ¨re. Mes agents font de la prospection terrain pour rÃ©cupÃ©rer des mandats de vente exclusifs. Les prospects sont des propriÃ©taires qui veulent vendre leur bien..." rows={5} style={{ ...iS, marginBottom: 12 } as any} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}><I.Wand /><div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>Générer avec l'IA</div></div>
+        <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 12 }}>Décrivez votre entreprise, votre processus de vente et vos prospects en langage naturel. L'IA générera une configuration complète (contexte, personas, produits).</div>
+        <textarea value={genDesc} onChange={e => setGenDesc(e.target.value)} placeholder="Ex: Je suis directeur commercial dans une agence immobilière. Mes agents font de la prospection terrain pour récupérer des mandats de vente exclusifs. Les prospects sont des propriétaires qui veulent vendre leur bien..." rows={5} style={{ ...iS, marginBottom: 12 } as any} />
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={generateContext} disabled={generating || !genDesc.trim()} style={{ padding: "10px 20px", background: genDesc.trim() && !generating ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 10, color: genDesc.trim() ? "#fff" : "#555", fontSize: 13, fontWeight: 700, cursor: genDesc.trim() ? "pointer" : "default" }}>{generating ? "â³ GÃ©nÃ©ration en cours..." : "â¨ GÃ©nÃ©rer la configuration"}</button>
+          <button onClick={generateContext} disabled={generating || !genDesc.trim()} style={{ padding: "10px 20px", background: genDesc.trim() && !generating ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 10, color: genDesc.trim() ? "#fff" : "#555", fontSize: 13, fontWeight: 700, cursor: genDesc.trim() ? "pointer" : "default" }}>{generating ? "⏳ Génération en cours..." : "✨ Générer la configuration"}</button>
         </div>
         {genResult && !genResult.error && <div style={{ marginTop: 16, padding: 16, background: "#111621", borderRadius: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "#63c397" }}>â Configuration gÃ©nÃ©rÃ©e</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>Entreprise : <strong>{genResult.company_name}</strong> â {genResult.company_sector}</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>{genResult.sales_process?.length || 0} Ã©tapes de vente</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>{genResult.suggested_personas?.length || 0} personas suggÃ©rÃ©s</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 12 }}>{genResult.suggested_products?.length || 0} produits/services suggÃ©rÃ©s</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "#63c397" }}>✅ Configuration générée</div>
+          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>Entreprise : <strong>{genResult.company_name}</strong> — {genResult.company_sector}</div>
+          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>{genResult.sales_process?.length || 0} étapes de vente</div>
+          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>{genResult.suggested_personas?.length || 0} personas suggérés</div>
+          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 12 }}>{genResult.suggested_products?.length || 0} produits/services suggérés</div>
           <button onClick={applyGenerated} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Appliquer cette configuration</button>
           <button onClick={() => setGenResult(null)} style={{ ...bS("#8b95a5"), marginLeft: 10 }}>Annuler</button>
         </div>}
-        {genResult?.error && <div style={{ marginTop: 12, fontSize: 12, color: "#ef4444" }}>â Erreur lors de la gÃ©nÃ©ration. VÃ©rifiez votre clÃ© API.</div>}
+        {genResult?.error && <div style={{ marginTop: 12, fontSize: 12, color: "#ef4444" }}>❌ Erreur lors de la génération. Vérifiez votre clé API.</div>}
       </div>
 
       {/* Manual sections */}
       <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Contexte global</div>
         <EF label="Nom de l'entreprise" value={config.company_name} onSave={(v: string) => savCfg({ company_name: v })} />
-        <EF label="Secteur d'activitÃ©" value={config.company_sector} onSave={(v: string) => savCfg({ company_sector: v })} />
+        <EF label="Secteur d'activité" value={config.company_sector} onSave={(v: string) => savCfg({ company_sector: v })} />
         <EF label="Description de l'entreprise (2-3 phrases)" value={config.company_description} onSave={(v: string) => savCfg({ company_description: v })} rows={3} />
         <EF label="Contexte prospect (comment il arrive, ce qu'il sait/ne sait pas)" value={config.prospect_context} onSave={(v: string) => savCfg({ prospect_context: v })} rows={4} />
         <EF label="Objections courantes du secteur" value={config.common_objections} onSave={(v: string) => savCfg({ common_objections: v })} rows={3} />
         <EF label="Points de tension (moments critiques du RDV)" value={config.tension_points} onSave={(v: string) => savCfg({ tension_points: v })} rows={3} />
-        <EF label="Vocabulaire et ton (jargon mÃ©tier, formalitÃ©)" value={config.vocabulary_tone} onSave={(v: string) => savCfg({ vocabulary_tone: v })} rows={2} />
-        <EF label="Instructions supplÃ©mentaires pour l'IA" value={config.custom_instructions} onSave={(v: string) => savCfg({ custom_instructions: v })} rows={3} />
+        <EF label="Vocabulaire et ton (jargon métier, formalité)" value={config.vocabulary_tone} onSave={(v: string) => savCfg({ vocabulary_tone: v })} rows={2} />
+        <EF label="Instructions supplémentaires pour l'IA" value={config.custom_instructions} onSave={(v: string) => savCfg({ custom_instructions: v })} rows={3} />
       </div>
 
       {/* Sales process */}
       <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 16, fontWeight: 700 }}>Ãtapes du processus de vente</div><button onClick={() => savCfg({ sales_process: [...(config.sales_process || []), { step: (config.sales_process?.length || 0) + 1, name: "Nouvelle Ã©tape", description: "Ã dÃ©finir" }] })} style={{ ...bS("#63c397") }}><I.Plus /> Ajouter</button></div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 16, fontWeight: 700 }}>Étapes du processus de vente</div><button onClick={() => savCfg({ sales_process: [...(config.sales_process || []), { step: (config.sales_process?.length || 0) + 1, name: "Nouvelle étape", description: "À définir" }] })} style={{ ...bS("#63c397") }}><I.Plus /> Ajouter</button></div>
         {(config.sales_process || []).map((step: any, i: number) => (
           <div key={i} style={{ display: "flex", gap: 10, alignItems: "start", marginBottom: 8, padding: 12, background: "#1a1e27", borderRadius: 8 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#63c397", minWidth: 28 }}>{step.step}</div>
             <div style={{ flex: 1 }}>
-              <input value={step.name} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], name: e.target.value }; savCfg({ sales_process: np }) }} style={{ ...iS, marginBottom: 4 } as any} placeholder="Nom de l'Ã©tape" />
+              <input value={step.name} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], name: e.target.value }; savCfg({ sales_process: np }) }} style={{ ...iS, marginBottom: 4 } as any} placeholder="Nom de l'étape" />
               <textarea value={step.description} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], description: e.target.value }; savCfg({ sales_process: np }) }} rows={2} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} placeholder="Description" />
             </div>
             <button onClick={() => { const np = config.sales_process.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); savCfg({ sales_process: np }) }} style={bS("#ef4444")}><I.Trash /></button>
@@ -767,7 +767,7 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
         <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Options d'affichage</div>
         <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
           <input type="checkbox" checked={config.show_full_profile !== false} onChange={e => savCfg({ show_full_profile: e.target.checked })} style={{ width: 18, height: 18, accentColor: "#63c397" }} />
-          <div><div style={{ fontSize: 13, fontWeight: 600 }}>Afficher le profil complet du prospect</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Si dÃ©sactivÃ©, le vendeur ne verra qu'un aperÃ§u (nom, Ã¢ge, profession) lors du lancement d'une session</div></div>
+          <div><div style={{ fontSize: 13, fontWeight: 600 }}>Afficher le profil complet du prospect</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Si désactivé, le vendeur ne verra qu'un aperçu (nom, âge, profession) lors du lancement d'une session</div></div>
         </label>
       </div>
     </div>}
@@ -779,24 +779,24 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
         <input value={nn} onChange={e => setNn(e.target.value)} placeholder="Nom complet" style={iS} />
         <input value={ne} onChange={e => setNe(e.target.value)} placeholder="Email" style={iS} />
         <input value={np} onChange={e => setNp(e.target.value)} placeholder="Mot de passe initial" style={iS} />
-        <button onClick={async () => { if (!nn || !ne || !np) return; setMsg("CrÃ©ation..."); const r = await fetch('/api/vendors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ne, password: np, full_name: nn }) }); const d = await r.json(); if (d.success) { setMsg("â CrÃ©Ã©"); setNn(""); setNe(""); setNp(""); onRefresh() } else setMsg("â " + d.error) }} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>CrÃ©er</button>
+        <button onClick={async () => { if (!nn || !ne || !np) return; setMsg("Création..."); const r = await fetch('/api/vendors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ne, password: np, full_name: nn }) }); const d = await r.json(); if (d.success) { setMsg("✅ Créé"); setNn(""); setNe(""); setNp(""); onRefresh() } else setMsg("❌ " + d.error) }} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Créer</button>
         {msg && <div style={{ fontSize: 12, color: "#8b95a5", marginTop: 8 }}>{msg}</div>}
       </div>
-      {profiles.map((u: any) => <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}><div><div style={{ fontSize: 14, fontWeight: 600 }}>{u.full_name}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{u.email} â¢ {u.role === "admin" ? "Manager" : "Vendeur"}</div></div>{u.role !== 'admin' && <button onClick={async () => { if (!confirm("Supprimer ce vendeur ?")) return; await fetch('/api/vendors', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: u.id }) }); onRefresh() }} style={bS("#ef4444")}><I.Trash /> Supprimer</button>}</div>)}
+      {profiles.map((u: any) => <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}><div><div style={{ fontSize: 14, fontWeight: 600 }}>{u.full_name}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{u.email} • {u.role === "admin" ? "Manager" : "Vendeur"}</div></div>{u.role !== 'admin' && <button onClick={async () => { if (!confirm("Supprimer ce vendeur ?")) return; await fetch('/api/vendors', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: u.id }) }); onRefresh() }} style={bS("#ef4444")}><I.Trash /> Supprimer</button>}</div>)}
     </div>}
 
     {/* ===== PERSONAS ===== */}
     {tab === "personas" && <div>
-      <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('personas').insert({ name: "Nouveau prospect", subtitle: "Ã configurer", age: 30, emoji: "ð¤", profession: "Ã dÃ©finir", situation: "Ã dÃ©finir", personality: "Ã dÃ©finir", motivations: "Ã dÃ©finir", obstacles: "Ã dÃ©finir", communication_style: "Ã dÃ©finir" }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un prospect</button></div>
+      <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('personas').insert({ name: "Nouveau prospect", subtitle: "À configurer", age: 30, emoji: "👤", profession: "À définir", situation: "À définir", personality: "À définir", motivations: "À définir", obstacles: "À définir", communication_style: "À définir" }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un prospect</button></div>
       {personas.map((p: any) => <div key={p.id} style={{ padding: 18, background: "#111621", borderRadius: 12, border: `1px solid ${editId === p.id ? "#63c397" : "#1e2530"}`, marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ fontSize: 24 }}>{p.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p.name} â {p.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{p.profession}</div></div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === p.id ? null : p.id)} style={bS("#63c397")}>{editId === p.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { const { id, created_at, updated_at, ...rest } = p; await supabase.from('personas').insert({ ...rest, name: p.name + " (copie)" }); onRefresh() }} style={bS("#60a5fa")}><I.Copy /></button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('personas').delete().eq('id', p.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
-        {editId === p.id && <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><EF label="Nom" value={p.name} onSave={(v: string) => savP(p.id, { name: v })} /><EF label="Sous-titre" value={p.subtitle} onSave={(v: string) => savP(p.id, { subtitle: v })} /><EF label="Ãge" value={p.age} onSave={(v: string) => savP(p.id, { age: parseInt(v) })} /><EF label="Emoji" value={p.emoji} onSave={(v: string) => savP(p.id, { emoji: v })} /><EF label="Profession" value={p.profession} onSave={(v: string) => savP(p.id, { profession: v })} rows={2} /><EF label="Situation" value={p.situation} onSave={(v: string) => savP(p.id, { situation: v })} rows={3} /><EF label="PersonnalitÃ©" value={p.personality} onSave={(v: string) => savP(p.id, { personality: v })} rows={2} /><EF label="Motivations" value={p.motivations} onSave={(v: string) => savP(p.id, { motivations: v })} rows={2} /><EF label="Freins" value={p.obstacles} onSave={(v: string) => savP(p.id, { obstacles: v })} rows={2} /><EF label="Style" value={p.communication_style} onSave={(v: string) => savP(p.id, { communication_style: v })} rows={2} /></div>}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ fontSize: 24 }}>{p.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p.name} — {p.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{p.profession}</div></div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === p.id ? null : p.id)} style={bS("#63c397")}>{editId === p.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { const { id, created_at, updated_at, ...rest } = p; await supabase.from('personas').insert({ ...rest, name: p.name + " (copie)" }); onRefresh() }} style={bS("#60a5fa")}><I.Copy /></button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('personas').delete().eq('id', p.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
+        {editId === p.id && <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><EF label="Nom" value={p.name} onSave={(v: string) => savP(p.id, { name: v })} /><EF label="Sous-titre" value={p.subtitle} onSave={(v: string) => savP(p.id, { subtitle: v })} /><EF label="Âge" value={p.age} onSave={(v: string) => savP(p.id, { age: parseInt(v) })} /><EF label="Emoji" value={p.emoji} onSave={(v: string) => savP(p.id, { emoji: v })} /><EF label="Profession" value={p.profession} onSave={(v: string) => savP(p.id, { profession: v })} rows={2} /><EF label="Situation" value={p.situation} onSave={(v: string) => savP(p.id, { situation: v })} rows={3} /><EF label="Personnalité" value={p.personality} onSave={(v: string) => savP(p.id, { personality: v })} rows={2} /><EF label="Motivations" value={p.motivations} onSave={(v: string) => savP(p.id, { motivations: v })} rows={2} /><EF label="Freins" value={p.obstacles} onSave={(v: string) => savP(p.id, { obstacles: v })} rows={2} /><EF label="Style" value={p.communication_style} onSave={(v: string) => savP(p.id, { communication_style: v })} rows={2} /></div>}
       </div>)}
     </div>}
 
     {/* ===== PRODUCTS/SERVICES ===== */}
     {tab === "formations" && <div>
-      <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('formations').insert({ name: "Nouveau produit/service", description: "Ã dÃ©finir", price: "Ã configurer", key_arguments: ["Argument 1"], common_objections: ["Objection 1"] }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un produit/service</button></div>
+      <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('formations').insert({ name: "Nouveau produit/service", description: "À définir", price: "À configurer", key_arguments: ["Argument 1"], common_objections: ["Objection 1"] }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un produit/service</button></div>
       {formations.map((f: any) => <div key={f.id} style={{ padding: 18, background: "#111621", borderRadius: 12, border: `1px solid ${editId === f.id ? "#63c397" : "#1e2530"}`, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div><div style={{ fontSize: 15, fontWeight: 700 }}>{f.name}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{f.price}</div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === f.id ? null : f.id)} style={bS("#63c397")}>{editId === f.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('formations').delete().eq('id', f.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
         {editId === f.id && <div style={{ marginTop: 14 }}><EF label="Nom" value={f.name} onSave={(v: string) => savF(f.id, { name: v })} /><EF label="Description" value={f.description} onSave={(v: string) => savF(f.id, { description: v })} rows={3} /><EF label="Prix" value={f.price} onSave={(v: string) => savF(f.id, { price: v })} /><EA label="Arguments" value={f.key_arguments || f.arguments} onSave={(v: string[]) => savF(f.id, { key_arguments: v })} /><EA label="Objections" value={f.common_objections || f.objections} onSave={(v: string[]) => savF(f.id, { common_objections: v })} /></div>}
@@ -808,26 +808,26 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
 
     {/* ===== API KEYS (BYOK) ===== */}
     {tab === "keys" && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
-      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>ClÃ©s API (BYOK)</div>
-      <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 20 }}>Configurez vos propres clÃ©s API pour que la facturation soit directe entre vous et les fournisseurs. Si aucune clÃ© n'est renseignÃ©e, les clÃ©s par dÃ©faut de la plateforme seront utilisÃ©es.</div>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Clés API (BYOK)</div>
+      <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 20 }}>Configurez vos propres clés API pour que la facturation soit directe entre vous et les fournisseurs. Si aucune clé n'est renseignée, les clés par défaut de la plateforme seront utilisées.</div>
       <div style={{ marginBottom: 16 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>ClÃ© API Anthropic (Claude)</label>
-        <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 6 }}>UtilisÃ©e pour les simulations de conversation et l'analyse. <a href="https://console.anthropic.com/settings/keys" target="_blank" style={{ color: "#63c397" }}>Obtenir une clÃ©</a></div>
+        <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Clé API Anthropic (Claude)</label>
+        <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 6 }}>Utilisée pour les simulations de conversation et l'analyse. <a href="https://console.anthropic.com/settings/keys" target="_blank" style={{ color: "#63c397" }}>Obtenir une clé</a></div>
         <input type="password" value={config.client_anthropic_key || ''} onChange={e => savCfg({ client_anthropic_key: e.target.value })} placeholder="sk-ant-..." style={iS} />
-        <div style={{ fontSize: 11, color: config.client_anthropic_key ? "#63c397" : "#f59e0b" }}>{config.client_anthropic_key ? "â ClÃ© configurÃ©e" : "â ï¸ Utilise la clÃ© par dÃ©faut de la plateforme"}</div>
+        <div style={{ fontSize: 11, color: config.client_anthropic_key ? "#63c397" : "#f59e0b" }}>{config.client_anthropic_key ? "✅ Clé configurée" : "⚠️ Utilise la clé par défaut de la plateforme"}</div>
       </div>
       <div>
-        <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>ClÃ© API OpenAI (Voix)</label>
-        <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 6 }}>UtilisÃ©e pour la synthÃ¨se vocale du prospect. <a href="https://platform.openai.com/api-keys" target="_blank" style={{ color: "#63c397" }}>Obtenir une clÃ©</a></div>
+        <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Clé API OpenAI (Voix)</label>
+        <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 6 }}>Utilisée pour la synthèse vocale du prospect. <a href="https://platform.openai.com/api-keys" target="_blank" style={{ color: "#63c397" }}>Obtenir une clé</a></div>
         <input type="password" value={config.client_openai_key || ''} onChange={e => savCfg({ client_openai_key: e.target.value })} placeholder="sk-..." style={iS} />
-        <div style={{ fontSize: 11, color: config.client_openai_key ? "#63c397" : "#f59e0b" }}>{config.client_openai_key ? "â ClÃ© configurÃ©e" : "â ï¸ Utilise la clÃ© par dÃ©faut (voix navigateur si absente)"}</div>
+        <div style={{ fontSize: 11, color: config.client_openai_key ? "#63c397" : "#f59e0b" }}>{config.client_openai_key ? "✅ Clé configurée" : "⚠️ Utilise la clé par défaut (voix navigateur si absente)"}</div>
       </div>
     </div>}
   </div>)
 }
 
 // ============================================
-// SCORING EDITOR â CRUD complet
+// SCORING EDITOR — CRUD complet
 // ============================================
 function ScoringEditor({ supabase, scoring, onRefresh }: any) {
   const [pos, setPos] = useState<any[]>(scoring.positive || [])
@@ -848,7 +848,7 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
     const n = [...arr]; n[idx] = { ...n[idx], [key]: val }; setArr(n); save({ [field]: n })
   }
   const addItem = (arr: any[], setArr: any, field: string, pts: number) => {
-    const n = [...arr, { key: "new_" + Date.now(), label: "Nouveau critÃ¨re", points: pts }]; setArr(n); save({ [field]: n })
+    const n = [...arr, { key: "new_" + Date.now(), label: "Nouveau critère", points: pts }]; setArr(n); save({ [field]: n })
   }
   const removeItem = (arr: any[], setArr: any, field: string, idx: number) => {
     const n = arr.filter((_: any, i: number) => i !== idx); setArr(n); save({ [field]: n })
@@ -870,7 +870,7 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
         {(["level1", "level2", "level3"] as const).map((l, i) => (
           <div key={l} style={{ padding: 14, background: "#1a1e27", borderRadius: 10 }}>
             <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: "#63c397" }}>Niveau {i + 1}</div>
-            <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>Score de dÃ©part</div>
+            <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>Score de départ</div>
             <input type="number" value={startScores[l]} onChange={e => { const ns = { ...startScores, [l]: parseInt(e.target.value) || 0 }; setStartScores(ns); save({ level1_start_score: ns.level1, level2_start_score: ns.level2, level3_start_score: ns.level3 }) }} style={{ width: "100%", padding: "6px 10px", background: "#111621", border: "1px solid #2a2f3a", borderRadius: 6, color: "#fff", fontSize: 13, outline: "none", marginBottom: 8, boxSizing: "border-box" as any }} />
             <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>Seuil signature</div>
             <input type="number" value={thresholds[l]} onChange={e => { const nt = { ...thresholds, [l]: parseInt(e.target.value) || 0 }; setThresholds(nt); save({ level1_threshold: nt.level1, level2_threshold: nt.level2, level3_threshold: nt.level3 }) }} style={{ width: "100%", padding: "6px 10px", background: "#111621", border: "1px solid #2a2f3a", borderRadius: 6, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" as any }} />
@@ -891,7 +891,7 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
     {/* Negative criteria */}
     <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>Points nÃ©gatifs</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>Points négatifs</div>
         <button onClick={() => addItem(neg, setNeg, 'negative', -5)} style={bS("#ef4444")}><I.Plus /> Ajouter</button>
       </div>
       {neg.map((r: any, i: number) => <CriteriaRow key={i} item={r} idx={i} arr={neg} setArr={setNeg} field="negative" color="#ef4444" />)}
