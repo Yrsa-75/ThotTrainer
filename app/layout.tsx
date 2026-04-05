@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Thot',
-  description: 'Plateforme d\'entraÃ®nement commercial IA',
+  description: 'Plateforme d\'entraînement commercial IA',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
