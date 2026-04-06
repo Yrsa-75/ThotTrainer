@@ -254,7 +254,7 @@ export default function DashboardPage() {
       <div style={{ marginLeft: 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
         {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { setSessionData(sd); setScreen("chat") }} />}
-        {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onEnd={async (sess: any) => {
+        {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onCancel={() => setScreen("new_session")} onEnd={async (sess: any) => {
           const newSessions = [sess, ...sessions]
           setSessions(newSessions)
           // Compute and save badges
@@ -370,21 +370,17 @@ function NewSession({ personas, formations, config, onStart }: any) {
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Niveau</div><div style={{ display: "flex", gap: 8 }}>{[{ v: 1, l: "Ouvert" }, { v: 2, l: "Sceptique" }, { v: 3, l: "Hostile" }].map(d => <button key={d.v} onClick={() => setLevel(d.v)} style={{ flex: 1, padding: "10px 8px", background: level === d.v ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${level === d.v ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: level === d.v ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{d.l}</button>)}</div></div>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Durée</div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input type="number" value={durMin} onChange={e => { setDurMin(Math.max(1, parseInt(e.target.value) || 1)); setUnlimited(false) }} disabled={unlimited} style={{ width: 70, padding: "10px 12px", background: unlimited ? "#1a1e27" : "#111621", border: `1px solid ${!unlimited ? "#63c397" : "#2a2f3a"}`, borderRadius: 10, color: unlimited ? "#555" : "#63c397", fontSize: 14, fontWeight: 700, textAlign: "center", outline: "none" }} />
-          <span style={{ fontSize: 12, color: "#8b95a5" }}>min</span>
-          <button onClick={() => setUnlimited(!unlimited)} style={{ marginLeft: 8, padding: "10px 16px", background: unlimited ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${unlimited ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: unlimited ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>∞ Illimité</button>
-        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><input type="range" min="1" max="60" value={unlimited ? 20 : durMin} onChange={e => { setDurMin(parseInt(e.target.value)); setUnlimited(false) }} style={{ flex: 1, accentColor: "#63c397", opacity: unlimited ? 0.3 : 1, cursor: "pointer" }} /><span style={{ fontSize: 15, fontWeight: 800, color: unlimited ? "#555" : "#63c397", minWidth: 56, textAlign: "right" }}>{unlimited ? "Illimite" : durMin + " min"}</span></div><div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#555", marginTop: 2 }}><span>1 min</span><span>30 min</span><span>60 min</span></div><button onClick={() => setUnlimited(!unlimited)} style={{ marginTop: 6, padding: "7px 14px", background: unlimited ? "rgba(99,195,151,0.15)" : "#111621", border: "1px solid " + (unlimited ? "#63c397" : "#1e2530"), borderRadius: 10, color: unlimited ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Illimite</button></div>
       </div>
     </div>
-    <button onClick={handleStart} disabled={!pId} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", padding: 16, background: pId ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 14, color: pId ? "#fff" : "#555", fontSize: 16, fontWeight: 700, cursor: pId ? "pointer" : "default" }}><I.Target /> {isRandom ? "Lancer (prospect mystère)" : fId ? "Commencer la simulation" : "Commencer en mode libre"}</button>
+    <div style={{ fontSize: 12, color: "#8b95a5", textAlign: "center", marginBottom: 12, padding: "10px 16px", background: "rgba(99,195,151,0.05)", borderRadius: 8, border: "1px solid rgba(99,195,151,0.1)", lineHeight: 1.5 }}>Vous avez 30 secondes pour annuler cette session sans qu'elle soit decompte de votre forfait — ideal si la configuration ne vous convient pas.</div><button onClick={handleStart} disabled={!pId} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", padding: 16, background: pId ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 14, color: pId ? "#fff" : "#555", fontSize: 16, fontWeight: 700, cursor: pId ? "pointer" : "default" }}><I.Target /> {isRandom ? "Lancer (prospect mystère)" : fId ? "Commencer la simulation" : "Commencer en mode libre"}</button>
   </div>)
 }
 
 // ============================================
 // CHAT SESSION — Voix + config dynamique
 // ============================================
-function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd }: any) {
+function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd, onCancel }: any) {
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(false); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -460,13 +456,26 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     if (sd.formationId) ins.formation_id = sd.formationId
     const { data: sess } = await supabase.from('sessions').insert(ins).select().single()
     if (sess) { await supabase.from('messages').insert(m.map((msg: any, i: number) => ({ session_id: sess.id, sender: msg.sender, content: msg.content, sequence_number: i + 1 }))) }
+    if (sess && elapsed >= 30) { try { await fetch("/api/sessions/count", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId: sess.id }) }) } catch {} }
     const normalized = normSession(sess)
     normalized.messages = m
     onEnd(normalized)
   }, [profile, sd, p, f, config, supabase, onEnd])
   useEffect(() => { if (ended && result) finish(msgs, result) }, [ended, result])
 
-  const send = async () => {
+
+  const handleStop = () => {
+    if (ended) return
+    const el = Math.round((Date.now() - startRef.current) / 1000)
+    if (window.speechSynthesis) window.speechSynthesis.cancel()
+    listeningRef.current = false
+    if (recRef.current) recRef.current.stop()
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    clearInterval(timerRef.current)
+    if (el < 30) { if (onCancel) onCancel() }
+    else { setEnded(true); setResult("not_signed") }
+  }
+    const send = async () => {
     if (!input.trim() || ended || thinking) return; recRef.current?.stop(); listeningRef.current = false; setListening(false); window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; inputAccRef.current = ''
     const nm = [...msgs, { sender: "vendor", content: input.trim(), time: Date.now() }]; setMsgs(nm); setInput(""); setThinking(true)
     try { const reply = await callChat(sys, nm); let content = reply, res: string | null = null; const match = reply.match(/\[RÉSULTAT:(SIGNÉ|NON_SIGNÉ|RACCROCHÉ)\]/); if (match) { content = reply.replace(match[0], "").trim(); res = match[1] === "SIGNÉ" ? "signed" : match[1] === "RACCROCHÉ" ? "hung_up" : "not_signed" }; setMsgs([...nm, { sender: "prospect", content, time: Date.now() }]); if (voiceOn && content) speak(content); if (res) { setEnded(true); setResult(res) } } catch { setMsgs([...nm, { sender: "prospect", content: "...(problème de connexion)", time: Date.now() }]) }
@@ -475,7 +484,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const MicIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill={listening ? "#ef4444" : "currentColor"} stroke={listening ? "#ef4444" : "currentColor"} strokeWidth="1"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" fill="none" strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" fill="none" strokeWidth="2"/></svg>
   const VolumeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14" opacity={voiceOn ? 1 : 0.3}/><path d="M15.54 8.46a5 5 0 0 1 0 7.07" opacity={voiceOn ? 1 : 0.3}/></svg>
   return (<div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 24 }}>{p?.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {sd.level} • {f?.name || "Mode libre"}</div></div></div><div style={{ display: "flex", alignItems: "center", gap: 12 }}><button onClick={() => { const nv = !voiceOn; setVoiceOn(nv); if (!nv) { window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; setSpeaking(false) } }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button><Timer seconds={timeLeft} maxSeconds={sd.duration} danger={!isUnlimited && timeLeft < 60} /></div></div>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 24 }}>{p?.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {sd.level} • {f?.name || "Mode libre"}</div></div></div><div style={{ display: "flex", alignItems: "center", gap: 12 }}><button onClick={() => { const nv = !voiceOn; setVoiceOn(nv); if (!nv) { window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; setSpeaking(false) } }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button><Timer seconds={timeLeft} maxSeconds={sd.duration} danger={!isUnlimited && timeLeft < 60} /><button onClick={handleStop} disabled={ended} style={{ padding: "7px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#ef4444", fontSize: 12, fontWeight: 700, cursor: ended ? "default" : "pointer", opacity: ended ? 0.4 : 1, marginLeft: 8 }}>Arreter</button></div></div>
     <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
       {msgs.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#8b95a5" }}><div style={{ fontSize: 36, marginBottom: 12 }}>📞</div><div style={{ fontSize: 14, fontWeight: 600 }}>Le prospect décroche...</div><div style={{ fontSize: 12, marginTop: 4 }}>C'est à vous de lancer l'échange.</div></div>}
       {msgs.map((m: any, i: number) => <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start" }}><div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>{m.content}{m.sender === "prospect" && voiceOn && <button onClick={() => speak(m.content)} style={{ background: "none", border: "none", color: "#8b95a5", cursor: "pointer", marginLeft: 8, padding: 0, verticalAlign: "middle" }} title="Réécouter"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>}</div></div>)}
@@ -710,7 +719,7 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
 
   return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
-    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }, { id: "keys", l: "🔑 Clés API" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
+    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
     {/* ===== CONTEXT ===== */}
     {tab === "context" && <div>
@@ -806,23 +815,7 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
     {/* ===== SCORING ===== */}
     {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
 
-    {/* ===== API KEYS (BYOK) ===== */}
-    {tab === "keys" && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
-      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Clés API (BYOK)</div>
-      <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 20 }}>Configurez vos propres clés API pour que la facturation soit directe entre vous et les fournisseurs. Si aucune clé n'est renseignée, les clés par défaut de la plateforme seront utilisées.</div>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Clé API Anthropic (Claude)</label>
-        <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 6 }}>Utilisée pour les simulations de conversation et l'analyse. <a href="https://console.anthropic.com/settings/keys" target="_blank" style={{ color: "#63c397" }}>Obtenir une clé</a></div>
-        <input type="password" value={config.client_anthropic_key || ''} onChange={e => savCfg({ client_anthropic_key: e.target.value })} placeholder="sk-ant-..." style={iS} />
-        <div style={{ fontSize: 11, color: config.client_anthropic_key ? "#63c397" : "#f59e0b" }}>{config.client_anthropic_key ? "✅ Clé configurée" : "⚠️ Utilise la clé par défaut de la plateforme"}</div>
-      </div>
-      <div>
-        <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>Clé API OpenAI (Voix)</label>
-        <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 6 }}>Utilisée pour la synthèse vocale du prospect. <a href="https://platform.openai.com/api-keys" target="_blank" style={{ color: "#63c397" }}>Obtenir une clé</a></div>
-        <input type="password" value={config.client_openai_key || ''} onChange={e => savCfg({ client_openai_key: e.target.value })} placeholder="sk-..." style={iS} />
-        <div style={{ fontSize: 11, color: config.client_openai_key ? "#63c397" : "#f59e0b" }}>{config.client_openai_key ? "✅ Clé configurée" : "⚠️ Utilise la clé par défaut (voix navigateur si absente)"}</div>
-      </div>
-    </div>}
+    
   </div>)
 }
 
