@@ -200,6 +200,8 @@ const bS = (c: string): React.CSSProperties => ({ padding: "5px 12px", backgroun
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(DEFAULT_SCORING); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
+  const [org, setOrg] = useState(null)
+  const [allOrgs, setAllOrgs] = useState([])
   const supabase = createClient(); const router = useRouter()
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) { router.push('/'); return }
@@ -214,6 +216,17 @@ export default function DashboardPage() {
     const { data: pers } = await supabase.from('personas').select('*').eq('is_active', true); setPersonas(pers?.length ? pers : DEFAULT_PERSONAS)
     const { data: sc } = await supabase.from('scoring_rules').select('*').eq('is_active', true).single(); if (sc) setScoring(normalizeScoring(sc))
     const { data: cfg } = await supabase.from('platform_config').select('*').limit(1).single(); if (cfg) setConfig(cfg)
+    // Org loading
+    if (p.role === 'super_admin') {
+      const { data: orgs2 } = await supabase.from('organisations').select('*').order('created_at', { ascending: false })
+      if (orgs2) {
+        const { data: adms } = await supabase.from('profiles').select('id, full_name, email, organisation_id').eq('role', 'admin')
+        setAllOrgs(orgs2.map(o => ({ ...o, adminProfile: (adms||[]).find(a => a.organisation_id === o.id) })))
+      }
+    } else if (p.organisation_id) {
+      const { data: orgD } = await supabase.from('organisations').select('*').eq('id', p.organisation_id).single()
+      if (orgD) setOrg(orgD)
+    }
     setLoading(false)
   }, [supabase, router])
   useEffect(() => { loadData() }, [])
@@ -247,9 +260,9 @@ export default function DashboardPage() {
       <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100 }}>
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #1e2530" }}><Logo size={28} /><div><div style={{ fontSize: 15, fontWeight: 700 }}>Thot</div><div style={{ fontSize: 10, color: "#63c397" }}>{config.company_name || 'Plateforme'}</div></div></div>
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-          {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
+          {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(profile.role === "super_admin" ? [{ id: "clients", icon: <I.Settings />, label: "Clients" }] : isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
         </div>
-        <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
+        <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}>{org && <div style={{ marginBottom: 12, padding: "10px 12px", background: "#0f1219", borderRadius: 8 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><span style={{ fontSize: 11, color: "#8b95a5" }}>Sessions</span><span style={{ fontSize: 11, fontWeight: 700, color: org.sessions_used >= org.sessions_limit * 0.9 ? "#ef4444" : "#63c397" }}>{org.sessions_used}/{org.sessions_limit}</span></div><div style={{ height: 4, background: "#1e2530", borderRadius: 2 }}><div style={{ width: Math.min(100, (org.sessions_used/Math.max(1,org.sessions_limit))*100) + "%", height: "100%", background: org.sessions_used >= org.sessions_limit*0.9 ? "#ef4444" : "#63c397", borderRadius: 2 }} /></div></div>}<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
       <div style={{ marginLeft: 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
@@ -273,6 +286,7 @@ export default function DashboardPage() {
         {screen === "replay" && viewSession && <Replay session={viewSession} personas={personas} formations={formations} profiles={profiles} goBack={() => setScreen("history")} />}
         {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
         {screen === "badges" && <BadgesScreen sessions={sessions} personas={personas} profile={profile} allSessions={sessions} />}
+        {screen === "clients" && profile.role === "super_admin" && <SuperAdminClients orgs={allOrgs} onRefresh={loadData} />}
         {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
     </div>
@@ -901,4 +915,71 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
 
     {saving && <div style={{ fontSize: 11, color: "#63c397", marginTop: 8, textAlign: "center" }}>Sauvegarde...</div>}
   </div>)
+}
+
+
+function SuperAdminClients({ orgs, onRefresh }) {
+  const [search, setSearch] = useState('')
+  const PL = { trial:'Trial', starter:'Starter', business:'Business', premium:'Premium', cancelled:'Annule' }
+  const PC = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa', cancelled:'#8b95a5' }
+  const SL = { trialing:'Essai gratuit', active:'Actif', past_due:'Impaye', cancelled:'Annule', paused:'Pause' }
+  const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
+  const list = (orgs||[]).filter(o => !search || o.name.toLowerCase().includes(search.toLowerCase()))
+  const totalActive = (orgs||[]).filter(o => o.status==='active'||o.status==='trialing').length
+  const totalSess = (orgs||[]).reduce((a,o) => a+(o.sessions_used||0), 0)
+
+  return (
+    <div style={{ padding:"32px 40px", maxWidth:960 }}>
+      <div style={{ marginBottom:28 }}>
+        <div style={{ fontSize:24, fontWeight:800 }}>Clients</div>
+        <div style={{ fontSize:14, color:"#8b95a5", marginTop:4 }}>Vue globale de toutes les organisations</div>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:28 }}>
+        {[{l:"Organisations",v:(orgs||[]).length,c:"#63c397"},{l:"Actives / En essai",v:totalActive,c:"#3b82f6"},{l:"Sessions ce mois",v:totalSess,c:"#a78bfa"}].map((s,i) => (
+          <div key={i} style={{ padding:20, background:"#111621", borderRadius:12, border:"1px solid #1e2530" }}>
+            <div style={{ fontSize:11, color:"#8b95a5", marginBottom:6 }}>{s.l}</div>
+            <div style={{ fontSize:28, fontWeight:800, color:s.c }}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." style={{ width:"100%", padding:"10px 14px", background:"#111621", border:"1px solid #1e2530", borderRadius:10, color:"#fff", fontSize:13, outline:"none", marginBottom:20, boxSizing:"border-box" }} />
+      {list.length === 0 ? <div style={{ textAlign:"center", padding:40, color:"#8b95a5" }}>Aucune organisation</div> :
+      list.map(o => {
+        const pct = o.sessions_limit > 0 ? Math.min(100, (o.sessions_used/o.sessions_limit)*100) : 0
+        const pc = pct >= 90 ? "#ef4444" : pct >= 70 ? "#f59e0b" : "#63c397"
+        const daysLeft = o.trial_ends_at ? Math.max(0, Math.ceil((new Date(o.trial_ends_at).getTime()-Date.now())/86400000)) : null
+        const periodEnd = o.current_period_end ? new Date(o.current_period_end).toLocaleDateString('fr-FR') : null
+        return (
+          <div key={o.id} style={{ padding:20, background:"#111621", borderRadius:14, border:"1px solid #1e2530", marginBottom:12 }}>
+            <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:14 }}>
+              <div>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                  <div style={{ fontSize:16, fontWeight:800 }}>{o.name}</div>
+                  <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:PC[o.plan]+'22', color:PC[o.plan]||'#8b95a5', border:"1px solid "+(PC[o.plan]||'#8b95a5')+'44' }}>{PL[o.plan]||o.plan}</span>
+                  <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:(SC[o.status]||'#8b95a5')+'22', color:SC[o.status]||'#8b95a5', border:"1px solid "+(SC[o.status]||'#8b95a5')+'44' }}>{SL[o.status]||o.status}</span>
+                </div>
+                {o.adminProfile && <div style={{ fontSize:12, color:"#8b95a5" }}>{o.adminProfile.full_name} — {o.adminProfile.email}</div>}
+              </div>
+              <div style={{ textAlign:"right", fontSize:12, color:"#8b95a5" }}>
+                {o.status==='trialing' && daysLeft!==null && <div style={{ color:daysLeft<=2?"#ef4444":"#f59e0b" }}>{daysLeft>0?daysLeft+" j d'essai restants":"Essai expire"}</div>}
+                {o.status==='active' && periodEnd && <div>Renouvellement le {periodEnd}</div>}
+              </div>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#8b95a5", marginBottom:4 }}>
+                  <span>Sessions utilisees</span>
+                  <span style={{ fontWeight:700, color:pc }}>{o.sessions_used} / {o.sessions_limit}</span>
+                </div>
+                <div style={{ height:6, background:"#1e2530", borderRadius:3, overflow:"hidden" }}>
+                  <div style={{ width:pct+"%", height:"100%", background:pc, borderRadius:3 }} />
+                </div>
+              </div>
+              <div style={{ fontSize:11, color:"#8b95a5", minWidth:80, textAlign:"right" }}>{Math.max(0, o.sessions_limit - o.sessions_used)} restantes</div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
