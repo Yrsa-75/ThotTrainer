@@ -204,8 +204,8 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) { router.push('/'); return }
     const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single(); if (!p) { router.push('/'); return }; setProfile(p)
-    const { data: sess } = p.role === 'admin' ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(normSessions(sess))
-    if (p.role === 'admin') {
+    const { data: sess } = (p.role === 'admin' || p.role === 'super_admin') ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(normSessions(sess))
+    if (p.role === 'admin' || p.role === 'super_admin') {
       const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
     } else {
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
@@ -241,7 +241,7 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [supabase])
   if (loading || !profile) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0f1219", color: "#fff", fontFamily: "'Segoe UI', system-ui, sans-serif" }}><div style={{ textAlign: "center" }}><Logo size={56} /><div style={{ marginTop: 16, fontSize: 20, fontWeight: 700 }}>Thot</div><div style={{ marginTop: 4, fontSize: 12, color: "#8b95a5" }}>Chargement...</div></div></div>
-  const isAdmin = profile.role === 'admin'; const initials = profile.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'
+  const isAdmin = profile.role === 'admin' || profile.role === 'super_admin'; const initials = profile.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: "#0f1219", minHeight: "100vh", color: "#fff" }}>
       <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100 }}>
@@ -280,7 +280,7 @@ export default function DashboardPage() {
 }
 
 function Dashboard({ profile, sessions, personas, formations, config, profiles, setScreen }: any) {
-  const isAdmin = profile.role === 'admin'
+  const isAdmin = profile.role === 'admin' || profile.role === 'super_admin'
   const my = sessions.filter((s: any) => s.vendor_id === profile.id && s.result !== 'in_progress'); const signed = my.filter((s: any) => s.result === 'signed').length; const total = my.length; const avg = total ? Math.round(my.reduce((a: number, s: any) => a + (s.performance_score || 0), 0) / total) : 0; const rate = total ? Math.round((signed / total) * 100) : 0
   const allDone = sessions.filter((s: any) => s.result !== 'in_progress')
 
@@ -370,7 +370,7 @@ function NewSession({ personas, formations, config, onStart }: any) {
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Niveau</div><div style={{ display: "flex", gap: 8 }}>{[{ v: 1, l: "Ouvert" }, { v: 2, l: "Sceptique" }, { v: 3, l: "Hostile" }].map(d => <button key={d.v} onClick={() => setLevel(d.v)} style={{ flex: 1, padding: "10px 8px", background: level === d.v ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${level === d.v ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: level === d.v ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{d.l}</button>)}</div></div>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Durée</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><input type="range" min="1" max="60" value={unlimited ? 20 : durMin} onChange={e => { setDurMin(parseInt(e.target.value)); setUnlimited(false) }} style={{ flex: 1, accentColor: "#63c397", opacity: unlimited ? 0.3 : 1, cursor: "pointer" }} /><span style={{ fontSize: 15, fontWeight: 800, color: unlimited ? "#555" : "#63c397", minWidth: 56, textAlign: "right" }}>{unlimited ? "Illimite" : durMin + " min"}</span></div><div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#555", marginTop: 2 }}><span>1 min</span><span>30 min</span><span>60 min</span></div><button onClick={() => setUnlimited(!unlimited)} style={{ marginTop: 6, padding: "7px 14px", background: unlimited ? "rgba(99,195,151,0.15)" : "#111621", border: "1px solid " + (unlimited ? "#63c397" : "#1e2530"), borderRadius: 10, color: unlimited ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Illimite</button></div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><input type="range" min="1" max="60" value={unlimited ? 20 : durMin} onChange={e => { setDurMin(parseInt(e.target.value)); setUnlimited(false) }} style={{ flex: 1, accentColor: "#63c397", cursor: "pointer" }} /><span style={{ fontSize: 15, fontWeight: 800, color: unlimited ? "#555" : "#63c397", minWidth: 56, textAlign: "right" }}>{durMin + " min"}</span></div><div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#555", marginTop: 2 }}><span>1 min</span><span>30 min</span><span>60 min</span></div></div>
       </div>
     </div>
     <div style={{ fontSize: 12, color: "#8b95a5", textAlign: "center", marginBottom: 12, padding: "10px 16px", background: "rgba(99,195,151,0.05)", borderRadius: 8, border: "1px solid rgba(99,195,151,0.1)", lineHeight: 1.5 }}>Vous avez 30 secondes pour annuler cette session sans qu'elle soit decompte de votre forfait — ideal si la configuration ne vous convient pas.</div><button onClick={handleStart} disabled={!pId} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", padding: 16, background: pId ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 14, color: pId ? "#fff" : "#555", fontSize: 16, fontWeight: 700, cursor: pId ? "pointer" : "default" }}><I.Target /> {isRandom ? "Lancer (prospect mystère)" : fId ? "Commencer la simulation" : "Commencer en mode libre"}</button>
@@ -527,7 +527,7 @@ function Analysis({ session, personas, formations, config, goBack }: any) {
 }
 
 function HistoryScreen({ profile, sessions, personas, formations, profiles, supabase, onView, onReplay }: any) {
-  const isAdmin = profile.role === 'admin'
+  const isAdmin = profile.role === 'admin' || profile.role === 'super_admin'
   const loadReplay = async (s: any) => {
     const { data: msgs } = await supabase.from('messages').select('*').eq('session_id', s.id).order('sequence_number', { ascending: true })
     onReplay({ ...s, messages: msgs || [] })
