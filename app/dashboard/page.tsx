@@ -268,21 +268,21 @@ export default function DashboardPage() {
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #1e2530" }}><Logo size={28} /><div><div style={{ fontSize: 15, fontWeight: 700 }}>Thot</div><div style={{ fontSize: 10, color: "#63c397" }}>{profile.role === 'super_admin' ? 'Super Admin' : (config.company_name || 'Plateforme')}</div></div></div>
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {(profile.role === 'super_admin' ? [
-            { id: "clients",  icon: <I.Settings />, label: "Clients"     },
-            { id: "overview", icon: <I.Target />,   label: "Vue globale" },
-            { id: "revenue",  icon: <I.Award />,    label: "Revenus"     },
-            { id: "settings", icon: <I.Wand />,     label: "Parametres"  },
+            { id: "clients",  icon: <I.Settings />, label: "Clients"      },
+            { id: "overview", icon: <I.Target />,   label: "Vue globale"  },
+            { id: "revenue",  icon: <I.Award />,    label: "Revenus"      },
+            { id: "settings", icon: <I.Wand />,     label: "Parametres"   },
           ] : [
             { id: "dashboard",   icon: <I.Home />,    label: "Tableau de bord"  },
-            { id: "new_session", icon: <I.Play />,    label: "Nouvelle session" },
-            { id: "history",     icon: <I.History />, label: "Historique"       },
-            { id: "badges",      icon: <I.Award />,   label: "Badges"           },
-            { id: "leaderboard", icon: <I.Target />,  label: "Classement"       },
+            { id: "new_session", icon: <I.Play />,    label: "Nouvelle session"  },
+            { id: "history",     icon: <I.History />, label: "Historique"        },
+            { id: "badges",      icon: <I.Award />,   label: "Badges"            },
+            { id: "leaderboard", icon: <I.Target />,  label: "Classement"        },
             ...(isAdmin ? [
               { id: "admin",   icon: <I.Settings />, label: "Administration" },
-              { id: "billing", icon: <I.Target />,   label: "Abonnement"     },
+              { id: "billing", icon: <I.Target />,   label: "Abonnement"    },
             ] : []),
-          ]).map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
+          ]).map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background: screen===item.id ? "rgba(99,195,151,0.1)" : "transparent", border:"none", borderRadius:8, color: screen===item.id ? "#63c397" : "#8b95a5", fontSize:13, fontWeight: screen===item.id ? 600 : 400, cursor:"pointer", textAlign:"left", width:"100%" }}>{item.icon} {item.label}</button>)}
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}>{org && <div style={{ marginBottom: 12, padding: "10px 12px", background: "#0f1219", borderRadius: 8 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><span style={{ fontSize: 11, color: "#8b95a5" }}>Sessions</span><span style={{ fontSize: 11, fontWeight: 700, color: org.sessions_used >= org.sessions_limit * 0.9 ? "#ef4444" : "#63c397" }}>{org.sessions_used}/{org.sessions_limit}</span></div><div style={{ height: 4, background: "#1e2530", borderRadius: 2 }}><div style={{ width: Math.min(100, (org.sessions_used/Math.max(1,org.sessions_limit))*100) + "%", height: "100%", background: org.sessions_used >= org.sessions_limit*0.9 ? "#ef4444" : "#63c397", borderRadius: 2 }} /></div></div>}<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{profile.role === 'super_admin' ? "Super Admin" : isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
