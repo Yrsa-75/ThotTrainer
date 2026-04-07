@@ -267,7 +267,7 @@ export default function DashboardPage() {
       <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100 }}>
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #1e2530" }}><Logo size={28} /><div><div style={{ fontSize: 15, fontWeight: 700 }}>Thot</div><div style={{ fontSize: 10, color: "#63c397" }}>{profile.role === 'super_admin' ? 'Super Admin' : (config.company_name || 'Plateforme')}</div></div></div>
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-          {[{ id: profile.role === 'super_admin' ? 'clients' : 'dashboard', icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(profile.role === "super_admin" ? [{ id: "clients", icon: <I.Settings />, label: "Clients" }] : isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }, { id: "billing", icon: <I.Target />, label: "Abonnement" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
+          {[{ id: profile.role === 'super_admin' ? 'clients' : 'dashboard', icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(profile.role === "super_admin" ? [{ id: "clients", icon: <I.Settings />, label: "Clients" }, { id: "overview", icon: <I.Target />, label: "Vue globale" }, { id: "revenue", icon: <I.Award />, label: "Revenus" }, { id: "settings", icon: <I.Wand />, label: "Parametres" }] : isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }, { id: "billing", icon: <I.Target />, label: "Abonnement" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}>{org && <div style={{ marginBottom: 12, padding: "10px 12px", background: "#0f1219", borderRadius: 8 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><span style={{ fontSize: 11, color: "#8b95a5" }}>Sessions</span><span style={{ fontSize: 11, fontWeight: 700, color: org.sessions_used >= org.sessions_limit * 0.9 ? "#ef4444" : "#63c397" }}>{org.sessions_used}/{org.sessions_limit}</span></div><div style={{ height: 4, background: "#1e2530", borderRadius: 2 }}><div style={{ width: Math.min(100, (org.sessions_used/Math.max(1,org.sessions_limit))*100) + "%", height: "100%", background: org.sessions_used >= org.sessions_limit*0.9 ? "#ef4444" : "#63c397", borderRadius: 2 }} /></div></div>}<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{profile.role === 'super_admin' ? "Super Admin" : isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
@@ -294,6 +294,9 @@ export default function DashboardPage() {
         {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
         {screen === "badges" && <BadgesScreen sessions={sessions} personas={personas} profile={profile} allSessions={sessions} />}
         {screen === "clients" && profile.role === "super_admin" && <SuperAdminClients orgs={allOrgs} onRefresh={loadData} />}
+        {screen === "overview" && profile.role === "super_admin" && <SuperAdminOverview orgs={allOrgs} />}
+        {screen === "revenue" && profile.role === "super_admin" && <SuperAdminRevenue orgs={allOrgs} />}
+        {screen === "settings" && profile.role === "super_admin" && <SuperAdminSettings orgs={allOrgs} onRefresh={loadData} />}
         {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen org={org} profile={profile} onRefresh={loadData} />}
         {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
@@ -1219,6 +1222,283 @@ function BillingScreen({ org, profile, onRefresh }) {
               <button onClick={() => upgrade(plan.id)} disabled={isCurrent || loading} style={{ marginTop:16, width:'100%', padding:'10px', background: isCurrent ? 'rgba(255,255,255,0.05)' : plan.color, border:'none', borderRadius:10, color: isCurrent ? '#555' : '#0f1219', fontSize:13, fontWeight:700, cursor: isCurrent ? 'default' : 'pointer', opacity: loading ? 0.6 : 1 }}>
                 {isCurrent ? 'Forfait actuel' : 'Choisir ' + plan.name}
               </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// SUPER ADMIN — VUE GLOBALE
+// ============================================
+function SuperAdminOverview({ orgs }: any) {
+  const [stripeData, setStripeData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/stripe-data')
+      .then(r => r.json())
+      .then(d => { setStripeData(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const PL: any = { trial:'Trial', starter:'Starter', business:'Business', premium:'Premium', cancelled:'Annule' }
+  const PC: any = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa' }
+
+  const totalOrgs = (orgs||[]).length
+  const activeOrgs = (orgs||[]).filter((o:any) => o.status==='active').length
+  const trialingOrgs = (orgs||[]).filter((o:any) => o.status==='trialing').length
+  const pastDueOrgs = (orgs||[]).filter((o:any) => o.status==='past_due').length
+  const totalSessions = (orgs||[]).reduce((a:number,o:any) => a+(o.sessions_used||0), 0)
+
+  return (
+    <div style={{ padding:'32px 40px', maxWidth:960 }}>
+      <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Vue globale</div>
+      <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Indicateurs clés de la plateforme</div>
+
+      {/* KPIs */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
+        {[
+          { label:'MRR', value: loading ? '...' : (stripeData?.mrr?.total || 0) + '€', color:'#63c397', sub:'revenu mensuel récurrent' },
+          { label:'Clients actifs', value: activeOrgs, color:'#3b82f6', sub: trialingOrgs + ' en essai' },
+          { label:'Total orgs', value: totalOrgs, color:'#a78bfa', sub: pastDueOrgs > 0 ? pastDueOrgs + ' impayé(s)' : 'tout à jour' },
+          { label:'Sessions ce mois', value: totalSessions, color:'#f59e0b', sub:'toutes orgs confondues' },
+        ].map((k,i) => (
+          <div key={i} style={{ padding:20, background:'#111621', borderRadius:14, border:'1px solid #1e2530' }}>
+            <div style={{ fontSize:11, color:'#8b95a5', marginBottom:8, textTransform:'uppercase', letterSpacing:'.05em' }}>{k.label}</div>
+            <div style={{ fontSize:30, fontWeight:800, color:k.color }}>{k.value}</div>
+            <div style={{ fontSize:11, color:'#555', marginTop:4 }}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Répartition par plan */}
+      {stripeData?.mrr?.countByPlan && (
+        <div style={{ background:'#111621', borderRadius:14, border:'1px solid #1e2530', padding:24, marginBottom:20 }}>
+          <div style={{ fontSize:16, fontWeight:700, marginBottom:20 }}>Répartition par forfait</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+            {['starter','business','premium'].map(plan => {
+              const count = stripeData.mrr.countByPlan[plan] || 0
+              const mrr = stripeData.mrr.byPlan[plan] || 0
+              const sessOrgs = (orgs||[]).filter((o:any) => o.plan===plan)
+              const sessTotal = sessOrgs.reduce((a:number,o:any) => a+(o.sessions_used||0),0)
+              return (
+                <div key={plan} style={{ padding:18, background:'#1a1e27', borderRadius:10, borderLeft:'3px solid '+(PC[plan]||'#555') }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                    <span style={{ fontSize:14, fontWeight:700 }}>{PL[plan]}</span>
+                    <span style={{ fontSize:12, color:PC[plan]||'#555', fontWeight:700 }}>{count} client{count>1?'s':''}</span>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:800, color:PC[plan]||'#555', marginBottom:4 }}>{mrr}€</div>
+                  <div style={{ fontSize:11, color:'#8b95a5' }}>MRR • {sessTotal} sessions utilisées</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Top clients par usage */}
+      <div style={{ background:'#111621', borderRadius:14, border:'1px solid #1e2530', padding:24 }}>
+        <div style={{ fontSize:16, fontWeight:700, marginBottom:16 }}>Utilisation par organisation</div>
+        {(orgs||[]).sort((a:any,b:any) => (b.sessions_used||0)-(a.sessions_used||0)).map((o:any) => {
+          const pct = o.sessions_limit > 0 ? Math.min(100,(o.sessions_used/o.sessions_limit)*100) : 0
+          const pc = pct>=90?'#ef4444':pct>=70?'#f59e0b':'#63c397'
+          return (
+            <div key={o.id} style={{ display:'flex', alignItems:'center', gap:16, marginBottom:12 }}>
+              <div style={{ minWidth:140, fontSize:13, fontWeight:600 }}>{o.name}</div>
+              <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:(PC[o.plan]||'#555')+'22', color:PC[o.plan]||'#555', border:'1px solid '+(PC[o.plan]||'#555')+'44', minWidth:60, textAlign:'center' }}>{PL[o.plan]||o.plan}</span>
+              <div style={{ flex:1, height:6, background:'#1e2530', borderRadius:3, overflow:'hidden' }}>
+                <div style={{ width:pct+'%', height:'100%', background:pc, borderRadius:3 }} />
+              </div>
+              <div style={{ fontSize:12, color:pc, minWidth:60, textAlign:'right', fontWeight:600 }}>{o.sessions_used}/{o.sessions_limit}</div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// SUPER ADMIN — REVENUS
+// ============================================
+function SuperAdminRevenue({ orgs }: any) {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/stripe-data')
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const pastDueOrgs = (orgs||[]).filter((o:any) => o.status==='past_due')
+
+  return (
+    <div style={{ padding:'32px 40px', maxWidth:960 }}>
+      <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Revenus</div>
+      <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Suivi financier et facturation Stripe</div>
+
+      {loading && <div style={{ color:'#8b95a5', padding:40, textAlign:'center' }}>Chargement des données Stripe...</div>}
+
+      {data && !data.error && <>
+        {/* MRR */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:28 }}>
+          {[
+            { label:'MRR actuel', value:(data.mrr?.total||0)+'€', color:'#63c397' },
+            { label:'ARR estimé', value:Math.round((data.mrr?.total||0)*12)+'€', color:'#3b82f6' },
+            { label:'Clients impayés', value:(data.pastDue?.length||0), color:(data.pastDue?.length||0)>0?'#ef4444':'#63c397' },
+          ].map((k,i) => (
+            <div key={i} style={{ padding:24, background:'#111621', borderRadius:14, border:'1px solid #1e2530' }}>
+              <div style={{ fontSize:11, color:'#8b95a5', marginBottom:8, textTransform:'uppercase' }}>{k.label}</div>
+              <div style={{ fontSize:32, fontWeight:800, color:k.color }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Clients impayés */}
+        {pastDueOrgs.length > 0 && (
+          <div style={{ background:'rgba(239,68,68,0.05)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:14, padding:24, marginBottom:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'#ef4444', marginBottom:12 }}>⚠️ Clients avec paiement en retard</div>
+            {pastDueOrgs.map((o:any) => (
+              <div key={o.id} style={{ display:'flex', justifyContent:'space-between', padding:'10px 14px', background:'rgba(239,68,68,0.05)', borderRadius:8, marginBottom:8 }}>
+                <span style={{ fontSize:13, fontWeight:600 }}>{o.name}</span>
+                <span style={{ fontSize:12, color:'#ef4444' }}>À relancer</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Factures récentes */}
+        <div style={{ background:'#111621', borderRadius:14, border:'1px solid #1e2530', padding:24 }}>
+          <div style={{ fontSize:16, fontWeight:700, marginBottom:16 }}>Dernières factures</div>
+          {data.invoices?.length === 0 && <div style={{ color:'#8b95a5', fontSize:13 }}>Aucune facture</div>}
+          {(data.invoices||[]).map((inv:any,i:number) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid #1e2530' }}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600 }}>{inv.customer_email || 'Client inconnu'}</div>
+                <div style={{ fontSize:11, color:'#8b95a5', marginTop:2 }}>{inv.date} • {inv.description?.slice(0,50)}</div>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(99,195,151,0.1)', color:'#63c397', border:'1px solid rgba(99,195,151,0.3)' }}>Payée</span>
+                <span style={{ fontSize:16, fontWeight:800, color:'#63c397' }}>{inv.amount}€</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>}
+
+      {data?.error && <div style={{ color:'#ef4444', fontSize:13, padding:20, background:'rgba(239,68,68,0.1)', borderRadius:10, border:'1px solid rgba(239,68,68,0.2)' }}>
+        Erreur Stripe : {data.error}
+      </div>}
+    </div>
+  )
+}
+
+// ============================================
+// SUPER ADMIN — PARAMÈTRES GLOBAUX
+// ============================================
+function SuperAdminSettings({ orgs, onRefresh }: any) {
+  const PLANS = [
+    { id:'starter', name:'Starter', color:'#63c397', defaultPrice:249, defaultSessions:25 },
+    { id:'business', name:'Business', color:'#3b82f6', defaultPrice:489, defaultSessions:100 },
+    { id:'premium', name:'Premium', color:'#a78bfa', defaultPrice:990, defaultSessions:250 },
+  ]
+
+  const [configs, setConfigs] = useState<any>({
+    starter: { sessions: 25, price: 249 },
+    business: { sessions: 100, price: 489 },
+    premium: { sessions: 250, price: 990 },
+  })
+  const [saving, setSaving] = useState<string|null>(null)
+  const [results, setResults] = useState<any>({})
+
+  // Initialiser avec les données réelles des orgs
+  useEffect(() => {
+    const counts: any = {}
+    PLANS.forEach(p => {
+      const planOrgs = (orgs||[]).filter((o:any) => o.plan === p.id)
+      const firstOrg = planOrgs[0]
+      counts[p.id] = {
+        sessions: firstOrg?.sessions_limit || p.defaultSessions,
+        price: p.defaultPrice,
+        orgCount: planOrgs.length,
+      }
+    })
+    setConfigs(counts)
+  }, [orgs])
+
+  const savePlan = async (planId: string) => {
+    setSaving(planId)
+    setResults((r:any) => ({ ...r, [planId]: null }))
+    try {
+      const cfg = configs[planId]
+      const r = await fetch('/api/admin/update-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId, newSessions: cfg.sessions, newPrice: cfg.price })
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      setResults((prev:any) => ({ ...prev, [planId]: { ok: true, ...d } }))
+      onRefresh()
+    } catch(e:any) {
+      setResults((prev:any) => ({ ...prev, [planId]: { ok: false, error: e.message } }))
+    }
+    setSaving(null)
+  }
+
+  const iS: any = { padding:'10px 14px', background:'#0f1219', border:'1px solid #2a2f3a', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, outline:'none', width:'100%', boxSizing:'border-box' }
+
+  return (
+    <div style={{ padding:'32px 40px', maxWidth:900 }}>
+      <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Paramètres globaux</div>
+      <div style={{ fontSize:14, color:'#8b95a5', marginBottom:8 }}>Modifier les forfaits — les changements se répercutent sur Stripe et tous les abonnements actifs.</div>
+      <div style={{ fontSize:12, color:'#f59e0b', marginBottom:32, padding:'10px 14px', background:'rgba(245,158,11,0.1)', borderRadius:8, border:'1px solid rgba(245,158,11,0.2)' }}>
+        ⚠️ Un changement de prix crée un nouveau tarif dans Stripe et migre tous les abonnements actifs au prochain renouvellement. L'ancien tarif est archivé.
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
+        {PLANS.map(plan => {
+          const cfg = configs[plan.id] || {}
+          const result = results[plan.id]
+          const orgCount = cfg.orgCount || 0
+          return (
+            <div key={plan.id} style={{ background:'#111621', borderRadius:16, border:'2px solid #1e2530', padding:24 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+                <div style={{ fontSize:18, fontWeight:800 }}>{plan.name}</div>
+                <span style={{ fontSize:11, color:plan.color, padding:'3px 8px', borderRadius:20, background:plan.color+'22', border:'1px solid '+plan.color+'44' }}>
+                  {orgCount} client{orgCount>1?'s':''}
+                </span>
+              </div>
+
+              <label style={{ fontSize:11, color:'#8b95a5', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.05em' }}>
+                Sessions / mois
+              </label>
+              <input type="number" min="1" max="9999" value={cfg.sessions||0}
+                onChange={e => setConfigs((c:any) => ({...c, [plan.id]: {...c[plan.id], sessions: parseInt(e.target.value)||0}}))}
+                style={{...iS, marginBottom:16}} />
+
+              <label style={{ fontSize:11, color:'#8b95a5', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'.05em' }}>
+                Prix mensuel (€ HT)
+              </label>
+              <input type="number" min="1" max="99999" value={cfg.price||0}
+                onChange={e => setConfigs((c:any) => ({...c, [plan.id]: {...c[plan.id], price: parseInt(e.target.value)||0}}))}
+                style={{...iS, color:plan.color, marginBottom:20}} />
+
+              <button onClick={() => savePlan(plan.id)} disabled={saving===plan.id}
+                style={{ width:'100%', padding:'12px', background:saving===plan.id?'#1e2530':plan.color, border:'none', borderRadius:10, color:saving===plan.id?'#555':'#0f1219', fontSize:13, fontWeight:700, cursor:saving===plan.id?'default':'pointer' }}>
+                {saving===plan.id ? 'Mise à jour...' : 'Enregistrer'}
+              </button>
+
+              {result && (
+                <div style={{ marginTop:12, fontSize:12, padding:'8px 10px', borderRadius:8, background:result.ok?'rgba(99,195,151,0.1)':'rgba(239,68,68,0.1)', color:result.ok?'#63c397':'#ef4444', border:'1px solid '+(result.ok?'rgba(99,195,151,0.3)':'rgba(239,68,68,0.3)') }}>
+                  {result.ok ? '✅ ' + (result.sessionsUpdated?'Sessions mises à jour. ':'') + (result.priceUpdated?result.subsUpdated+' abonnement(s) migré(s) vers le nouveau tarif.':'') : '❌ ' + result.error}
+                </div>
+              )}
             </div>
           )
         })}
