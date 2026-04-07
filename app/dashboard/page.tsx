@@ -920,20 +920,112 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
 
 function SuperAdminClients({ orgs, onRefresh }) {
   const [search, setSearch] = useState('')
+  const [showCreate, setShowCreate] = useState(false)
+  const [extendId, setExtendId] = useState(null)
+  const [extendDays, setExtendDays] = useState(7)
+  const [form, setForm] = useState({ orgName:'', adminName:'', email:'', password:'', plan:'starter', trialDays:7 })
+  const [creating, setCreating] = useState(false)
+  const [extending, setExtending] = useState(false)
+  const [msg, setMsg] = useState('')
+
   const PL = { trial:'Trial', starter:'Starter', business:'Business', premium:'Premium', cancelled:'Annule' }
   const PC = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa', cancelled:'#8b95a5' }
   const SL = { trialing:'Essai gratuit', active:'Actif', past_due:'Impaye', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
-  const list = (orgs||[]).filter(o => !search || o.name.toLowerCase().includes(search.toLowerCase()))
+  const PLAN_SESSIONS = { trial:0, starter:25, business:100, premium:250 }
+  
+  const filtered = (orgs||[]).filter(o => !search || o.name.toLowerCase().includes(search.toLowerCase()))
   const totalActive = (orgs||[]).filter(o => o.status==='active'||o.status==='trialing').length
   const totalSess = (orgs||[]).reduce((a,o) => a+(o.sessions_used||0), 0)
 
+  const createClient = async () => {
+    if (!form.orgName || !form.adminName || !form.email || !form.password) { setMsg('Tous les champs sont requis'); return }
+    setCreating(true); setMsg('')
+    try {
+      const r = await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ orgName: form.orgName, adminEmail: form.email, adminName: form.adminName, password: form.password }) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      // Update plan + sessions_limit + trial
+      const trialEnd = new Date(Date.now() + form.trialDays * 86400000).toISOString()
+      const { createClient: sc } = await import('@/lib/supabase-browser')
+      const sb = sc()
+      await sb.from('organisations').update({ plan: form.plan, sessions_limit: PLAN_SESSIONS[form.plan], trial_ends_at: trialEnd, current_period_end: trialEnd }).eq('id', d.orgId)
+      setMsg('Client cree avec succes')
+      setShowCreate(false)
+      setForm({ orgName:'', adminName:'', email:'', password:'', plan:'starter', trialDays:7 })
+      setTimeout(() => { setMsg(''); onRefresh() }, 1500)
+    } catch(e) { setMsg('Erreur: ' + e.message) }
+    setCreating(false)
+  }
+
+  const extendTrial = async (orgId) => {
+    setExtending(true)
+    try {
+      const r = await fetch('/api/admin/extend-trial', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ orgId, days: extendDays }) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      setExtendId(null)
+      onRefresh()
+    } catch(e) { alert('Erreur: ' + e.message) }
+    setExtending(false)
+  }
+
+  const iS = { width:'100%', padding:'10px 14px', background:'#0f1219', border:'1px solid #2a2f3a', borderRadius:8, color:'#fff', fontSize:13, outline:'none', marginBottom:12, boxSizing:'border-box' }
+
   return (
     <div style={{ padding:"32px 40px", maxWidth:960 }}>
-      <div style={{ marginBottom:28 }}>
-        <div style={{ fontSize:24, fontWeight:800 }}>Clients</div>
-        <div style={{ fontSize:14, color:"#8b95a5", marginTop:4 }}>Vue globale de toutes les organisations</div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
+        <div>
+          <div style={{ fontSize:24, fontWeight:800 }}>Clients</div>
+          <div style={{ fontSize:14, color:"#8b95a5", marginTop:4 }}>Vue globale de toutes les organisations</div>
+        </div>
+        <button onClick={() => { setShowCreate(!showCreate); setMsg('') }} style={{ padding:"10px 20px", background:"rgba(99,195,151,0.15)", border:"1px solid rgba(99,195,151,0.4)", borderRadius:10, color:"#63c397", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+          {showCreate ? 'Annuler' : '+ Creer un client'}
+        </button>
       </div>
+
+      {/* Create client form */}
+      {showCreate && <div style={{ background:"#111621", borderRadius:14, border:"1px solid #1e2530", padding:24, marginBottom:24 }}>
+        <div style={{ fontSize:16, fontWeight:700, marginBottom:20 }}>Nouveau client</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+          <div>
+            <label style={{ fontSize:11, color:"#8b95a5", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>Nom de l'organisation</label>
+            <input value={form.orgName} onChange={e => setForm(f => ({...f, orgName:e.target.value}))} placeholder="Acme Corp" style={iS} />
+          </div>
+          <div>
+            <label style={{ fontSize:11, color:"#8b95a5", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>Nom de l'admin</label>
+            <input value={form.adminName} onChange={e => setForm(f => ({...f, adminName:e.target.value}))} placeholder="Jean Dupont" style={iS} />
+          </div>
+          <div>
+            <label style={{ fontSize:11, color:"#8b95a5", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>Email admin</label>
+            <input type="email" value={form.email} onChange={e => setForm(f => ({...f, email:e.target.value}))} placeholder="jean@acme.com" style={iS} />
+          </div>
+          <div>
+            <label style={{ fontSize:11, color:"#8b95a5", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>Mot de passe initial</label>
+            <input type="password" value={form.password} onChange={e => setForm(f => ({...f, password:e.target.value}))} placeholder="8 caracteres min" style={iS} />
+          </div>
+          <div>
+            <label style={{ fontSize:11, color:"#8b95a5", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>Forfait</label>
+            <select value={form.plan} onChange={e => setForm(f => ({...f, plan:e.target.value}))} style={{...iS, marginBottom:0}}>
+              <option value="trial">Trial (0 sessions)</option>
+              <option value="starter">Starter (25 sessions)</option>
+              <option value="business">Business (100 sessions)</option>
+              <option value="premium">Premium (250 sessions)</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize:11, color:"#8b95a5", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>Jours d'essai gratuit</label>
+            <input type="number" min="0" max="90" value={form.trialDays} onChange={e => setForm(f => ({...f, trialDays:parseInt(e.target.value)||0}))} style={iS} />
+          </div>
+        </div>
+        {msg && <div style={{ fontSize:12, color: msg.includes('succes') ? "#63c397" : "#ef4444", marginBottom:12 }}>{msg}</div>}
+        <button onClick={createClient} disabled={creating} style={{ padding:"12px 24px", background:"linear-gradient(135deg,#63c397,#4aa87a)", border:"none", borderRadius:10, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", opacity:creating?0.6:1 }}>
+          {creating ? 'Creation...' : 'Creer le client'}
+        </button>
+        <div style={{ fontSize:11, color:"#8b95a5", marginTop:10 }}>Aucun moyen de paiement requis — acces direct configure manuellement.</div>
+      </div>}
+
+      {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:28 }}>
         {[{l:"Organisations",v:(orgs||[]).length,c:"#63c397"},{l:"Actives / En essai",v:totalActive,c:"#3b82f6"},{l:"Sessions ce mois",v:totalSess,c:"#a78bfa"}].map((s,i) => (
           <div key={i} style={{ padding:20, background:"#111621", borderRadius:12, border:"1px solid #1e2530" }}>
@@ -942,29 +1034,48 @@ function SuperAdminClients({ orgs, onRefresh }) {
           </div>
         ))}
       </div>
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." style={{ width:"100%", padding:"10px 14px", background:"#111621", border:"1px solid #1e2530", borderRadius:10, color:"#fff", fontSize:13, outline:"none", marginBottom:20, boxSizing:"border-box" }} />
-      {list.length === 0 ? <div style={{ textAlign:"center", padding:40, color:"#8b95a5" }}>Aucune organisation</div> :
-      list.map(o => {
+
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une organisation..." style={{ width:"100%", padding:"10px 14px", background:"#111621", border:"1px solid #1e2530", borderRadius:10, color:"#fff", fontSize:13, outline:"none", marginBottom:20, boxSizing:"border-box" }} />
+
+      {filtered.length === 0 ? <div style={{ textAlign:"center", padding:40, color:"#8b95a5" }}>Aucune organisation</div> :
+      filtered.map(o => {
         const pct = o.sessions_limit > 0 ? Math.min(100, (o.sessions_used/o.sessions_limit)*100) : 0
         const pc = pct >= 90 ? "#ef4444" : pct >= 70 ? "#f59e0b" : "#63c397"
         const daysLeft = o.trial_ends_at ? Math.max(0, Math.ceil((new Date(o.trial_ends_at).getTime()-Date.now())/86400000)) : null
         const periodEnd = o.current_period_end ? new Date(o.current_period_end).toLocaleDateString('fr-FR') : null
+        const isExtending = extendId === o.id
+
         return (
           <div key={o.id} style={{ padding:20, background:"#111621", borderRadius:14, border:"1px solid #1e2530", marginBottom:12 }}>
             <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:14 }}>
               <div>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
                   <div style={{ fontSize:16, fontWeight:800 }}>{o.name}</div>
-                  <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:PC[o.plan]+'22', color:PC[o.plan]||'#8b95a5', border:"1px solid "+(PC[o.plan]||'#8b95a5')+'44' }}>{PL[o.plan]||o.plan}</span>
+                  <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:(PC[o.plan]||'#8b95a5')+'22', color:PC[o.plan]||'#8b95a5', border:"1px solid "+(PC[o.plan]||'#8b95a5')+'44' }}>{PL[o.plan]||o.plan}</span>
                   <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:(SC[o.status]||'#8b95a5')+'22', color:SC[o.status]||'#8b95a5', border:"1px solid "+(SC[o.status]||'#8b95a5')+'44' }}>{SL[o.status]||o.status}</span>
                 </div>
                 {o.adminProfile && <div style={{ fontSize:12, color:"#8b95a5" }}>{o.adminProfile.full_name} — {o.adminProfile.email}</div>}
               </div>
-              <div style={{ textAlign:"right", fontSize:12, color:"#8b95a5" }}>
-                {o.status==='trialing' && daysLeft!==null && <div style={{ color:daysLeft<=2?"#ef4444":"#f59e0b" }}>{daysLeft>0?daysLeft+" j d'essai restants":"Essai expire"}</div>}
-                {o.status==='active' && periodEnd && <div>Renouvellement le {periodEnd}</div>}
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
+                {o.status==='trialing' && daysLeft!==null && <div style={{ fontSize:12, color:daysLeft<=2?"#ef4444":"#f59e0b" }}>{daysLeft>0?daysLeft+" j d'essai restants":"Essai expire"}</div>}
+                {o.status==='active' && periodEnd && <div style={{ fontSize:12, color:"#8b95a5" }}>Renouvellement le {periodEnd}</div>}
+                <button onClick={() => setExtendId(isExtending ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(99,195,151,0.1)", border:"1px solid rgba(99,195,151,0.3)", borderRadius:6, color:"#63c397", cursor:"pointer" }}>
+                  + Essai gratuit
+                </button>
               </div>
             </div>
+
+            {/* Extend trial inline */}
+            {isExtending && <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14, padding:"12px 14px", background:"rgba(99,195,151,0.05)", borderRadius:10, border:"1px solid rgba(99,195,151,0.2)" }}>
+              <span style={{ fontSize:13, color:"#ccc" }}>Ajouter</span>
+              <input type="number" min="1" max="90" value={extendDays} onChange={e => setExtendDays(parseInt(e.target.value)||1)} style={{ width:70, padding:"6px 10px", background:"#0f1219", border:"1px solid #2a2f3a", borderRadius:8, color:"#63c397", fontSize:14, fontWeight:700, textAlign:"center", outline:"none" }} />
+              <span style={{ fontSize:13, color:"#ccc" }}>jour(s) d'essai</span>
+              <button onClick={() => extendTrial(o.id)} disabled={extending} style={{ padding:"7px 16px", background:"#63c397", border:"none", borderRadius:8, color:"#0f1219", fontSize:13, fontWeight:700, cursor:"pointer", opacity:extending?0.6:1 }}>
+                {extending ? '...' : 'Confirmer'}
+              </button>
+              <button onClick={() => setExtendId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
+            </div>}
+
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
               <div style={{ flex:1 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#8b95a5", marginBottom:4 }}>
