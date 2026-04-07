@@ -287,7 +287,7 @@ export default function DashboardPage() {
         {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
         {screen === "badges" && <BadgesScreen sessions={sessions} personas={personas} profile={profile} allSessions={sessions} />}
         {screen === "clients" && profile.role === "super_admin" && <SuperAdminClients orgs={allOrgs} onRefresh={loadData} />}
-        {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen org={org} onRefresh={loadData} />}
+        {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen org={org} profile={profile} onRefresh={loadData} />}
         {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
     </div>
@@ -1096,7 +1096,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
   )
 }
 
-function BillingScreen({ org, onRefresh }) {
+function BillingScreen({ org, profile, onRefresh }) {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -1128,7 +1128,7 @@ function BillingScreen({ org, onRefresh }) {
         else throw new Error(d.error || 'Erreur portail')
       } else {
         // Nouvel abonnement
-        const r = await fetch('/api/stripe/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ priceId, orgId: org.id, orgName: org.name, adminEmail: '' }) })
+        const r = await fetch('/api/stripe/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ priceId, orgId: org.id, orgName: org.name, adminEmail: profile?.email || '' }) })
         const d = await r.json()
         if (d.url) window.location.href = d.url
         else throw new Error(d.error || 'Erreur checkout')
