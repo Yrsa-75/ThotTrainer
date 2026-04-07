@@ -63,9 +63,12 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <a href="/forgot-password" style={{ color: '#63c397', fontSize: 13, textDecoration: 'none' }}>
-            Mot de passe oublié ?
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+          <a href="/forgot-password" style={{ color: '#8b95a5', fontSize: 13, textDecoration: 'none' }}>
+            Mot de passe oublie ?
+          </a>
+          <a href="/register" style={{ color: '#63c397', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>
+            Creer un compte →
           </a>
         </div>
       </div>
