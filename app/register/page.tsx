@@ -3,17 +3,17 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const PLANS = [
-  { id: 'starter', name: 'Starter', price: 249, sessions: 50,
+  { id: 'starter', name: 'Starter', price: 249, sessions: 25,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER,
-    features: ['50 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Support email'],
+    features: ['25 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Support email'],
     color: '#63c397' },
-  { id: 'business', name: 'Business', price: 489, sessions: 200,
+  { id: 'business', name: 'Business', price: 489, sessions: 100,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
-    features: ['200 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
+    features: ['100 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
     color: '#3b82f6', popular: true },
-  { id: 'premium', name: 'Premium', price: 990, sessions: 500,
+  { id: 'premium', name: 'Premium', price: 990, sessions: 250,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM,
-    features: ['500 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Dashboard admin', 'Support dedie', 'Onboarding personnalise'],
+    features: ['250 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Dashboard admin', 'Support dedie', 'Onboarding personnalise'],
     color: '#a78bfa' },
 ]
 
