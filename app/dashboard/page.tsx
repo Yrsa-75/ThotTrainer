@@ -260,7 +260,7 @@ export default function DashboardPage() {
       <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100 }}>
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #1e2530" }}><Logo size={28} /><div><div style={{ fontSize: 15, fontWeight: 700 }}>Thot</div><div style={{ fontSize: 10, color: "#63c397" }}>{profile.role === 'super_admin' ? 'Super Admin' : (config.company_name || 'Plateforme')}</div></div></div>
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
-          {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(profile.role === "super_admin" ? [{ id: "clients", icon: <I.Settings />, label: "Clients" }] : isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
+          {[{ id: "dashboard", icon: <I.Home />, label: "Tableau de bord" }, { id: "new_session", icon: <I.Play />, label: "Nouvelle session" }, { id: "history", icon: <I.History />, label: "Historique" }, { id: "badges", icon: <I.Award />, label: "Badges" }, { id: "leaderboard", icon: <I.Target />, label: "Classement" }, ...(profile.role === "super_admin" ? [{ id: "clients", icon: <I.Settings />, label: "Clients" }] : isAdmin ? [{ id: "admin", icon: <I.Settings />, label: "Administration" }, { id: "billing", icon: <I.Target />, label: "Abonnement" }] : [])].map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: screen === item.id ? "rgba(99,195,151,0.1)" : "transparent", border: "none", borderRadius: 8, color: screen === item.id ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: screen === item.id ? 600 : 400, cursor: "pointer", textAlign: "left", width: "100%" }}>{item.icon} {item.label}</button>)}
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}>{org && <div style={{ marginBottom: 12, padding: "10px 12px", background: "#0f1219", borderRadius: 8 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><span style={{ fontSize: 11, color: "#8b95a5" }}>Sessions</span><span style={{ fontSize: 11, fontWeight: 700, color: org.sessions_used >= org.sessions_limit * 0.9 ? "#ef4444" : "#63c397" }}>{org.sessions_used}/{org.sessions_limit}</span></div><div style={{ height: 4, background: "#1e2530", borderRadius: 2 }}><div style={{ width: Math.min(100, (org.sessions_used/Math.max(1,org.sessions_limit))*100) + "%", height: "100%", background: org.sessions_used >= org.sessions_limit*0.9 ? "#ef4444" : "#63c397", borderRadius: 2 }} /></div></div>}<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{isAdmin ? "Manager" : "Vendeur"}</div></div></div><button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
@@ -287,6 +287,7 @@ export default function DashboardPage() {
         {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
         {screen === "badges" && <BadgesScreen sessions={sessions} personas={personas} profile={profile} allSessions={sessions} />}
         {screen === "clients" && profile.role === "super_admin" && <SuperAdminClients orgs={allOrgs} onRefresh={loadData} />}
+        {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen org={org} onRefresh={loadData} />}
         {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
     </div>
@@ -1091,6 +1092,129 @@ function SuperAdminClients({ orgs, onRefresh }) {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function BillingScreen({ org, onRefresh }) {
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const PL = { trial:'Trial', starter:'Starter', business:'Business', premium:'Premium', cancelled:'Annule' }
+  const PC = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa', cancelled:'#8b95a5' }
+  const SL = { trialing:'Essai gratuit en cours', active:'Actif', past_due:'Paiement en retard', cancelled:'Annule', paused:'Pause' }
+  const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
+  const PLANS = [
+    { id:'starter', name:'Starter', price:249, sessions:25, color:'#63c397', features:['25 sessions / mois','Personas IA illimites','Analyse post-session','Support email'] },
+    { id:'business', name:'Business', price:489, sessions:100, color:'#3b82f6', popular:true, features:['100 sessions / mois','Personas IA illimites','Analyse post-session','Dashboard admin','Support prioritaire'] },
+    { id:'premium', name:'Premium', price:990, sessions:250, color:'#a78bfa', features:['250 sessions / mois','Personas IA illimites','Analyse post-session','Dashboard admin','Support dedie','Onboarding personnalise'] },
+  ]
+
+  const upgrade = async (planId) => {
+    const plan = PLANS.find(p => p.id === planId)
+    if (!plan || planId === org?.plan) return
+    setLoading(true); setMsg('')
+    try {
+      const priceId = {
+        starter: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER,
+        business: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
+        premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM,
+      }[planId]
+      if (org?.stripe_subscription_id) {
+        // Abonnement existant -> portail Stripe
+        const r = await fetch('/api/stripe/portal', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ orgId: org.id }) })
+        const d = await r.json()
+        if (d.url) window.location.href = d.url
+        else throw new Error(d.error || 'Erreur portail')
+      } else {
+        // Nouvel abonnement
+        const r = await fetch('/api/stripe/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ priceId, orgId: org.id, orgName: org.name, adminEmail: '' }) })
+        const d = await r.json()
+        if (d.url) window.location.href = d.url
+        else throw new Error(d.error || 'Erreur checkout')
+      }
+    } catch(e) { setMsg('Erreur: ' + e.message) }
+    setLoading(false)
+  }
+
+  if (!org) return (
+    <div style={{ padding:'32px 40px', color:'#8b95a5' }}>
+      <div style={{ fontSize:22, fontWeight:800, marginBottom:8, color:'#fff' }}>Abonnement</div>
+      Aucune information d'abonnement disponible.
+    </div>
+  )
+
+  const pct = org.sessions_limit > 0 ? Math.min(100, (org.sessions_used/org.sessions_limit)*100) : 0
+  const pctColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#63c397'
+  const trialEnd = org.trial_ends_at ? new Date(org.trial_ends_at) : null
+  const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime()-Date.now())/86400000)) : null
+  const periodEnd = org.current_period_end ? new Date(org.current_period_end).toLocaleDateString('fr-FR') : null
+  const currentPlan = PLANS.find(p => p.id === org.plan)
+
+  return (
+    <div style={{ padding:'32px 40px', maxWidth:860 }}>
+      <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Abonnement</div>
+      <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Gerez votre forfait et suivez votre consommation</div>
+
+      {/* Carte statut actuel */}
+      <div style={{ background:'#111621', borderRadius:16, border:'1px solid #1e2530', padding:28, marginBottom:28 }}>
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20 }}>
+          <div>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+              <div style={{ fontSize:22, fontWeight:800 }}>{org.name}</div>
+              <span style={{ fontSize:12, fontWeight:700, padding:'4px 10px', borderRadius:20, background:(PC[org.plan]||'#8b95a5')+'22', color:PC[org.plan]||'#8b95a5', border:'1px solid '+(PC[org.plan]||'#8b95a5')+'44' }}>{PL[org.plan]||org.plan}</span>
+              <span style={{ fontSize:12, fontWeight:700, padding:'4px 10px', borderRadius:20, background:(SC[org.status]||'#8b95a5')+'22', color:SC[org.status]||'#8b95a5', border:'1px solid '+(SC[org.status]||'#8b95a5')+'44' }}>{SL[org.status]||org.status}</span>
+            </div>
+            {org.status==='trialing' && daysLeft!==null && <div style={{ fontSize:13, color:daysLeft<=2?'#ef4444':'#f59e0b' }}>{daysLeft>0?daysLeft+" jour(s) d'essai restant(s)":"Essai expire - activez votre abonnement"}</div>}
+            {org.status==='active' && periodEnd && <div style={{ fontSize:13, color:'#8b95a5' }}>Prochain renouvellement le {periodEnd}</div>}
+            {currentPlan && <div style={{ fontSize:13, color:'#8b95a5', marginTop:4 }}>{currentPlan.price}€ / mois HT</div>}
+          </div>
+          {org.stripe_customer_id && <button onClick={() => upgrade(org.plan)} disabled={loading} style={{ padding:'10px 20px', background:'rgba(99,195,151,0.1)', border:'1px solid rgba(99,195,151,0.3)', borderRadius:10, color:'#63c397', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+            Gerer la facturation
+          </button>}
+        </div>
+
+        {/* Barre sessions */}
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:8 }}>
+            <span style={{ color:'#8b95a5' }}>Sessions utilisees ce mois</span>
+            <span style={{ fontWeight:700, color:pctColor }}>{org.sessions_used} / {org.sessions_limit}</span>
+          </div>
+          <div style={{ height:8, background:'#1e2530', borderRadius:4, overflow:'hidden' }}>
+            <div style={{ width:pct+'%', height:'100%', background:pctColor, borderRadius:4, transition:'width 0.3s' }} />
+          </div>
+          <div style={{ fontSize:12, color:'#8b95a5', marginTop:6 }}>{Math.max(0, org.sessions_limit - org.sessions_used)} sessions restantes</div>
+        </div>
+      </div>
+
+      {msg && <div style={{ padding:'12px 16px', background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:10, color:'#fca5a5', fontSize:13, marginBottom:20 }}>{msg}</div>}
+
+      {/* Grille des forfaits */}
+      <div style={{ fontSize:16, fontWeight:700, marginBottom:16 }}>Changer de forfait</div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+        {PLANS.map(plan => {
+          const isCurrent = org.plan === plan.id
+          return (
+            <div key={plan.id} style={{ background: isCurrent ? 'rgba(99,195,151,0.05)' : '#111621', borderRadius:14, border:'2px solid '+(isCurrent?plan.color:'#1e2530'), padding:24, position:'relative' }}>
+              {plan.popular && !isCurrent && <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#3b82f6', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>Populaire</div>}
+              {isCurrent && <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:plan.color, color:'#0f1219', fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>Forfait actuel</div>}
+              <div style={{ fontSize:18, fontWeight:700 }}>{plan.name}</div>
+              <div style={{ fontSize:32, fontWeight:800, color:plan.color, margin:'10px 0 4px' }}>{plan.price}€</div>
+              <div style={{ fontSize:12, color:'#8b95a5', marginBottom:14 }}>par mois HT</div>
+              <div style={{ fontSize:13, fontWeight:600, color:plan.color, marginBottom:14 }}>{plan.sessions} sessions / mois</div>
+              {plan.features.map(f => (
+                <div key={f} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#b4bcc8', marginBottom:6 }}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="6" fill={plan.color} opacity=".2"/><path d="M3 6l2 2 4-4" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  {f}
+                </div>
+              ))}
+              <button onClick={() => upgrade(plan.id)} disabled={isCurrent || loading} style={{ marginTop:16, width:'100%', padding:'10px', background: isCurrent ? 'rgba(255,255,255,0.05)' : plan.color, border:'none', borderRadius:10, color: isCurrent ? '#555' : '#0f1219', fontSize:13, fontWeight:700, cursor: isCurrent ? 'default' : 'pointer', opacity: loading ? 0.6 : 1 }}>
+                {isCurrent ? 'Forfait actuel' : 'Choisir ' + plan.name}
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
