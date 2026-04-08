@@ -712,6 +712,7 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
   const [tab, setTab] = useState("context"); const [editId, setEditId] = useState<string | null>(null)
   const [nn, setNn] = useState(""); const [ne, setNe] = useState(""); const [np, setNp] = useState(""); const [msg, setMsg] = useState("")
   const [genDesc, setGenDesc] = useState(""); const [generating, setGenerating] = useState(false); const [genResult, setGenResult] = useState<any>(null)
+  const [generatingPersona, setGeneratingPersona] = useState(false); const [generatedPersona, setGeneratedPersona] = useState<any>(null)
 
   const EF = ({ label, value, onSave, rows = 1 }: any) => { const [v, setV] = useState(value || ""); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label}</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => v !== (value || "") && onSave(v)} rows={rows} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
   const EA = ({ label, value, onSave }: any) => { const [v, setV] = useState((value || []).join("\n")); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label} (un par ligne)</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => onSave(v.split("\n").filter((x: string) => x.trim()))} rows={4} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
@@ -756,6 +757,50 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
       }
     }
     setGenResult(null); setGenDesc(''); onRefresh()
+  }
+
+  const applyGeneratedPersona = async () => {
+    if (!generatedPersona || generatedPersona.error) return
+    await supabase.from('personas').insert({
+      name: generatedPersona.name, subtitle: generatedPersona.subtitle, age: generatedPersona.age, emoji: generatedPersona.emoji, profession: generatedPersona.profession, situation: generatedPersona.situation, personality: generatedPersona.personality, motivations: generatedPersona.motivations, obstacles: generatedPersona.obstacles, communication_style: generatedPersona.communication_style,
+    })
+    setGeneratedPersona(null); onRefresh()
+  }
+
+  const generatePersonaAI = async () => {
+    setGeneratingPersona(true); setGeneratedPersona(null)
+    try {
+      const context = [
+        config.company_name && `Entreprise: ${config.company_name}`,
+        config.company_sector && `Secteur: ${config.company_sector}`,
+        config.company_description && `Description: ${config.company_description}`,
+        config.prospect_context && `Contexte prospect: ${config.prospect_context}`,
+        config.common_objections && `Objections courantes: ${config.common_objections}`,
+        config.vocabulary_tone && `Ton et vocabulaire: ${config.vocabulary_tone}`,
+        formations.length > 0 && `Produits/services vendus: ${formations.map((f: any) => f.name + ' - ' + (f.description || '').slice(0, 100)).join(' | ')}`,
+        personas.length > 0 && `Prospects existants (pour varier): ${personas.map((p: any) => p.name + ' (' + p.profession + ')').join(', ')}`,
+      ].filter(Boolean).join('\n')
+
+      const prompt = `Tu es un expert en simulation commerciale. Génère UN prospect virtuel réaliste et cohérent pour une entreprise.
+
+CONTEXTE DE L'ENTREPRISE:
+${context}
+
+RÈGLES:
+- Le prospect doit être cohérent avec le secteur et les produits vendus
+- Il doit être DIFFÉRENT des prospects existants (varier âge, profession, situation, personnalité)
+- Personnalité réaliste avec des nuances (pas caricatural)
+- Les freins doivent être crédibles pour ce type de prospect
+- L'emoji doit correspondre au profil (genre, âge)
+
+Réponds UNIQUEMENT en JSON valide sans backticks:
+{"name":"Prénom Nom","subtitle":"Description courte (5 mots max)","age":00,"emoji":"👤","profession":"Métier","situation":"Situation personnelle et professionnelle en 2 phrases","personality":"Traits de personnalité en 2 phrases","motivations":"Ce qui pourrait le convaincre en 2 phrases","obstacles":"Ses freins et objections probables en 2 phrases","communication_style":"Son style de communication en 1 phrase"}`
+
+      const res = await callChat(prompt, [{ sender: 'user', content: 'Génère un nouveau prospect.' }])
+      const parsed = JSON.parse(res.replace(/```json\s*/g, '').replace(/```/g, '').trim())
+      setGeneratedPersona(parsed)
+    } catch (e) { setGeneratedPersona({ error: true }) }
+    setGeneratingPersona(false)
   }
 
   return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
@@ -837,7 +882,31 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
 
     {/* ===== PERSONAS ===== */}
     {tab === "personas" && <div>
-      <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('personas').insert({ name: "Nouveau prospect", subtitle: "À configurer", age: 30, emoji: "👤", profession: "À définir", situation: "À définir", personality: "À définir", motivations: "À définir", obstacles: "À définir", communication_style: "À définir" }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un prospect</button></div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <button onClick={async () => { await supabase.from('personas').insert({ name: "Nouveau prospect", subtitle: "À configurer", age: 30, emoji: "👤", profession: "À définir", situation: "À définir", personality: "À définir", motivations: "À définir", obstacles: "À définir", communication_style: "À définir" }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter manuellement</button>
+        <button onClick={generatePersonaAI} disabled={generatingPersona} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: generatingPersona ? "#1e2530" : "linear-gradient(135deg, rgba(99,195,151,0.15), rgba(96,165,250,0.15))", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: generatingPersona ? "#8b95a5" : "#63c397", fontSize: 13, fontWeight: 600, cursor: generatingPersona ? "default" : "pointer" }}><I.Wand /> {generatingPersona ? "⏳ Génération..." : "Générer avec l'IA"}</button>
+      </div>
+
+      {/* Preview du prospect généré par l'IA */}
+      {generatedPersona && !generatedPersona.error && <div style={{ padding: 24, background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.25)", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}><I.Wand /><div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>Prospect généré par l'IA</div></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <span style={{ fontSize: 36 }}>{generatedPersona.emoji}</span>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>{generatedPersona.name}</div>
+            <div style={{ fontSize: 13, color: "#8b95a5" }}>{generatedPersona.subtitle} • {generatedPersona.age} ans • {generatedPersona.profession}</div>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+          {[{ l: "Situation", v: generatedPersona.situation }, { l: "Personnalité", v: generatedPersona.personality }, { l: "Motivations", v: generatedPersona.motivations }, { l: "Freins", v: generatedPersona.obstacles }, { l: "Style de communication", v: generatedPersona.communication_style }].map((x, i) => <div key={i} style={{ padding: 10, background: "#111621", borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 700, color: "#63c397", marginBottom: 4, textTransform: "uppercase" }}>{x.l}</div><div style={{ fontSize: 12, color: "#ccc", lineHeight: 1.4 }}>{x.v}</div></div>)}
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={applyGeneratedPersona} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✅ Valider et enregistrer</button>
+          <button onClick={generatePersonaAI} disabled={generatingPersona} style={{ padding: "10px 20px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 10, color: "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>🔄 Regénérer</button>
+          <button onClick={() => setGeneratedPersona(null)} style={{ ...bS("#8b95a5") }}>Annuler</button>
+        </div>
+      </div>}
+      {generatedPersona?.error && <div style={{ padding: 16, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, marginBottom: 16, fontSize: 13, color: "#ef4444" }}>❌ Erreur lors de la génération. Réessayez.</div>}
       {personas.map((p: any) => <div key={p.id} style={{ padding: 18, background: "#111621", borderRadius: 12, border: `1px solid ${editId === p.id ? "#63c397" : "#1e2530"}`, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ fontSize: 24 }}>{p.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p.name} — {p.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{p.profession}</div></div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === p.id ? null : p.id)} style={bS("#63c397")}>{editId === p.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { const { id, created_at, updated_at, ...rest } = p; await supabase.from('personas').insert({ ...rest, name: p.name + " (copie)" }); onRefresh() }} style={bS("#60a5fa")}><I.Copy /></button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('personas').delete().eq('id', p.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
         {editId === p.id && <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><EF label="Nom" value={p.name} onSave={(v: string) => savP(p.id, { name: v })} /><EF label="Sous-titre" value={p.subtitle} onSave={(v: string) => savP(p.id, { subtitle: v })} /><EF label="Âge" value={p.age} onSave={(v: string) => savP(p.id, { age: parseInt(v) })} /><EF label="Emoji" value={p.emoji} onSave={(v: string) => savP(p.id, { emoji: v })} /><EF label="Profession" value={p.profession} onSave={(v: string) => savP(p.id, { profession: v })} rows={2} /><EF label="Situation" value={p.situation} onSave={(v: string) => savP(p.id, { situation: v })} rows={3} /><EF label="Personnalité" value={p.personality} onSave={(v: string) => savP(p.id, { personality: v })} rows={2} /><EF label="Motivations" value={p.motivations} onSave={(v: string) => savP(p.id, { motivations: v })} rows={2} /><EF label="Freins" value={p.obstacles} onSave={(v: string) => savP(p.id, { obstacles: v })} rows={2} /><EF label="Style" value={p.communication_style} onSave={(v: string) => savP(p.id, { communication_style: v })} rows={2} /></div>}
