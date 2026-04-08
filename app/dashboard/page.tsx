@@ -1139,7 +1139,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
             <button onClick={applyGenerated} style={{ padding: "10px 20px", background: "#63c397", border: "none", borderRadius: 10, color: "#0f1219", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
               ✓ Valider et enregistrer
             </button>
-            <button onClick={generatePersona} style={{ padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={generatePersonaAI} style={{ padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               ↻ Regénérer
             </button>
             <button onClick={() => setGeneratedPersona(null)} style={{ padding: "10px 20px", background: "transparent", border: "1px solid #2a2f3a", borderRadius: 10, color: "#8b95a5", fontSize: 13, cursor: "pointer" }}>
