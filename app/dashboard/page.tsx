@@ -424,7 +424,8 @@ function NewSession({ personas, formations, config, onStart }: any) {
 function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd, onCancel }: any) {
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(true); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
-  const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
+  const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null)
+  const sessionDbIdRef = useRef<string | null>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
   const inputAccRef = useRef(''); const sttFinalRef = useRef(''); const listeningRef = useRef(false); const usedMicRef = useRef(false)
   const p = personas.find((x: any) => x.id === sd.personaId); const f = sd.formationId ? formations.find((x: any) => x.id === sd.formationId) : null
   const sys = buildSystemPrompt(p, f, sd.level, scoring, config)
@@ -474,6 +475,34 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     startRec()
   }, [ended, thinking, input])
 
+  useEffect(() => {
+    // Créer la session en DB dès le démarrage avec counted=false
+    const createInitialSession = async () => {
+      const base = {
+        vendor_id: profile.id,
+        persona_id: sd.personaId,
+        difficulty_level: sd.level,
+        duration_limit_seconds: sd.duration || 0,
+        is_mystery: sd.isMystery || false,
+        organisation_id: profile.organisation_id || null,
+        counted: false,
+        result: 'in_progress',
+      } as any
+      if (sd.formationId) base.formation_id = sd.formationId
+      const { data } = await supabase.from('sessions').insert(base).select('id').single()
+      if (data?.id) {
+        sessionDbIdRef.current = data.id
+        // Après 30 secondes : marquer counted=true (comptabilisée même si le browser ferme)
+        setTimeout(async () => {
+          if (sessionDbIdRef.current) {
+            await supabase.from('sessions').update({ counted: true }).eq('id', sessionDbIdRef.current)
+          }
+        }, 30000)
+      }
+    }
+    createInitialSession()
+  }, [])
+
   useEffect(() => { if (!isUnlimited) { timerRef.current = setInterval(() => { setTimeLeft((prev: number) => { if (prev <= 1) { clearInterval(timerRef.current); setEnded(true); setResult("timeout"); return 0 } return prev - 1 }) }, 1000) } return () => clearInterval(timerRef.current) }, [isUnlimited])
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
   useEffect(() => { if (!thinking && !ended && !listening) inputRef.current?.focus() }, [thinking, ended, listening])
@@ -497,7 +526,16 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
       analysis_next_recommendation: analysis?.phase_coverage || {}
     }
     if (sd.formationId) ins.formation_id = sd.formationId
-    const { data: sess } = await supabase.from('sessions').insert(ins).select().single()
+    let sess: any = null
+    if (sessionDbIdRef.current) {
+      // Session déjà créée au démarrage — on UPDATE les champs finaux
+      const { data } = await supabase.from('sessions').update(ins).eq('id', sessionDbIdRef.current).select().single()
+      sess = data
+    } else {
+      // Fallback : INSERT si sessionDbIdRef est null (ne devrait pas arriver)
+      const { data } = await supabase.from('sessions').insert(ins).select().single()
+      sess = data
+    }
     if (sess) { await supabase.from('messages').insert(m.map((msg: any, i: number) => ({ session_id: sess.id, sender: msg.sender, content: msg.content, sequence_number: i + 1 }))) }
     if (sess && elapsed >= 30) { try { await fetch("/api/sessions/count", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId: sess.id }) }) } catch {} }
     const normalized = normSession(sess)
