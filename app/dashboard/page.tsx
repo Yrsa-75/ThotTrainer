@@ -942,7 +942,9 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
     const reindexed = steps.map((s: any, i: number) => ({ ...s, step: i + 1 }))
     savCfg({ sales_process: reindexed })
     setDragIdx(null)
-  } (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
+  }
+
+  return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
     <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
