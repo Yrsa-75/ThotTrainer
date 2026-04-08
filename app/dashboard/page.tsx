@@ -1120,22 +1120,22 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
             <span style={{ fontSize: 28 }}>{generatedPersona.emoji || "🤖"}</span>
             <div>
               <div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>Prospect généré par l'IA</div>
-              <div style={{ fontSize: 13, color: "#8b95a5" }}>{generatedPersona.name} — {generatedPersona.subtitle}</div>
+              <div style={{ fontSize: 13, color: "#8b95a5" }}>{generatedPersona.name || ""} — {generatedPersona.subtitle || ""}</div>
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-            <EF label="Nom" value={generatedPersona.name} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, name: v })} />
-            <EF label="Sous-titre" value={generatedPersona.subtitle} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, subtitle: v })} />
-            <EF label="Âge" value={generatedPersona.age} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, age: parseInt(v) })} />
-            <EF label="Emoji" value={generatedPersona.emoji} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, emoji: v })} />
-            <EF label="Profession" value={generatedPersona.profession} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, profession: v })} rows={2} />
-            <EF label="Situation" value={generatedPersona.situation} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, situation: v })} rows={2} />
-            <EF label="Personnalité" value={generatedPersona.personality} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, personality: v })} rows={2} />
-            <EF label="Motivations" value={generatedPersona.motivations} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, motivations: v })} rows={2} />
-            <EF label="Freins" value={generatedPersona.obstacles} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, obstacles: v })} rows={2} />
-            <EF label="Style" value={generatedPersona.communication_style} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, communication_style: v })} rows={2} />
+            <EF label="Nom" value={String(generatedPersona.name || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, name: v })} />
+            <EF label="Sous-titre" value={String(generatedPersona.subtitle || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, subtitle: v })} />
+            <EF label="Âge" value={String(generatedPersona.age || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, age: parseInt(v) || 0 })} />
+            <EF label="Emoji" value={String(generatedPersona.emoji || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, emoji: v })} />
+            <EF label="Profession" value={String(generatedPersona.profession || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, profession: v })} rows={2} />
+            <EF label="Situation" value={String(generatedPersona.situation || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, situation: v })} rows={2} />
+            <EF label="Personnalité" value={String(generatedPersona.personality || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, personality: v })} rows={2} />
+            <EF label="Motivations" value={String(generatedPersona.motivations || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, motivations: v })} rows={2} />
+            <EF label="Freins" value={String(generatedPersona.obstacles || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, obstacles: v })} rows={2} />
+            <EF label="Style" value={String(generatedPersona.communication_style || "")} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, communication_style: v })} rows={2} />
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button onClick={applyGenerated} style={{ padding: "10px 20px", background: "#63c397", border: "none", borderRadius: 10, color: "#0f1219", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
               ✓ Valider et enregistrer
             </button>
