@@ -423,7 +423,7 @@ function NewSession({ personas, formations, config, onStart }: any) {
 // ============================================
 function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd, onCancel }: any) {
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
-  const [voiceOn, setVoiceOn] = useState(false); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
+  const [voiceOn, setVoiceOn] = useState(true); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
   const inputAccRef = useRef(''); const sttFinalRef = useRef(''); const listeningRef = useRef(false); const usedMicRef = useRef(false)
   const p = personas.find((x: any) => x.id === sd.personaId); const f = sd.formationId ? formations.find((x: any) => x.id === sd.formationId) : null
