@@ -1114,25 +1114,40 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
       </div>
 
       {/* Preview du prospect généré par l'IA */}
-      {generatedPersona && !generatedPersona.error && <div style={{ padding: 24, background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.25)", marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}><I.Wand /><div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>Prospect généré par l'IA</div></div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <span style={{ fontSize: 36 }}>{generatedPersona.emoji}</span>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{generatedPersona.name}</div>
-            <div style={{ fontSize: 13, color: "#8b95a5" }}>{generatedPersona.subtitle} • {generatedPersona.age} ans • {generatedPersona.profession}</div>
+      {generatedPersona && (
+        <div style={{ padding: 24, background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.25)", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+            <span style={{ fontSize: 28 }}>{generatedPersona.emoji || "🤖"}</span>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>Prospect généré par l'IA</div>
+              <div style={{ fontSize: 13, color: "#8b95a5" }}>{generatedPersona.name} — {generatedPersona.subtitle}</div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <EF label="Nom" value={generatedPersona.name} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, name: v })} />
+            <EF label="Sous-titre" value={generatedPersona.subtitle} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, subtitle: v })} />
+            <EF label="Âge" value={generatedPersona.age} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, age: parseInt(v) })} />
+            <EF label="Emoji" value={generatedPersona.emoji} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, emoji: v })} />
+            <EF label="Profession" value={generatedPersona.profession} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, profession: v })} rows={2} />
+            <EF label="Situation" value={generatedPersona.situation} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, situation: v })} rows={2} />
+            <EF label="Personnalité" value={generatedPersona.personality} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, personality: v })} rows={2} />
+            <EF label="Motivations" value={generatedPersona.motivations} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, motivations: v })} rows={2} />
+            <EF label="Freins" value={generatedPersona.obstacles} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, obstacles: v })} rows={2} />
+            <EF label="Style" value={generatedPersona.communication_style} onSave={(v: string) => setGeneratedPersona({ ...generatedPersona, communication_style: v })} rows={2} />
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={applyGenerated} style={{ padding: "10px 20px", background: "#63c397", border: "none", borderRadius: 10, color: "#0f1219", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              ✓ Valider et enregistrer
+            </button>
+            <button onClick={generatePersona} style={{ padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              ↻ Regénérer
+            </button>
+            <button onClick={() => setGeneratedPersona(null)} style={{ padding: "10px 20px", background: "transparent", border: "1px solid #2a2f3a", borderRadius: 10, color: "#8b95a5", fontSize: 13, cursor: "pointer" }}>
+              Annuler
+            </button>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-          {[{ l: "Situation", v: generatedPersona.situation }, { l: "Personnalité", v: generatedPersona.personality }, { l: "Motivations", v: generatedPersona.motivations }, { l: "Freins", v: generatedPersona.obstacles }, { l: "Style de communication", v: generatedPersona.communication_style }].map((x, i) => <div key={i} style={{ padding: 10, background: "#111621", borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 700, color: "#63c397", marginBottom: 4, textTransform: "uppercase" }}>{x.l}</div><div style={{ fontSize: 12, color: "#ccc", lineHeight: 1.4 }}>{x.v}</div></div>)}
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={applyGeneratedPersona} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✅ Valider et enregistrer</button>
-          <button onClick={generatePersonaAI} disabled={generatingPersona} style={{ padding: "10px 20px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 10, color: "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>🔄 Regénérer</button>
-          <button onClick={() => setGeneratedPersona(null)} style={{ ...bS("#8b95a5") }}>Annuler</button>
-        </div>
-      </div>}
-      {generatedPersona?.error && <div style={{ padding: 16, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, marginBottom: 16, fontSize: 13, color: "#ef4444" }}>❌ Erreur lors de la génération. Réessayez.</div>}
+      )}
       {personas.map((p: any) => <div key={p.id} style={{ padding: 18, background: "#111621", borderRadius: 12, border: `1px solid ${editId === p.id ? "#63c397" : "#1e2530"}`, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ fontSize: 24 }}>{p.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p.name} — {p.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{p.profession}</div></div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === p.id ? null : p.id)} style={bS("#63c397")}>{editId === p.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { const { id, created_at, updated_at, ...rest } = p; await supabase.from('personas').insert({ ...rest, name: p.name + " (copie)" }); onRefresh() }} style={bS("#60a5fa")}><I.Copy /></button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('personas').delete().eq('id', p.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
         {editId === p.id && <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><EF label="Nom" value={p.name} onSave={(v: string) => savP(p.id, { name: v })} /><EF label="Sous-titre" value={p.subtitle} onSave={(v: string) => savP(p.id, { subtitle: v })} /><EF label="Âge" value={p.age} onSave={(v: string) => savP(p.id, { age: parseInt(v) })} /><EF label="Emoji" value={p.emoji} onSave={(v: string) => savP(p.id, { emoji: v })} /><EF label="Profession" value={p.profession} onSave={(v: string) => savP(p.id, { profession: v })} rows={2} /><EF label="Situation" value={p.situation} onSave={(v: string) => savP(p.id, { situation: v })} rows={3} /><EF label="Personnalité" value={p.personality} onSave={(v: string) => savP(p.id, { personality: v })} rows={2} /><EF label="Motivations" value={p.motivations} onSave={(v: string) => savP(p.id, { motivations: v })} rows={2} /><EF label="Freins" value={p.obstacles} onSave={(v: string) => savP(p.id, { obstacles: v })} rows={2} /><EF label="Style" value={p.communication_style} onSave={(v: string) => savP(p.id, { communication_style: v })} rows={2} /></div>}
