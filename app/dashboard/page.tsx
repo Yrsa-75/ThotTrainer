@@ -489,6 +489,8 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
       difficulty_level: sd.level, result: r, performance_score: score,
       actual_duration_seconds: elapsed, duration_limit_seconds: sd.duration || 0,
       used_mic: usedMicRef.current, is_mystery: sd.isMystery || false,
+        organisation_id: profile.organisation_id || null,
+        counted: true,
       analysis_summary: analysis?.summary || '', analysis_strengths: analysis?.strengths || [],
       analysis_improvements: analysis?.improvements || [], analysis_objections: analysis?.objections || [],
       analysis_skills: analysis?.skills || {}, analysis_main_advice: analysis?.main_advice || '',
