@@ -713,6 +713,12 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
   const [nn, setNn] = useState(""); const [ne, setNe] = useState(""); const [np, setNp] = useState(""); const [msg, setMsg] = useState("")
   const [genDesc, setGenDesc] = useState(""); const [generating, setGenerating] = useState(false); const [genResult, setGenResult] = useState<any>(null)
   const [generatingPersona, setGeneratingPersona] = useState(false); const [generatedPersona, setGeneratedPersona] = useState<any>(null)
+  const [wizardStep, setWizardStep] = useState<'describe'|'questions'|'generating'|'review'|null>(null)
+  const [wizardQuestions, setWizardQuestions] = useState<string[]>([])
+  const [wizardAnswers, setWizardAnswers] = useState<{[k:number]:string}>({})
+  const [wizardFullResult, setWizardFullResult] = useState<any>(null)
+  const [dragIdx, setDragIdx] = useState<number|null>(null)
+  const isFirstSetup = !config?.company_name || config.company_name === 'Mon Entreprise' || config.company_name === ''
 
   const EF = ({ label, value, onSave, rows = 1 }: any) => { const [v, setV] = useState(value || ""); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label}</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => v !== (value || "") && onSave(v)} rows={rows} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
   const EA = ({ label, value, onSave }: any) => { const [v, setV] = useState((value || []).join("\n")); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label} (un par ligne)</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => onSave(v.split("\n").filter((x: string) => x.trim()))} rows={4} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
@@ -803,68 +809,286 @@ Réponds UNIQUEMENT en JSON valide sans backticks:
     setGeneratingPersona(false)
   }
 
-  return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
+  // ===== ONBOARDING WIZARD =====
+  const startWizard = () => { setWizardStep('describe'); setGenDesc(''); setWizardQuestions([]); setWizardAnswers({}); setWizardFullResult(null); setGenResult(null) }
+
+  const wizardGenerate = async () => {
+    if (!genDesc.trim()) return
+    setGenerating(true); setWizardStep('generating')
+    try {
+      const existingPersonas = personas.map((p: any) => p.name).join(', ')
+      const existingProducts = formations.map((f: any) => f.name).join(', ')
+      const answersText = wizardQuestions.length > 0 ? '\n\nRÉPONSES AUX QUESTIONS:\n' + wizardQuestions.map((q: string, i: number) => q + ' → ' + (wizardAnswers[i] || 'Non répondu')).join('\n') : ''
+
+      const prompt = `Tu es un expert en configuration de plateformes d'entraînement commercial. Analyse cette description d'entreprise et détermine si tu as assez d'informations pour générer une configuration complète.
+
+DESCRIPTION:
+${genDesc}${answersText}
+
+Si tu as ASSEZ d'informations, réponds en JSON:
+{"ready": true, "config": {
+  "company_name": "...",
+  "company_sector": "...",
+  "company_description": "2-3 phrases",
+  "prospect_context": "Comment le prospect arrive, ce qu'il sait/ne sait pas",
+  "common_objections": "Les objections typiques du secteur",
+  "tension_points": "Moments critiques du RDV",
+  "vocabulary_tone": "Jargon métier et niveau de formalité",
+  "custom_instructions": "Instructions spéciales pour l'IA",
+  "sales_process": [{"step":1,"name":"...","description":"..."},{"step":2,...}],
+  "scoring": {
+    "positive": [{"key":"...","label":"Description du critère positif","points": 5}],
+    "negative": [{"key":"...","label":"Description du critère négatif","points": -5}],
+    "phase_bonus": [{"key":"phase_...","label":"A couvert telle phase","points": 5}],
+    "level1_threshold": 30, "level2_threshold": 55, "level3_threshold": 80,
+    "level1_start_score": 20, "level2_start_score": 5, "level3_start_score": -15
+  },
+  "suggested_personas": [{"name":"...","subtitle":"5 mots max","age":00,"emoji":"👤","profession":"...","situation":"...","personality":"...","motivations":"...","obstacles":"...","communication_style":"..."}],
+  "suggested_products": [{"name":"...","description":"...","price":"...","key_arguments":["..."],"common_objections":["..."]}]
+}}
+
+Les critères de scoring positifs doivent valoriser les bonnes pratiques commerciales de CE secteur.
+Les critères négatifs doivent pénaliser les erreurs typiques.
+Les phase_bonus doivent correspondre aux étapes du process de vente.
+Génère 3-5 personas variés et 2-4 produits/services.
+Le sales_process doit avoir 4-8 étapes.
+
+Si tu N'AS PAS assez d'informations, réponds en JSON:
+{"ready": false, "questions": ["Question 1 ?", "Question 2 ?", ...]}
+
+Pose entre 3 et 10 questions maximum. Ne pose que les questions ESSENTIELLES. Ne pose pas de questions si la description est déjà suffisante.
+Exemples de questions utiles: type de prospect, canal de vente (téléphone/visio/terrain), produits/services vendus, durée typique d'un RDV, objections fréquentes, critères de réussite d'un RDV.
+
+Réponds UNIQUEMENT en JSON valide sans backticks.`
+
+      const res = await callChat(prompt, [{ sender: 'user', content: 'Analyse et génère.' }])
+      const parsed = JSON.parse(res.replace(/\`\`\`json\s*/g, '').replace(/\`\`\`/g, '').trim())
+
+      if (parsed.ready) {
+        setWizardFullResult(parsed.config)
+        setWizardStep('review')
+      } else if (parsed.questions) {
+        setWizardQuestions(parsed.questions)
+        setWizardAnswers({})
+        setWizardStep('questions')
+      }
+    } catch (e) {
+      setWizardStep('describe')
+      setMsg('❌ Erreur de génération. Réessayez.')
+    }
+    setGenerating(false)
+  }
+
+  const wizardSubmitAnswers = async () => {
+    setGenerating(true); setWizardStep('generating')
+    try {
+      const answersText = wizardQuestions.map((q: string, i: number) => q + ' → ' + (wizardAnswers[i] || 'Non répondu')).join('\n')
+      const prompt = `Tu es un expert en configuration de plateformes d'entraînement commercial. Génère une configuration COMPLÈTE basée sur ces informations.
+
+DESCRIPTION INITIALE:
+${genDesc}
+
+RÉPONSES AUX QUESTIONS:
+${answersText}
+
+Réponds UNIQUEMENT en JSON valide sans backticks:
+{"company_name":"...","company_sector":"...","company_description":"2-3 phrases","prospect_context":"...","common_objections":"...","tension_points":"...","vocabulary_tone":"...","custom_instructions":"...","sales_process":[{"step":1,"name":"...","description":"..."}],"scoring":{"positive":[{"key":"...","label":"...","points":5}],"negative":[{"key":"...","label":"...","points":-5}],"phase_bonus":[{"key":"phase_...","label":"...","points":5}],"level1_threshold":30,"level2_threshold":55,"level3_threshold":80,"level1_start_score":20,"level2_start_score":5,"level3_start_score":-15},"suggested_personas":[{"name":"...","subtitle":"...","age":0,"emoji":"👤","profession":"...","situation":"...","personality":"...","motivations":"...","obstacles":"...","communication_style":"..."}],"suggested_products":[{"name":"...","description":"...","price":"...","key_arguments":["..."],"common_objections":["..."]}]}
+
+Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring complet adapté au secteur.`
+
+      const res = await callChat(prompt, [{ sender: 'user', content: 'Génère tout.' }])
+      const parsed = JSON.parse(res.replace(/\`\`\`json\s*/g, '').replace(/\`\`\`/g, '').trim())
+      setWizardFullResult(parsed)
+      setWizardStep('review')
+    } catch (e) {
+      setWizardStep('questions')
+      setMsg('❌ Erreur. Réessayez.')
+    }
+    setGenerating(false)
+  }
+
+  const applyWizardConfig = async () => {
+    if (!wizardFullResult) return
+    const r = wizardFullResult
+    // Save config
+    await savCfg({
+      company_name: r.company_name || '', company_sector: r.company_sector || '', company_description: r.company_description || '',
+      sales_process: r.sales_process || [], prospect_context: r.prospect_context || '', common_objections: r.common_objections || '',
+      tension_points: r.tension_points || '', vocabulary_tone: r.vocabulary_tone || '', custom_instructions: r.custom_instructions || ''
+    })
+    // Save scoring
+    if (r.scoring) {
+      await supabase.from('scoring_rules').update({
+        positive: r.scoring.positive || [], negative: r.scoring.negative || [], phase_bonus: r.scoring.phase_bonus || [],
+        level1_threshold: r.scoring.level1_threshold || 30, level2_threshold: r.scoring.level2_threshold || 55, level3_threshold: r.scoring.level3_threshold || 80,
+        level1_start_score: r.scoring.level1_start_score || 20, level2_start_score: r.scoring.level2_start_score || 5, level3_start_score: r.scoring.level3_start_score || -15
+      }).eq('is_active', true)
+    }
+    // Save personas
+    if (r.suggested_personas?.length) { for (const p of r.suggested_personas) { await supabase.from('personas').insert({ name: p.name, subtitle: p.subtitle, age: p.age, emoji: p.emoji, profession: p.profession, situation: p.situation, personality: p.personality, motivations: p.motivations, obstacles: p.obstacles, communication_style: p.communication_style }) } }
+    // Save products
+    if (r.suggested_products?.length) { for (const f of r.suggested_products) { await supabase.from('formations').insert({ name: f.name, description: f.description, price: f.price, key_arguments: f.key_arguments || [], common_objections: f.common_objections || [] }) } }
+    setWizardFullResult(null); setWizardStep(null); setGenDesc(''); onRefresh()
+  }
+
+  // Drag & drop for sales process
+  const handleDragStart = (idx: number) => setDragIdx(idx)
+  const handleDragOver = (e: any) => e.preventDefault()
+  const handleDrop = (targetIdx: number) => {
+    if (dragIdx === null || dragIdx === targetIdx) return
+    const steps = [...(config.sales_process || [])]
+    const [moved] = steps.splice(dragIdx, 1)
+    steps.splice(targetIdx, 0, moved)
+    const reindexed = steps.map((s: any, i: number) => ({ ...s, step: i + 1 }))
+    savCfg({ sales_process: reindexed })
+    setDragIdx(null)
+  } (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
     <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
     {/* ===== CONTEXT ===== */}
     {tab === "context" && <div>
-      {/* AI Generation */}
-      <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.2)", padding: 24, marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}><I.Wand /><div style={{ fontSize: 16, fontWeight: 700, color: "#63c397" }}>Générer avec l'IA</div></div>
-        <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 12 }}>Décrivez votre entreprise, votre processus de vente et vos prospects en langage naturel. L'IA générera une configuration complète (contexte, personas, produits).</div>
-        <textarea value={genDesc} onChange={e => setGenDesc(e.target.value)} placeholder="Ex: Je suis directeur commercial dans une agence immobilière. Mes agents font de la prospection terrain pour récupérer des mandats de vente exclusifs. Les prospects sont des propriétaires qui veulent vendre leur bien..." rows={5} style={{ ...iS, marginBottom: 12 } as any} />
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={generateContext} disabled={generating || !genDesc.trim()} style={{ padding: "10px 20px", background: genDesc.trim() && !generating ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 10, color: genDesc.trim() ? "#fff" : "#555", fontSize: 13, fontWeight: 700, cursor: genDesc.trim() ? "pointer" : "default" }}>{generating ? "⏳ Génération en cours..." : "✨ Générer la configuration"}</button>
-        </div>
-        {genResult && !genResult.error && <div style={{ marginTop: 16, padding: 16, background: "#111621", borderRadius: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "#63c397" }}>✅ Configuration générée</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>Entreprise : <strong>{genResult.company_name}</strong> — {genResult.company_sector}</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>{genResult.sales_process?.length || 0} étapes de vente</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 4 }}>{genResult.suggested_personas?.length || 0} personas suggérés</div>
-          <div style={{ fontSize: 12, color: "#ccc", marginBottom: 12 }}>{genResult.suggested_products?.length || 0} produits/services suggérés</div>
-          <button onClick={applyGenerated} style={{ padding: "10px 20px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Appliquer cette configuration</button>
-          <button onClick={() => setGenResult(null)} style={{ ...bS("#8b95a5"), marginLeft: 10 }}>Annuler</button>
-        </div>}
-        {genResult?.error && <div style={{ marginTop: 12, fontSize: 12, color: "#ef4444" }}>❌ Erreur lors de la génération. Vérifiez votre clé API.</div>}
-      </div>
-
-      {/* Manual sections */}
-      <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Contexte global</div>
-        <EF label="Nom de l'entreprise" value={config.company_name} onSave={(v: string) => savCfg({ company_name: v })} />
-        <EF label="Secteur d'activité" value={config.company_sector} onSave={(v: string) => savCfg({ company_sector: v })} />
-        <EF label="Description de l'entreprise (2-3 phrases)" value={config.company_description} onSave={(v: string) => savCfg({ company_description: v })} rows={3} />
-        <EF label="Contexte prospect (comment il arrive, ce qu'il sait/ne sait pas)" value={config.prospect_context} onSave={(v: string) => savCfg({ prospect_context: v })} rows={4} />
-        <EF label="Objections courantes du secteur" value={config.common_objections} onSave={(v: string) => savCfg({ common_objections: v })} rows={3} />
-        <EF label="Points de tension (moments critiques du RDV)" value={config.tension_points} onSave={(v: string) => savCfg({ tension_points: v })} rows={3} />
-        <EF label="Vocabulaire et ton (jargon métier, formalité)" value={config.vocabulary_tone} onSave={(v: string) => savCfg({ vocabulary_tone: v })} rows={2} />
-        <EF label="Instructions supplémentaires pour l'IA" value={config.custom_instructions} onSave={(v: string) => savCfg({ custom_instructions: v })} rows={3} />
-      </div>
-
-      {/* Sales process */}
-      <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 16, fontWeight: 700 }}>Étapes du processus de vente</div><button onClick={() => savCfg({ sales_process: [...(config.sales_process || []), { step: (config.sales_process?.length || 0) + 1, name: "Nouvelle étape", description: "À définir" }] })} style={{ ...bS("#63c397") }}><I.Plus /> Ajouter</button></div>
-        {(config.sales_process || []).map((step: any, i: number) => (
-          <div key={i} style={{ display: "flex", gap: 10, alignItems: "start", marginBottom: 8, padding: 12, background: "#1a1e27", borderRadius: 8 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#63c397", minWidth: 28 }}>{step.step}</div>
-            <div style={{ flex: 1 }}>
-              <input value={step.name} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], name: e.target.value }; savCfg({ sales_process: np }) }} style={{ ...iS, marginBottom: 4 } as any} placeholder="Nom de l'étape" />
-              <textarea value={step.description} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], description: e.target.value }; savCfg({ sales_process: np }) }} rows={2} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} placeholder="Description" />
-            </div>
-            <button onClick={() => { const np = config.sales_process.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); savCfg({ sales_process: np }) }} style={bS("#ef4444")}><I.Trash /></button>
+      {/* ===== WIZARD: First-time setup ===== */}
+      {isFirstSetup || wizardStep !== null ? (<div>
+        {/* Step: Describe */}
+        {(wizardStep === 'describe' || (isFirstSetup && wizardStep === null)) && <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.2)", padding: 32 }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🧙</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Configurez votre plateforme en quelques minutes</div>
+            <div style={{ fontSize: 14, color: "#8b95a5" }}>Décrivez votre entreprise et votre processus de vente — l'IA s'occupe du reste.</div>
           </div>
-        ))}
-      </div>
+          <textarea value={genDesc} onChange={e => setGenDesc(e.target.value)} placeholder={"Décrivez votre entreprise, vos produits/services, votre processus de vente et le type de prospects que vos commerciaux contactent...\n\nExemple : Je suis directeur commercial dans une agence immobilière. Mes agents font de la prospection terrain pour récupérer des mandats de vente exclusifs. Les prospects sont des propriétaires contactés en porte-à-porte..."} rows={8} style={{ ...iS, fontSize: 15, lineHeight: 1.6, marginBottom: 16, padding: 20 } as any} />
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <button onClick={wizardGenerate} disabled={generating || !genDesc.trim()} style={{ padding: "14px 32px", background: genDesc.trim() && !generating ? "linear-gradient(135deg, #63c397, #4aa87a)" : "#2a2f3a", border: "none", borderRadius: 12, color: genDesc.trim() ? "#fff" : "#555", fontSize: 15, fontWeight: 700, cursor: genDesc.trim() ? "pointer" : "default" }}>✨ Générer la configuration</button>
+          </div>
+          {msg && <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "#ef4444" }}>{msg}</div>}
+        </div>}
 
-      {/* Display options */}
-      <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Options d'affichage</div>
-        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-          <input type="checkbox" checked={config.show_full_profile !== false} onChange={e => savCfg({ show_full_profile: e.target.checked })} style={{ width: 18, height: 18, accentColor: "#63c397" }} />
-          <div><div style={{ fontSize: 13, fontWeight: 600 }}>Afficher le profil complet du prospect</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Si désactivé, le vendeur ne verra qu'un aperçu (nom, âge, profession) lors du lancement d'une session</div></div>
-        </label>
-      </div>
+        {/* Step: Generating */}
+        {wizardStep === 'generating' && <div style={{ textAlign: "center", padding: "60px 40px" }}>
+          <div style={{ fontSize: 48, marginBottom: 16, animation: "spin 2s linear infinite" }}>⚙️</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>L'IA analyse votre description...</div>
+          <div style={{ fontSize: 13, color: "#8b95a5" }}>Configuration du contexte, des personas, du scoring et des produits</div>
+          <style>{"@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}"}</style>
+        </div>}
+
+        {/* Step: Questions */}
+        {wizardStep === 'questions' && <div style={{ background: "rgba(96,165,250,0.05)", borderRadius: 14, border: "1px solid rgba(96,165,250,0.2)", padding: 32 }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>💬</div>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Quelques précisions</div>
+            <div style={{ fontSize: 13, color: "#8b95a5" }}>L'IA a besoin de ces informations pour affiner la configuration.</div>
+          </div>
+          {wizardQuestions.map((q: string, i: number) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#ccc", display: "block", marginBottom: 6 }}>{i + 1}. {q}</label>
+              <textarea value={wizardAnswers[i] || ''} onChange={e => setWizardAnswers(prev => ({ ...prev, [i]: e.target.value }))} rows={2} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} placeholder="Votre réponse..." />
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 20 }}>
+            <button onClick={() => setWizardStep('describe')} style={{ ...bS("#8b95a5"), padding: "10px 20px" }}>← Retour</button>
+            <button onClick={wizardSubmitAnswers} disabled={generating} style={{ padding: "14px 32px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>✨ Générer la configuration</button>
+          </div>
+        </div>}
+
+        {/* Step: Review */}
+        {wizardStep === 'review' && wizardFullResult && <div>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Configuration générée</div>
+            <div style={{ fontSize: 13, color: "#8b95a5" }}>Vérifiez et validez. Vous pourrez tout modifier après.</div>
+          </div>
+
+          {/* Config summary */}
+          <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>⚙️ Contexte global</div>
+            <div style={{ fontSize: 13, color: "#ccc", lineHeight: 1.6 }}>
+              <strong>{wizardFullResult.company_name}</strong> — {wizardFullResult.company_sector}<br/>
+              {wizardFullResult.company_description}
+            </div>
+          </div>
+
+          {/* Sales process */}
+          {wizardFullResult.sales_process?.length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📋 Process de vente ({wizardFullResult.sales_process.length} étapes)</div>
+            {wizardFullResult.sales_process.map((s: any, i: number) => <div key={i} style={{ display: "flex", gap: 10, padding: "8px 12px", background: "#1a1e27", borderRadius: 8, marginBottom: 6 }}><span style={{ fontSize: 16, fontWeight: 800, color: "#63c397" }}>{s.step}</span><div><div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{s.description}</div></div></div>)}
+          </div>}
+
+          {/* Scoring */}
+          {wizardFullResult.scoring && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📊 Scoring</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              <div><div style={{ fontSize: 11, color: "#63c397", fontWeight: 700, marginBottom: 6 }}>POSITIFS ({wizardFullResult.scoring.positive?.length || 0})</div>{(wizardFullResult.scoring.positive||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>+{r.points} {r.label}</div>)}</div>
+              <div><div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 6 }}>NÉGATIFS ({wizardFullResult.scoring.negative?.length || 0})</div>{(wizardFullResult.scoring.negative||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>{r.points} {r.label}</div>)}</div>
+              <div><div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, marginBottom: 6 }}>BONUS PHASES ({wizardFullResult.scoring.phase_bonus?.length || 0})</div>{(wizardFullResult.scoring.phase_bonus||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>+{r.points} {r.label}</div>)}</div>
+            </div>
+          </div>}
+
+          {/* Personas + Products */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+            {wizardFullResult.suggested_personas?.length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>🎭 {wizardFullResult.suggested_personas.length} Prospects</div>
+              {wizardFullResult.suggested_personas.map((p: any, i: number) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: "1px solid #1e2530" }}><span style={{ fontSize: 20 }}>{p.emoji}</span><div><div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{p.subtitle}</div></div></div>)}
+            </div>}
+            {wizardFullResult.suggested_products?.length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📦 {wizardFullResult.suggested_products.length} Produits/Services</div>
+              {wizardFullResult.suggested_products.map((f: any, i: number) => <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid #1e2530" }}><div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{f.price} — {f.description?.slice(0, 60)}...</div></div>)}
+            </div>}
+          </div>
+
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <button onClick={() => setWizardStep('describe')} style={{ ...bS("#8b95a5"), padding: "12px 24px", fontSize: 14 }}>← Recommencer</button>
+            <button onClick={applyWizardConfig} style={{ padding: "14px 32px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>✅ Appliquer cette configuration</button>
+          </div>
+        </div>}
+      </div>) : (<div>
+        {/* ===== NORMAL CONFIG VIEW (after first setup) ===== */}
+        {/* AI Re-generation */}
+        <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 14, border: "1px solid rgba(99,195,151,0.2)", padding: 20, marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}><I.Wand /><div style={{ fontSize: 14, fontWeight: 700, color: "#63c397" }}>Reconfigurer avec l'IA</div></div>
+            <button onClick={startWizard} style={{ padding: "8px 16px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 8, color: "#63c397", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Relancer le wizard</button>
+          </div>
+        </div>
+
+        {/* Manual config sections */}
+        <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Contexte global</div>
+          <EF label="Nom de l'entreprise" value={config.company_name} onSave={(v: string) => savCfg({ company_name: v })} />
+          <EF label="Secteur d'activité" value={config.company_sector} onSave={(v: string) => savCfg({ company_sector: v })} />
+          <EF label="Description de l'entreprise" value={config.company_description} onSave={(v: string) => savCfg({ company_description: v })} rows={3} />
+          <EF label="Contexte prospect" value={config.prospect_context} onSave={(v: string) => savCfg({ prospect_context: v })} rows={4} />
+          <EF label="Objections courantes du secteur" value={config.common_objections} onSave={(v: string) => savCfg({ common_objections: v })} rows={3} />
+          <EF label="Points de tension" value={config.tension_points} onSave={(v: string) => savCfg({ tension_points: v })} rows={3} />
+          <EF label="Vocabulaire et ton" value={config.vocabulary_tone} onSave={(v: string) => savCfg({ vocabulary_tone: v })} rows={2} />
+          <EF label="Instructions supplémentaires pour l'IA" value={config.custom_instructions} onSave={(v: string) => savCfg({ custom_instructions: v })} rows={3} />
+        </div>
+
+        {/* Sales process with drag & drop */}
+        <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 16, fontWeight: 700 }}>Étapes du processus de vente</div><button onClick={() => savCfg({ sales_process: [...(config.sales_process || []), { step: (config.sales_process?.length || 0) + 1, name: "Nouvelle étape", description: "À définir" }] })} style={{ ...bS("#63c397") }}><I.Plus /> Ajouter</button></div>
+          <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 12 }}>↕ Glissez-déposez pour réorganiser les étapes</div>
+          {(config.sales_process || []).map((step: any, i: number) => (
+            <div key={i} draggable onDragStart={() => handleDragStart(i)} onDragOver={handleDragOver} onDrop={() => handleDrop(i)} style={{ display: "flex", gap: 10, alignItems: "start", marginBottom: 8, padding: 12, background: dragIdx === i ? "rgba(99,195,151,0.1)" : "#1a1e27", borderRadius: 8, border: dragIdx === i ? "1px dashed #63c397" : "1px solid transparent", cursor: "grab", transition: "all 0.2s" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#63c397", minWidth: 28, cursor: "grab", userSelect: "none" }}>☰ {step.step}</div>
+              <div style={{ flex: 1 }}>
+                <input value={step.name} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], name: e.target.value }; savCfg({ sales_process: np }) }} style={{ ...iS, marginBottom: 4 } as any} placeholder="Nom de l'étape" />
+                <textarea value={step.description} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], description: e.target.value }; savCfg({ sales_process: np }) }} rows={2} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} placeholder="Description" />
+              </div>
+              <button onClick={() => { const np = config.sales_process.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); savCfg({ sales_process: np }) }} style={bS("#ef4444")}><I.Trash /></button>
+            </div>
+          ))}
+        </div>
+
+        {/* Display options */}
+        <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Options d'affichage</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input type="checkbox" checked={config.show_full_profile !== false} onChange={e => savCfg({ show_full_profile: e.target.checked })} style={{ width: 18, height: 18, accentColor: "#63c397" }} />
+            <div><div style={{ fontSize: 13, fontWeight: 600 }}>Afficher le profil complet du prospect</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Si désactivé, le vendeur ne verra qu'un aperçu lors du lancement</div></div>
+          </label>
+        </div>
+      </div>)}
     </div>}
 
     {/* ===== TEAM ===== */}
