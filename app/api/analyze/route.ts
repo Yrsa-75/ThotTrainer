@@ -1,38 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getApiKeys } from '@/lib/api-keys'
-import { NextRequest } from 'next/server'
 
-const RL_URL = 'https://nbxrxulszfopcmaocieb.supabase.co/functions/v1/rate-limit'
-
-function getSubFromJWT(authHeader: string | null): string | null {
-  if (!authHeader?.startsWith('Bearer ')) return null
+export async function POST(request: Request) {
   try {
-    const parts = authHeader.slice(7).split('.')
-    if (parts.length < 2) return null
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'))
-    return payload.sub || null
-  } catch { return null }
-}
-
-async function checkRL(userId: string | null, endpoint: string): Promise<boolean> {
-  if (!userId) return true
-  try {
-    const res = await fetch(RL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, endpoint })
-    })
-    const data = await res.json()
-    return data.allowed !== false
-  } catch { return true }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const userId = getSubFromJWT(request.headers.get('authorization'))
-    const allowed = await checkRL(userId, 'analyze')
-    if (!allowed) return NextResponse.json({ error: 'Trop de requetes, reessayez dans quelques secondes.' }, { status: 429 })
-
     const { prompt } = await request.json()
     const keys = await getApiKeys()
     if (!keys.anthropic) return NextResponse.json({ text: '{"score":50,"summary":"Cle API manquante"}' }, { status: 400 })
