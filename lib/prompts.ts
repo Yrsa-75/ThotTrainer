@@ -58,8 +58,8 @@ export const DEFAULT_SCORING = {
 };
 
 export const DEFAULT_CONFIG = {
-  company_name: 'Chronos Emploi',
-  company_sector: 'Formation professionnelle / CPF',
+  company_name: '',
+  company_sector: '',
   company_description: '',
   sales_process: [],
   prospect_context: '',
@@ -68,8 +68,6 @@ export const DEFAULT_CONFIG = {
   vocabulary_tone: '',
   custom_instructions: '',
   show_full_profile: true,
-  client_anthropic_key: '',
-  client_openai_key: ''
 };
 
 // ============================================
