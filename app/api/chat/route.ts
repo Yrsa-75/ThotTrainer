@@ -7,17 +7,15 @@ const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth
     const supabase = createServerSupabase()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    // Rate limit
     const { data: profile } = await supabase.from('profiles').select('organisation_id').eq('id', user.id).single()
-    const rl = await checkRateLimit(user.id, profile?.organisation_id || null, 'chat')
+    const rl = await checkRateLimit(user.id, (profile as any)?.organisation_id || null, 'chat')
     if (!rl.allowed) return NextResponse.json({ error: rl.message }, { status: 429 })
 
-    const { system, messages, voice } = await req.json()
+    const { system, messages } = await req.json()
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',
