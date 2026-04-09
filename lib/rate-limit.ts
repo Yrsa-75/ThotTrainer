@@ -16,34 +16,31 @@ export async function checkRateLimit(
     const limit = LIMITS[endpoint]
     if (!limit) return { allowed: true }
 
-    // Check user rate limit
     const { data: userCheck } = await supabase.rpc('check_rate_limit', {
       p_key: `${endpoint}:user:${userId}`,
       p_max_requests: limit.userMax,
       p_window_seconds: limit.userWindow,
-    }) as { data: { allowed: boolean } | null }
+    }) as any
 
-    if (userCheck && !userCheck.allowed) {
+    if (userCheck && userCheck.allowed === false) {
       return { allowed: false, message: 'Trop de requêtes, réessayez dans quelques secondes.' }
     }
 
-    // Check org rate limit
     if (orgId) {
       const { data: orgCheck } = await supabase.rpc('check_rate_limit', {
         p_key: `${endpoint}:org:${orgId}`,
         p_max_requests: limit.orgMax,
         p_window_seconds: limit.orgWindow,
-      }) as { data: { allowed: boolean } | null }
+      }) as any
 
-      if (orgCheck && !orgCheck.allowed) {
+      if (orgCheck && orgCheck.allowed === false) {
         return { allowed: false, message: 'Trop de requêtes, réessayez dans quelques secondes.' }
       }
     }
 
     return { allowed: true }
-  } catch (e) {
-    // En cas d'erreur sur le rate limit, on laisse passer pour ne pas bloquer l'utilisateur
-    console.error('Rate limit check failed:', e)
+  } catch (e: any) {
+    console.error('Rate limit error:', e)
     return { allowed: true }
   }
 }
