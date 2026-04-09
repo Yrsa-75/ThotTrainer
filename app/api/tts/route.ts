@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getApiKeys } from '@/lib/api-keys'
 
-// GET — le navigateur pointe directement ici, commence à jouer dès les premiers octets
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url)
@@ -21,20 +20,9 @@ export async function GET(request: Request) {
     if (!response.ok || !response.body) return new Response('TTS failed', { status: 500 })
 
     return new Response(response.body, {
-      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-cache' }
+      headers: { 'Content-Type': 'audio/mpeg', 'Transfer-Encoding': 'chunked', 'Cache-Control': 'no-cache' }
     })
-  } catch {
-    return new Response('Error', { status: 500 })
-  }
-}
-
-// POST — vérifie si la clé est configurée (utilisé pour le fallback check)
-export async function POST(request: Request) {
-  try {
-    const keys = await getApiKeys()
-    if (!keys.openai) return NextResponse.json({ fallback: true })
-    return NextResponse.json({ available: true })
-  } catch {
-    return NextResponse.json({ fallback: true })
+  } catch (error: any) {
+    return new Response('Error: ' + error.message, { status: 500 })
   }
 }
