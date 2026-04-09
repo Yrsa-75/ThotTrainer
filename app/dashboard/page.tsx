@@ -216,7 +216,7 @@ export default function DashboardPage() {
     const { data: f } = await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id); setFormations(f?.length ? f : DEFAULT_FORMATIONS)
     if (profileData.organisation_id) {
       const { data: pers } = await supabase.from('personas').select('*').eq('is_active', true).eq('organisation_id', profile.organisation_id); setPersonas(pers?.length ? pers : DEFAULT_PERSONAS)
-      const { data: sc } = await supabase.from('scoring_rules').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id).maybeSingle(); if (sc) setScoring(normalizeScoring(sc))
+      const { data: sc } = await supabase.from('scoring_rules').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id).maybeSingle(); setScoring(sc ? normalizeScoring(sc) : null)
       const { data: cfg } = await supabase.from('platform_config').select('*').eq('organisation_id', profileData.organisation_id).maybeSingle(); if (cfg) setConfig(cfg)
       // Org loading
       if (p.role === 'super_admin') {
@@ -1208,7 +1208,14 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
     </div>}
 
     {/* ===== SCORING ===== */}
-    {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
+    {tab === "scoring" && !scoring && (
+          <div style={{ padding: "48px 32px", textAlign: "center", color: "#8b95a5" }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🎯</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: "#fff", marginBottom: 8 }}>Scoring non configuré</div>
+            <div style={{ fontSize: 13 }}>Le système de scoring sera généré lors du paramétrage initial.</div>
+          </div>
+        )}
+        {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
 
     
   </div>)
