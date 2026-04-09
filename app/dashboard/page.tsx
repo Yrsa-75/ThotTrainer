@@ -213,10 +213,10 @@ export default function DashboardPage() {
     } else {
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
     }
-    const { data: f } = await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id); setFormations(f?.length ? f : DEFAULT_FORMATIONS)
+    const { data: f } = await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id).order('created_at', { ascending: false }); setFormations(f?.length ? f : DEFAULT_FORMATIONS)
     if (profileData.organisation_id) {
-      const { data: pers } = await supabase.from('personas').select('*').eq('is_active', true).eq('organisation_id', profile.organisation_id); setPersonas(pers?.length ? pers : DEFAULT_PERSONAS)
-      const { data: sc } = await supabase.from('scoring_rules').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id).maybeSingle(); setScoring(sc ? normalizeScoring(sc) : null)
+      const { data: pers } = await supabase.from('personas').select('*').eq('is_active', true).order('created_at', { ascending: false }).eq('organisation_id', profile.organisation_id); setPersonas(pers?.length ? pers : DEFAULT_PERSONAS)
+      const { data: sc } = await supabase.from('scoring_rules').select('*').eq('is_active', true).eq('organisation_id', profileData.organisation_id).order('created_at', { ascending: false }).maybeSingle(); setScoring(sc ? normalizeScoring(sc) : null)
       const { data: cfg } = await supabase.from('platform_config').select('*').eq('organisation_id', profileData.organisation_id).maybeSingle(); if (cfg) setConfig(cfg)
       // Org loading
       if (p.role === 'super_admin') {
