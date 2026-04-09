@@ -204,6 +204,7 @@ export default function DashboardPage() {
   const [allOrgs, setAllOrgs] = useState([])
   const supabase = createClient(); const router = useRouter()
   const loadData = useCallback(async () => {
+    try {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) { router.push('/'); return }
     const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single(); if (!p) { router.push('/'); return }; setProfile(p)
     const { data: sess } = (p.role === 'admin' || p.role === 'super_admin') ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(normSessions(sess))
@@ -230,6 +231,7 @@ export default function DashboardPage() {
       }
       
     }setLoading(false)
+    } catch (e: any) { console.error('loadData error:', e?.message || e) } finally { setLoading(false) }
   }, [supabase, router])
   useEffect(() => { loadData() }, [])
 
