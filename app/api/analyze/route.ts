@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     })
     const data = await response.json()
     return NextResponse.json({ text: data.content?.[0]?.text || '{}' })
-  } catch (error: any) {
-    return NextResponse.json({ text: '{"score":50,"summary":"Analyse non disponible"}' }, { status: 200 })
+  } catch (error) {
+    return NextResponse.json({ text: '{"score":50,"summary":"Analyse non disponible"}' }, { status: 500 })
   }
 }
