@@ -1,21 +1,34 @@
-import { NextResponse } from 'next/server'
-import { getApiKeys } from '@/lib/api-keys'
+import { NextRequest, NextResponse } from 'next/server'
+import Anthropic from '@anthropic-ai/sdk'
+import { createServerSupabase } from '@/lib/supabase-server'
+import { checkRateLimit } from '@/lib/rate-limit'
 
-export async function POST(request: Request) {
+const client = new Anthropic()
+
+export async function POST(req: NextRequest) {
   try {
-    const { system, messages } = await request.json()
-    const keys = await getApiKeys()
-    if (!keys.anthropic) return NextResponse.json({ text: "Aucune clé API Anthropic configurée." }, { status: 400 })
+    // Auth
+    const supabase = createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    const apiMessages = messages.map((m: any) => ({ role: m.sender === "vendor" ? "user" : "assistant", content: m.content }))
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": keys.anthropic, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system, messages: apiMessages })
+    // Rate limit
+    const { data: profile } = await supabase.from('profiles').select('organisation_id').eq('id', user.id).single()
+    const rl = await checkRateLimit(user.id, profile?.organisation_id || null, 'chat')
+    if (!rl.allowed) return NextResponse.json({ error: rl.message }, { status: 429 })
+
+    const { system, messages, voice } = await req.json()
+
+    const response = await client.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 1024,
+      system,
+      messages,
     })
-    const data = await response.json()
-    return NextResponse.json({ text: data.content?.[0]?.text || "..." })
-  } catch (error) {
-    return NextResponse.json({ text: "...(erreur serveur)" }, { status: 500 })
+
+    const text = response.content[0]?.type === 'text' ? response.content[0].text : ''
+    return NextResponse.json({ text })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
