@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server'
 import { getApiKeys } from '@/lib/api-keys'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { createServerSupabase } from '@/lib/supabase-server'
 
 export async function POST(request: Request) {
   try {
+    const supabase = createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+    const { data: profile } = await supabase.from('profiles').select('organisation_id').eq('id', user.id).single()
+    const rl = await checkRateLimit(user.id, (profile as any)?.organisation_id || null, 'analyze')
+    if (!rl.allowed) return NextResponse.json({ error: rl.message }, { status: 429 })
+
     const { prompt } = await request.json()
     const keys = await getApiKeys()
     if (!keys.anthropic) return NextResponse.json({ text: '{"score":50,"summary":"Clé API manquante"}' }, { status: 400 })
@@ -14,7 +24,7 @@ export async function POST(request: Request) {
     })
     const data = await response.json()
     return NextResponse.json({ text: data.content?.[0]?.text || '{}' })
-  } catch (error) {
-    return NextResponse.json({ text: '{"score":50,"summary":"Analyse non disponible"}' }, { status: 500 })
+  } catch (error: any) {
+    return NextResponse.json({ text: '{"score":50,"summary":"Analyse non disponible"}' }, { status: 200 })
   }
 }
