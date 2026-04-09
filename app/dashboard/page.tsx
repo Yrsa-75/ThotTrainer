@@ -230,7 +230,6 @@ export default function DashboardPage() {
       }
       
     }setLoading(false)
-    } catch(err) { console.error(err) } finally { setLoading(false) }
   }, [supabase, router])
   useEffect(() => { loadData() }, [])
 
