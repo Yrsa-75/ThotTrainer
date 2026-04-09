@@ -199,7 +199,7 @@ const iS: React.CSSProperties = { width: "100%", padding: "10px 14px", backgroun
 const bS = (c: string): React.CSSProperties => ({ padding: "5px 12px", background: "none", border: `1px solid ${c}33`, borderRadius: 6, color: c, fontSize: 11, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 })
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(DEFAULT_SCORING); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(null); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
   const [org, setOrg] = useState(null)
   const [allOrgs, setAllOrgs] = useState([])
   const supabase = createClient(); const router = useRouter()
@@ -963,7 +963,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
     // Save scoring
     if (r.scoring) {
       await supabase.from('scoring_rules').update({
-        positive: r.scoring.positive || [], negative: r.scoring.negative || [], phase_bonus: r.scoring.phase_bonus || [],
+        positive: r.scoring?.positive || [], negative: r.scoring?.negative || [], phase_bonus: r.scoring?.phase_bonus || [],
         level1_threshold: r.scoring.level1_threshold || 30, level2_threshold: r.scoring.level2_threshold || 55, level3_threshold: r.scoring.level3_threshold || 80,
         level1_start_score: r.scoring.level1_start_score || 20, level2_start_score: r.scoring.level2_start_score || 5, level3_start_score: r.scoring.level3_start_score || -15
       }).eq('is_active', true)
@@ -1064,9 +1064,9 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
           {wizardFullResult.scoring && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>📊 Scoring</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              <div><div style={{ fontSize: 11, color: "#63c397", fontWeight: 700, marginBottom: 6 }}>POSITIFS ({wizardFullResult.scoring.positive?.length || 0})</div>{(wizardFullResult.scoring.positive||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>+{r.points} {r.label}</div>)}</div>
-              <div><div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 6 }}>NÉGATIFS ({wizardFullResult.scoring.negative?.length || 0})</div>{(wizardFullResult.scoring.negative||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>{r.points} {r.label}</div>)}</div>
-              <div><div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, marginBottom: 6 }}>BONUS PHASES ({wizardFullResult.scoring.phase_bonus?.length || 0})</div>{(wizardFullResult.scoring.phase_bonus||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>+{r.points} {r.label}</div>)}</div>
+              <div><div style={{ fontSize: 11, color: "#63c397", fontWeight: 700, marginBottom: 6 }}>POSITIFS ({wizardFullResult.scoring?.positive?.length || 0})</div>{(wizardFullResult.scoring?.positive||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>+{r.points} {r.label}</div>)}</div>
+              <div><div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 6 }}>NÉGATIFS ({wizardFullResult.scoring?.negative?.length || 0})</div>{(wizardFullResult.scoring?.negative||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>{r.points} {r.label}</div>)}</div>
+              <div><div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, marginBottom: 6 }}>BONUS PHASES ({wizardFullResult.scoring?.phase_bonus?.length || 0})</div>{(wizardFullResult.scoring?.phase_bonus||[]).slice(0,4).map((r: any, i: number) => <div key={i} style={{ fontSize: 11, color: "#8b95a5", marginBottom: 4 }}>+{r.points} {r.label}</div>)}</div>
             </div>
           </div>}
 
@@ -1225,11 +1225,11 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 // SCORING EDITOR — CRUD complet
 // ============================================
 function ScoringEditor({ supabase, scoring, onRefresh }: any) {
-  const [pos, setPos] = useState<any[]>(scoring.positive || [])
-  const [neg, setNeg] = useState<any[]>(scoring.negative || [])
-  const [bonus, setBonus] = useState<any[]>(scoring.phase_bonus || [])
-  const [thresholds, setThresholds] = useState(scoring.thresholds || { level1: 30, level2: 55, level3: 80 })
-  const [startScores, setStartScores] = useState(scoring.startScores || { level1: 20, level2: 5, level3: -15 })
+  const [pos, setPos] = useState<any[]>(scoring?.positive || [])
+  const [neg, setNeg] = useState<any[]>(scoring?.negative || [])
+  const [bonus, setBonus] = useState<any[]>(scoring?.phase_bonus || [])
+  const [thresholds, setThresholds] = useState(scoring?.thresholds || { level1: 30, level2: 55, level3: 80 })
+  const [startScores, setStartScores] = useState(scoring?.startScores || { level1: 20, level2: 5, level3: -15 })
   const [saving, setSaving] = useState(false)
 
   const save = async (updates: any) => {
