@@ -17,45 +17,7 @@ export const DEFAULT_FORMATIONS = [
   { id: "f4", name: "Intelligence Artificielle — Initiation Pro", description: "ChatGPT, automatisation, prompt engineering. Certification incluse.", price: "Financée CPF (à configurer)", arguments: ["Compétence la plus demandée", "Applicable dans tous les métiers", "Avantage concurrentiel", "Formation pratique", "Profils 'IA-ready' recherchés"], objections: ["L'IA va remplacer les emplois", "Trop technique", "C'est une mode", "ChatGPT c'est gratuit"] }
 ];
 
-export const DEFAULT_SCORING = {
-  positive: [
-    { key: "listening", label: "Écoute active et reformulation", points: 5 },
-    { key: "personalization", label: "Personnalisation au profil", points: 10 },
-    { key: "objection_response", label: "Réponse concrète à objection", points: 8 },
-    { key: "empathy", label: "Empathie sincère", points: 5 },
-    { key: "open_questions", label: "Questions ouvertes sur besoins", points: 5 },
-    { key: "examples", label: "Exemples concrets de résultats", points: 7 },
-    { key: "pace", label: "Respect du rythme du prospect", points: 3 },
-    { key: "social_proof", label: "Preuve sociale crédible", points: 5 },
-    { key: "cpf_guidance", label: "Guidance claire sur la procédure", points: 8 },
-    { key: "reassurance", label: "Rassure sur les freins majeurs", points: 7 },
-    { key: "needs_identification", label: "Identifie le besoin prioritaire", points: 8 },
-    { key: "company_presentation", label: "Présente bien l'entreprise et le dispositif", points: 6 }
-  ],
-  negative: [
-    { key: "ignores", label: "Ignore les objections", points: -10 },
-    { key: "robotic", label: "Script robotique", points: -8 },
-    { key: "pressure", label: "Pression excessive", points: -7 },
-    { key: "no_knowledge", label: "Ne connaît pas le produit/service", points: -15 },
-    { key: "condescending", label: "Condescendant", points: -10 },
-    { key: "lies", label: "Mensonge ou exagération", points: -20 },
-    { key: "no_questions", label: "Aucune question posée", points: -8 },
-    { key: "talks_much", label: "Parle plus qu'il n'écoute", points: -5 },
-    { key: "repeats", label: "Répète les mêmes arguments", points: -7 },
-    { key: "skips_profiling", label: "Saute le profiling / fonce sur la vente", points: -12 },
-    { key: "cant_explain_process", label: "Ne sait pas expliquer le processus", points: -10 }
-  ],
-  phase_bonus: [
-    { key: "phase_presentation", label: "A présenté l'entreprise et le dispositif", points: 5 },
-    { key: "phase_profiling", label: "A échangé sur le profil et les attentes", points: 8 },
-    { key: "phase_needs", label: "A identifié les besoins", points: 6 },
-    { key: "phase_solution", label: "A présenté la solution adaptée", points: 6 },
-    { key: "phase_objections", label: "A traité les objections", points: 5 },
-    { key: "phase_closing", label: "A fait le closing / résumé", points: 5 }
-  ],
-  thresholds: { level1: 30, level2: 55, level3: 80 },
-  startScores: { level1: 20, level2: 5, level3: -15 }
-};
+export const DEFAULT_SCORING = null;
 
 export const DEFAULT_CONFIG = {
   company_name: '',
