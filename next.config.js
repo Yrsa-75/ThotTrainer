@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['stripe'],
-  },
+  serverExternalPackages: ['stripe'],
   typescript: {
     ignoreBuildErrors: true,
   },
