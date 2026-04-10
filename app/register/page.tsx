@@ -10,7 +10,7 @@ const PLANS = [
     sessions: 25,
     color: '#63c397',
     priceId: 'price_1TJJzoRpbK02np6XEHDbWqsX',
-    features: ['25 sessions / mois', 'Personas IA illimit\u00e9es', 'Analyse post-session', 'Support email'],
+    features: ['25 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Support email'],
   },
   {
     id: 'business',
@@ -20,7 +20,7 @@ const PLANS = [
     color: '#3b82f6',
     popular: true,
     priceId: 'price_1TJJzoRpbK02np6XCMclag3r',
-    features: ['100 sessions / mois', 'Personas IA illimit\u00e9es', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
+    features: ['100 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
   },
   {
     id: 'premium',
@@ -29,7 +29,7 @@ const PLANS = [
     sessions: 250,
     color: '#a78bfa',
     priceId: 'price_1TJJzpRpbK02np6XtDXEDD9s',
-    features: ['250 sessions / mois', 'Personas IA illimit\u00e9es', 'Analyse post-session', 'Dashboard admin', 'Support d\u00e9di\u00e9', 'Onboarding personnalis\u00e9'],
+    features: ['250 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Dashboard admin', 'Support dédié', 'Onboarding personnalisé'],
   },
 ]
 
@@ -42,14 +42,14 @@ export default function RegisterPage() {
 
   async function handlePlanClick(plan: typeof PLANS[0]) {
     if (!isFormValid) {
-      setError('Veuillez remplir tous les champs (mot de passe : 6 caract\u00e8res minimum)')
+      setError('Veuillez remplir tous les champs (mot de passe : 6 caractères minimum)')
       return
     }
     setLoading(true)
     setError('')
 
     try {
-      // 1. Cr\u00e9er le compte (org + profil)
+      // 1. Créer le compte (org + profil)
       const regRes = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,12 +64,12 @@ export default function RegisterPage() {
       })
       const regData = await regRes.json()
       if (!regRes.ok) {
-        setError(regData.error || 'Erreur lors de la cr\u00e9ation du compte')
+        setError(regData.error || 'Erreur lors de la création du compte')
         setLoading(false)
         return
       }
 
-      // 2. Cr\u00e9er la session Stripe Checkout
+      // 2. Créer la session Stripe Checkout
       const stripeRes = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,14 +112,14 @@ export default function RegisterPage() {
             </svg>
             <span style={{ fontSize: 24, fontWeight: 800 }}>thot</span>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px' }}>Cr\u00e9ez votre compte</h1>
-          <p style={{ color: '#8b95a5', margin: 0 }}>7 jours d&apos;essai gratuit \u00b7 Sans engagement \u00b7 Annulation \u00e0 tout moment</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px' }}>Créez votre compte</h1>
+          <p style={{ color: '#8b95a5', margin: 0 }}>7 jours d&apos;essai gratuit · Sans engagement · Annulation à tout moment</p>
         </div>
 
         {/* Error / cancelled */}
         {(error || cancelled) && (
           <div style={{ background: '#1c1012', border: '1px solid #f8514930', borderRadius: 10, padding: '12px 16px', marginBottom: 24, color: '#f85149', fontSize: 14, textAlign: 'center' }}>
-            {cancelled ? 'Paiement annul\u00e9. Vous pouvez r\u00e9essayer.' : error}
+            {cancelled ? 'Paiement annulé. Vous pouvez réessayer.' : error}
           </div>
         )}
 
@@ -140,7 +140,7 @@ export default function RegisterPage() {
               <label style={{ fontSize: 13, color: '#8b95a5', display: 'block', marginBottom: 6 }}>Votre nom</label>
               <input
                 type="text"
-                placeholder="Pr\u00e9nom Nom"
+                placeholder="Prénom Nom"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
@@ -160,7 +160,7 @@ export default function RegisterPage() {
               <label style={{ fontSize: 13, color: '#8b95a5', display: 'block', marginBottom: 6 }}>Mot de passe</label>
               <input
                 type="password"
-                placeholder="6 caract\u00e8res minimum"
+                placeholder="6 caractères minimum"
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 style={{ width: '100%', padding: '10px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
@@ -195,7 +195,7 @@ export default function RegisterPage() {
                 </div>
               )}
               <div style={{ fontSize: 20, fontWeight: 700 }}>{plan.name}</div>
-              <div style={{ fontSize: 36, fontWeight: 800, color: plan.color, margin: '12px 0 4px' }}>{plan.price}\u20ac</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: plan.color, margin: '12px 0 4px' }}>{plan.price}€</div>
               <div style={{ fontSize: 13, color: '#8b95a5', marginBottom: 16 }}>par mois HT</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: plan.color, marginBottom: 16 }}>{plan.sessions} sessions / mois</div>
               {plan.features.map((f, i) => (
@@ -222,18 +222,18 @@ export default function RegisterPage() {
                   cursor: loading ? 'wait' : 'pointer',
                 }}
               >
-                {loading ? 'Redirection...' : 'D\u00e9marrer l\u2019essai gratuit \u2192'}
+                {loading ? 'Redirection...' : 'Démarrer l’essai gratuit →'}
               </button>
             </div>
           ))}
         </div>
 
         <p style={{ textAlign: 'center', color: '#63c397', fontSize: 13, margin: '16px 0 32px' }}>
-          Essai gratuit 7 jours \u00b7 Carte bancaire requise \u00b7 Aucun pr\u00e9l\u00e8vement avant le 8\u00e8me jour
+          Essai gratuit 7 jours · Carte bancaire requise · Aucun prélèvement avant le 8ème jour
         </p>
 
         <p style={{ textAlign: 'center', color: '#8b95a5', fontSize: 13 }}>
-          D\u00e9j\u00e0 un compte ? <a href="/login" style={{ color: '#63c397' }}>Se connecter</a>
+          Déjà un compte ? <a href="/login" style={{ color: '#63c397' }}>Se connecter</a>
         </p>
       </div>
     </div>
