@@ -1146,7 +1146,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
           <EF label="Objections courantes du secteur" value={config.common_objections} onSave={(v: string) => savCfg({ common_objections: v })} rows={3} />
           <EF label="Points de tension" value={config.tension_points} onSave={(v: string) => savCfg({ tension_points: v })} rows={3} />
           <EF label="Vocabulaire et ton" value={config.vocabulary_tone} onSave={(v: string) => savCfg({ vocabulary_tone: v })} rows={2} />
-          <EF label="Instructions supplémentaires pour l'IA" value={config.custom_instructions} onSave={(v: string) => savCfg({ custom_instructions: v })} rows={3} />
+          <EF label="Instructions pour le prospect virtuel pour l'IA" value={config.custom_instructions} onSave={(v: string) => savCfg({ custom_instructions: v })} rows={3} />
         </div>
 
         {/* Sales process with drag & drop */}
