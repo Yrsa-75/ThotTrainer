@@ -805,6 +805,7 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
 
   const applyGenerated = async () => {
     if (!genResult || genResult.error) return
+    const orgId = profile?.organisation_id
     await savCfg({
       company_name: genResult.company_name || config.company_name,
       company_sector: genResult.company_sector || '',
@@ -816,17 +817,31 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
       vocabulary_tone: genResult.vocabulary_tone || '',
       custom_instructions: genResult.custom_instructions || ''
     })
-    // Add suggested personas
-    if (genResult.suggested_personas?.length) {
+    // Add suggested personas with organisation_id
+    if (genResult.suggested_personas?.length && orgId) {
       for (const p of genResult.suggested_personas) {
-        await supabase.from('personas').insert({ name: p.name, subtitle: p.subtitle, age: p.age, emoji: p.emoji, profession: p.profession, situation: p.situation, personality: p.personality, motivations: p.motivations, obstacles: p.obstacles, communication_style: p.communication_style })
+        await supabase.from('personas').insert({ organisation_id: orgId, is_active: true, name: p.name, subtitle: p.subtitle || '', age: p.age || 40, emoji: p.emoji || '\ud83d\udc64', profession: p.profession || '', situation: p.situation || '', personality: p.personality || '', motivations: p.motivations || '', obstacles: p.obstacles || '', communication_style: p.communication_style || '' })
       }
     }
-    // Add suggested products
-    if (genResult.suggested_products?.length) {
+    // Add suggested products with organisation_id
+    if (genResult.suggested_products?.length && orgId) {
       for (const f of genResult.suggested_products) {
-        await supabase.from('formations').insert({ name: f.name, description: f.description, price: f.price, key_arguments: f.key_arguments || [], common_objections: f.common_objections || [] })
+        await supabase.from('formations').insert({ organisation_id: orgId, is_active: true, name: f.name, description: f.description || '', price: f.price || '', key_arguments: f.key_arguments || [], common_objections: f.common_objections || [] })
       }
+    }
+    // Add scoring rules with organisation_id
+    if (genResult.scoring && orgId) {
+      const sc = genResult.scoring
+      await supabase.from('scoring_rules').insert({
+        organisation_id: orgId,
+        is_active: true,
+        positive_criteria: sc.positive || [],
+        negative_criteria: sc.negative || [],
+        success_threshold: sc.success_threshold || 80,
+        level1_start_score: sc.level1_start_score || 20,
+        level2_start_score: sc.level2_start_score || 5,
+        level3_start_score: sc.level3_start_score || -15
+      })
     }
     setGenResult(null); setGenDesc(''); onRefresh()
   }
