@@ -40,7 +40,7 @@ Réponds UNIQUEMENT en JSON valide avec cette structure :
   "common_objections": "<objections typiques du secteur, séparées par des phrases>",
   "tension_points": "<moments de tension dans le processus de vente>",
   "vocabulary_tone": "<vocabulaire métier, niveau de formalité, expressions typiques>",
-  "custom_instructions": "<instructions spéciales pour le comportement du prospect virtuel>",
+  "custom_instructions": "<instructions pour le PROSPECT VIRTUEL : son état d'esprit, sa méfiance, ses réactions typiques, ses freins psychologiques — PAS des conseils pour le vendeur>",
   "suggested_personas": [
     {"name": "<prénom>", "subtitle": "<surnom descriptif>", "age": <age>, "emoji": "<emoji>", "profession": "<métier>", "situation": "<contexte>", "personality": "<traits>", "motivations": "<ce qu'il veut>", "obstacles": "<freins>", "communication_style": "<comment il parle>"},
     ...
