@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 3000,
+        max_tokens: 4096,
         system: `Tu es un expert en configuration de plateformes de simulation commerciale. L'utilisateur va te décrire son entreprise et son processus de vente. Tu dois générer une configuration structurée en JSON.
 
 Réponds UNIQUEMENT en JSON valide avec cette structure :
