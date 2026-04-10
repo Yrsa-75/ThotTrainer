@@ -213,7 +213,17 @@ export default function DashboardPage() {
     } else {
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
     }
-    const { data: f } = p.organisation_id ? await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', p.organisation_id) : null.order('created_at', { ascending: false }); setFormations(f?.length ? f : DEFAULT_FORMATIONS)
+    let f_data = null; // Super admin: charger les orgs meme sans organisation_id
+      if (p.role === 'super_admin') {
+        try {
+          const { data: orgs2 } = await supabase.from('organisations').select('*').order('created_at', { ascending: false })
+          if (orgs2) {
+            const { data: adms } = await supabase.from('profiles').select('id, full_name, email, organisation_id').eq('role', 'admin')
+            setAllOrgs(orgs2.map(o => ({ ...o, adminProfile: (adms||[]).find(a => a.organisation_id === o.id) })))
+          }
+        } catch(e) { console.error('super admin orgs error:', e) }
+      }
+      if (p.organisation_id) { const { data: fRes } = await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', p.organisation_id).order('created_at', { ascending: false }); f_data = fRes }; setFormations(f_data?.length ? f_data : (p.organisation_id ? DEFAULT_FORMATIONS : []))
     // Super admin: charger les orgs même sans organisation_id
       if (p.role === 'super_admin') {
         const { data: orgs2 } = await supabase.from('organisations').select('*').order('created_at', { ascending: false })
