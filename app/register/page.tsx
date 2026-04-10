@@ -1,118 +1,240 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 const PLANS = [
-  { id: 'starter', name: 'Starter', price: 249, sessions: 25,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER,
-    features: ['25 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Support email'],
-    color: '#63c397' },
-  { id: 'business', name: 'Business', price: 489, sessions: 100,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
-    features: ['100 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
-    color: '#3b82f6', popular: true },
-  { id: 'premium', name: 'Premium', price: 990, sessions: 250,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM,
-    features: ['250 sessions / mois', 'Personas IA illimites', 'Analyse post-session', 'Dashboard admin', 'Support dedie', 'Onboarding personnalise'],
-    color: '#a78bfa' },
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: 249,
+    sessions: 25,
+    color: '#63c397',
+    priceId: 'price_1TJJzoRpbK02np6XEHDbWqsX',
+    features: ['25 sessions / mois', 'Personas IA illimit\u00e9es', 'Analyse post-session', 'Support email'],
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    price: 489,
+    sessions: 100,
+    color: '#3b82f6',
+    popular: true,
+    priceId: 'price_1TJJzoRpbK02np6XCMclag3r',
+    features: ['100 sessions / mois', 'Personas IA illimit\u00e9es', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
+  },
+  {
+    id: 'premium',
+    name: 'Premium',
+    price: 990,
+    sessions: 250,
+    color: '#a78bfa',
+    priceId: 'price_1TJJzpRpbK02np6XtDXEDD9s',
+    features: ['250 sessions / mois', 'Personas IA illimit\u00e9es', 'Analyse post-session', 'Dashboard admin', 'Support d\u00e9di\u00e9', 'Onboarding personnalis\u00e9'],
+  },
 ]
 
-function Logo() {
-  return (
-    <svg width="36" height="36" viewBox="0 0 28 28" fill="none">
-      <rect width="28" height="28" rx="6" fill="#63c397"/>
-      <text x="5" y="20" fontFamily="Georgia,serif" fontSize="16" fontWeight="bold" fill="white">T</text>
-      <text x="14" y="20" fontFamily="Georgia,serif" fontSize="16" fontWeight="bold" fill="rgba(255,255,255,0.7)">T</text>
-    </svg>
-  )
-}
-
 export default function RegisterPage() {
-  const router = useRouter()
-  const [step, setStep] = useState<'plan'|'account'>('plan')
-  const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0]|null>(null)
-  const [form, setForm] = useState({ orgName: '', adminName: '', email: '', password: '' })
+  const [form, setForm] = useState({ company: '', name: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  function rgb(h: string) {
-    return `${parseInt(h.slice(1,3),16)},${parseInt(h.slice(3,5),16)},${parseInt(h.slice(5,7),16)}`
-  }
+  const isFormValid = form.company.trim() && form.name.trim() && form.email.trim() && form.password.length >= 6
 
-  async function submit() {
-    if (!selectedPlan) return
-    setLoading(true); setError('')
+  async function handlePlanClick(plan: typeof PLANS[0]) {
+    if (!isFormValid) {
+      setError('Veuillez remplir tous les champs (mot de passe : 6 caract\u00e8res minimum)')
+      return
+    }
+    setLoading(true)
+    setError('')
+
     try {
-      const r1 = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgName: form.orgName, adminEmail: form.email, adminName: form.adminName, password: form.password }) })
-      const d1 = await r1.json(); if (!r1.ok) throw new Error(d1.error)
-      const r2 = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ priceId: selectedPlan.priceId, orgName: form.orgName, adminEmail: form.email, adminName: form.adminName, orgId: d1.orgId }) })
-      const d2 = await r2.json(); if (!r2.ok) throw new Error(d2.error)
-      window.location.href = d2.url
-    } catch (e: any) { setError(e.message); setLoading(false) }
+      // 1. Cr\u00e9er le compte (org + profil)
+      const regRes = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: form.company.trim(),
+          adminName: form.name.trim(),
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+          plan: plan.id,
+          sessionsLimit: plan.sessions,
+        }),
+      })
+      const regData = await regRes.json()
+      if (!regRes.ok) {
+        setError(regData.error || 'Erreur lors de la cr\u00e9ation du compte')
+        setLoading(false)
+        return
+      }
+
+      // 2. Cr\u00e9er la session Stripe Checkout
+      const stripeRes = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: plan.priceId,
+          orgName: form.company.trim(),
+          adminEmail: form.email.trim().toLowerCase(),
+          adminName: form.name.trim(),
+          orgId: regData.orgId,
+        }),
+      })
+      const stripeData = await stripeRes.json()
+      if (!stripeRes.ok) {
+        setError(stripeData.error || 'Erreur Stripe')
+        setLoading(false)
+        return
+      }
+
+      // 3. Rediriger vers Stripe
+      window.location.href = stripeData.url
+    } catch (e: any) {
+      setError(e.message || 'Erreur inattendue')
+      setLoading(false)
+    }
   }
 
-  const pageStyle: React.CSSProperties = { minHeight: '100vh', background: '#0f1219', fontFamily: "'Segoe UI',system-ui", color: '#fff', padding: '40px 20px' }
-
-  if (step === 'plan') return (
-    <div style={pageStyle}>
-      <div style={{ textAlign: 'center', marginBottom: 48 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-          <Logo/><span style={{ fontSize: 24, fontWeight: 800 }}>thot</span>
-        </div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>Choisissez votre forfait</h1>
-        <p style={{ color: '#8b95a5' }}>7 jours d'essai gratuit · Sans engagement · Annulation a tout moment</p>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20, maxWidth: 900, margin: '0 auto 40px' }}>
-        {PLANS.map(p => (
-          <div key={p.id} onClick={() => setSelectedPlan(p)} style={{ background: selectedPlan?.id===p.id ? `rgba(${rgb(p.color)},0.08)` : '#111621', border: `2px solid ${selectedPlan?.id===p.id ? p.color : '#1e2530'}`, borderRadius: 16, padding: 28, cursor: 'pointer', position: 'relative' }}>
-            {p.popular && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#3b82f6', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20 }}>Le plus populaire</div>}
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{p.name}</div>
-            <div style={{ fontSize: 36, fontWeight: 800, color: p.color, margin: '12px 0 4px' }}>{p.price}€</div>
-            <div style={{ fontSize: 13, color: '#8b95a5', marginBottom: 16 }}>par mois HT</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: p.color, marginBottom: 16 }}>{p.sessions} sessions / mois</div>
-            {p.features.map(f => (
-              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#b4bcc8', marginBottom: 8 }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill={p.color} opacity=".2"/><path d="M4 7l2 2 4-4" stroke={p.color} strokeWidth="1.5" strokeLinecap="round"/></svg>
-                {f}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      <p style={{ textAlign: 'center', color: '#63c397', fontSize: 13, marginBottom: 40 }}>Essai gratuit 7 jours · Carte bancaire requise · Aucun prelevement avant le 8eme jour</p>
-      <div style={{ textAlign: 'center' }}>
-        <button style={{ padding: 14, background: selectedPlan?.color||'#63c397', color: '#0f1219', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', maxWidth: 320, width: '100%', opacity: selectedPlan ? 1 : 0.4 }} disabled={!selectedPlan} onClick={() => selectedPlan && setStep('account')}>
-          Continuer avec {selectedPlan?.name||'...'} →
-        </button>
-      </div>
-      <p style={{ textAlign: 'center', marginTop: 24, color: '#8b95a5', fontSize: 13 }}>
-        Deja un compte ? <a href="/login" style={{ color: '#63c397' }}>Se connecter</a>
-      </p>
-    </div>
-  )
+  const cancelled = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('cancelled')
 
   return (
-    <div style={{ ...pageStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ maxWidth: 480, width: '100%', background: '#111621', border: '1px solid #1e2530', borderRadius: 16, padding: 36 }}>
-        <button style={{ background: 'none', border: 'none', color: '#8b95a5', cursor: 'pointer', fontSize: 13, marginBottom: 20, padding: 0 }} onClick={() => setStep('plan')}>← Retour</button>
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Creer votre compte</h2>
-        <p style={{ color: '#8b95a5', fontSize: 14, marginBottom: 28 }}>Votre espace Thot sera pret en quelques secondes.</p>
-        {selectedPlan && <div style={{ background: `rgba(${rgb(selectedPlan.color)},0.15)`, border: `1px solid rgba(${rgb(selectedPlan.color)},0.3)`, borderRadius: 8, padding: '8px 12px', fontSize: 13, color: selectedPlan.color, marginBottom: 24 }}>
-          Forfait : <strong>{selectedPlan.name}</strong> — {selectedPlan.price}€/mois · {selectedPlan.sessions} sessions
-        </div>}
-        {error && <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '10px 14px', color: '#fca5a5', fontSize: 13, marginBottom: 16 }}>
-          {error}
-        </div>}
-        {(['Nom entreprise','Votre nom','Email professionnel','Mot de passe'] as const).map((l, i) => (
-          <div key={i}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8b95a5', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{l}</label>
-            <input type={i===3?'password':i===2?'email':'text'} placeholder={['Acme Corp','Marie Dupont','vous@entreprise.com','8 caracteres min'][i]} style={{ width: '100%', padding: '12px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 10, color: '#fff', fontSize: 14, outline: 'none', marginBottom: 20, fontFamily: 'inherit' }} value={[form.orgName,form.adminName,form.email,form.password][i]} onChange={e => setForm(f => ({ ...f, [['orgName','adminName','email','password'][i]]: e.target.value }))} />
+    <div style={{ minHeight: '100vh', background: '#0f1219', fontFamily: "'Segoe UI', system-ui", color: '#fff', padding: '40px 20px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
+            <svg width="36" height="36" viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="6" fill="#63c397"/>
+              <text x="5" y="20" fontFamily="Georgia,serif" fontSize="16" fontWeight="bold" fill="white">T</text>
+              <text x="14" y="20" fontFamily="Georgia,serif" fontSize="16" fontWeight="bold" fill="rgba(255,255,255,0.7)">T</text>
+            </svg>
+            <span style={{ fontSize: 24, fontWeight: 800 }}>thot</span>
           </div>
-        ))}
-        <button style={{ width: '100%', padding: 14, background: selectedPlan?.color||'#63c397', color: '#0f1219', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1 }} disabled={loading||!form.orgName||!form.adminName||!form.email||!form.password} onClick={submit}>
-          {loading ? 'Creation...' : 'Continuer vers le paiement →'}
-        </button>
-        <p style={{ textAlign: 'center', marginTop: 16, color: '#8b95a5', fontSize: 12 }}>Paiement securise par Stripe · 7 jours gratuits · Annulation en 1 clic</p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px' }}>Cr\u00e9ez votre compte</h1>
+          <p style={{ color: '#8b95a5', margin: 0 }}>7 jours d&apos;essai gratuit \u00b7 Sans engagement \u00b7 Annulation \u00e0 tout moment</p>
+        </div>
+
+        {/* Error / cancelled */}
+        {(error || cancelled) && (
+          <div style={{ background: '#1c1012', border: '1px solid #f8514930', borderRadius: 10, padding: '12px 16px', marginBottom: 24, color: '#f85149', fontSize: 14, textAlign: 'center' }}>
+            {cancelled ? 'Paiement annul\u00e9. Vous pouvez r\u00e9essayer.' : error}
+          </div>
+        )}
+
+        {/* Form */}
+        <div style={{ background: '#111621', border: '1px solid #1e2530', borderRadius: 16, padding: 28, marginBottom: 32 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+            <div>
+              <label style={{ fontSize: 13, color: '#8b95a5', display: 'block', marginBottom: 6 }}>Nom de votre entreprise</label>
+              <input
+                type="text"
+                placeholder="Ex: Acme Corp"
+                value={form.company}
+                onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, color: '#8b95a5', display: 'block', marginBottom: 6 }}>Votre nom</label>
+              <input
+                type="text"
+                placeholder="Pr\u00e9nom Nom"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, color: '#8b95a5', display: 'block', marginBottom: 6 }}>Email professionnel</label>
+              <input
+                type="email"
+                placeholder="vous@entreprise.com"
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 13, color: '#8b95a5', display: 'block', marginBottom: 6 }}>Mot de passe</label>
+              <input
+                type="password"
+                placeholder="6 caract\u00e8res minimum"
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                style={{ width: '100%', padding: '10px 14px', background: '#0f1219', border: '1px solid #1e2530', borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Plans */}
+        <h2 style={{ fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 20 }}>Choisissez votre forfait</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginBottom: 16 }}>
+          {PLANS.map(plan => (
+            <div
+              key={plan.id}
+              onClick={() => !loading && handlePlanClick(plan)}
+              style={{
+                background: '#111621',
+                border: `2px solid ${loading ? '#1e2530' : plan.color + '40'}`,
+                borderRadius: 16,
+                padding: 28,
+                cursor: loading ? 'wait' : 'pointer',
+                position: 'relative',
+                transition: 'border-color 0.2s, transform 0.2s',
+                opacity: loading ? 0.6 : 1,
+              }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget.style.borderColor = plan.color); (e.currentTarget.style.transform = 'translateY(-2px)') }}
+              onMouseLeave={e => { (e.currentTarget.style.borderColor = plan.color + '40'); (e.currentTarget.style.transform = 'none') }}
+            >
+              {plan.popular && (
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: plan.color, color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20 }}>
+                  Le plus populaire
+                </div>
+              )}
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{plan.name}</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: plan.color, margin: '12px 0 4px' }}>{plan.price}\u20ac</div>
+              <div style={{ fontSize: 13, color: '#8b95a5', marginBottom: 16 }}>par mois HT</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: plan.color, marginBottom: 16 }}>{plan.sessions} sessions / mois</div>
+              {plan.features.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#b4bcc8', marginBottom: 8 }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="7" fill={plan.color} opacity={0.2}/>
+                    <path d="M4 7l2 2 4-4" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  {f}
+                </div>
+              ))}
+              <button
+                disabled={loading}
+                style={{
+                  marginTop: 16,
+                  width: '100%',
+                  padding: '12px',
+                  background: loading ? '#1e2530' : plan.color,
+                  color: loading ? '#8b95a5' : '#0f1219',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: loading ? 'wait' : 'pointer',
+                }}
+              >
+                {loading ? 'Redirection...' : 'D\u00e9marrer l\u2019essai gratuit \u2192'}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <p style={{ textAlign: 'center', color: '#63c397', fontSize: 13, margin: '16px 0 32px' }}>
+          Essai gratuit 7 jours \u00b7 Carte bancaire requise \u00b7 Aucun pr\u00e9l\u00e8vement avant le 8\u00e8me jour
+        </p>
+
+        <p style={{ textAlign: 'center', color: '#8b95a5', fontSize: 13 }}>
+          D\u00e9j\u00e0 un compte ? <a href="/login" style={{ color: '#63c397' }}>Se connecter</a>
+        </p>
       </div>
     </div>
   )
