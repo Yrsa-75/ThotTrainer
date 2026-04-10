@@ -829,6 +829,20 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
       const data = await res.json()
       if (!res.ok) console.error('apply-config error:', data)
     } catch(e) { console.error('apply-config error:', e) }
+    
+    // Insert scoring rules (added by fix)
+    if (genResult.scoring) {
+      const sc = genResult.scoring
+      await supabase.from('scoring_rules').insert({
+        positive_criteria: sc.positive || [],
+        negative_criteria: sc.negative || [],
+        is_active: true,
+        success_threshold: sc.success_threshold || 80,
+        level1_start_score: sc.level1_start_score || 20,
+        level2_start_score: sc.level2_start_score || 5,
+        level3_start_score: sc.level3_start_score || -15
+      })
+    }
     setGenResult(null); setGenDesc(''); onRefresh()
   }
 
