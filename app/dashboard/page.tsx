@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { DEFAULT_PERSONAS, DEFAULT_FORMATIONS, DEFAULT_SCORING, DEFAULT_CONFIG, normalizeScoring, buildSystemPrompt, buildAnalysisPrompt } from '@/lib/prompts'
+import PersonasEditor from './PersonasEditor'
+import FormationsEditor from './FormationsEditor'
 
 async function callChat(system: string, messages: any[]) { const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system, messages }) }); return (await r.json()).text || '...' }
 async function callAnalyze(prompt: string) { const r = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) }); return (await r.json()).text || '{}' }
@@ -1202,7 +1204,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
     </div>}
 
     {/* ===== PERSONAS ===== */}
-    {tab === "personas" && <div>
+    {tab === "personas" && <PersonasEditor supabase={supabase} personas={personas} onRefresh={onRefresh} />}{false && <div>
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
         <button onClick={async () => { await supabase.from('personas').insert({ name: "Nouveau prospect", subtitle: "À configurer", age: 30, emoji: "👤", profession: "À définir", situation: "À définir", personality: "À définir", motivations: "À définir", obstacles: "À définir", communication_style: "À définir" }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter manuellement</button>
         <button onClick={generatePersonaAI} disabled={generatingPersona} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: generatingPersona ? "#1e2530" : "linear-gradient(135deg, rgba(99,195,151,0.15), rgba(96,165,250,0.15))", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: generatingPersona ? "#8b95a5" : "#63c397", fontSize: 13, fontWeight: 600, cursor: generatingPersona ? "default" : "pointer" }}><I.Wand /> {generatingPersona ? "⏳ Génération..." : "Générer avec l'IA"}</button>
@@ -1250,7 +1252,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
     </div>}
 
     {/* ===== PRODUCTS/SERVICES ===== */}
-    {tab === "formations" && <div>
+    {tab === "formations" && <FormationsEditor supabase={supabase} formations={formations} onRefresh={onRefresh} />}{false && <div>
       <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('formations').insert({ name: "Nouveau produit/service", description: "À définir", price: "À configurer", key_arguments: ["Argument 1"], common_objections: ["Objection 1"] }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un produit/service</button></div>
       {formations.map((f: any) => <div key={f.id} style={{ padding: 18, background: "#111621", borderRadius: 12, border: `1px solid ${editId === f.id ? "#63c397" : "#1e2530"}`, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div><div style={{ fontSize: 15, fontWeight: 700 }}>{f.name}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{f.price}</div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === f.id ? null : f.id)} style={bS("#63c397")}>{editId === f.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('formations').delete().eq('id', f.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
