@@ -1375,6 +1375,9 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
 
 
 
+  )
+}
+
 function SuperAdminClients({ orgs, onRefresh }) {
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
