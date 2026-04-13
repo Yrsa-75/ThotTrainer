@@ -796,7 +796,6 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
   const isFirstSetup = !config?.company_name || config.company_name === 'Mon Entreprise' || config.company_name === ''
 
   const EF = ({ label, value, onSave, rows = 1 }
-  const [cfgSaved, setCfgSaved] = useState(false)
 : any) => { const [v, setV] = useState(value || ""); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label}</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => v !== (value || "") && onSave(v)} rows={rows} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
   const EA = ({ label, value, onSave }: any) => { const [v, setV] = useState((value || []).join("\n")); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label} (un par ligne)</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => onSave(v.split("\n").filter((x: string) => x.trim()))} rows={4} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
   const savCfg = async (updates: any) => { if (config?.id) { await supabase.from('platform_config').update(updates).eq('id', config.id) } else { await supabase.from('platform_config').insert(updates) }; setCfgSaved(true); setTimeout(() => setCfgSaved(false), 2000) }
