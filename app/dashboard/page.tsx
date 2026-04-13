@@ -795,9 +795,11 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
   const [dragIdx, setDragIdx] = useState<number|null>(null)
   const isFirstSetup = !config?.company_name || config.company_name === 'Mon Entreprise' || config.company_name === ''
 
-  const EF = ({ label, value, onSave, rows = 1 }: any) => { const [v, setV] = useState(value || ""); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label}</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => v !== (value || "") && onSave(v)} rows={rows} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
+  const EF = ({ label, value, onSave, rows = 1 }
+  const [cfgSaved, setCfgSaved] = useState(false)
+: any) => { const [v, setV] = useState(value || ""); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label}</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => v !== (value || "") && onSave(v)} rows={rows} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
   const EA = ({ label, value, onSave }: any) => { const [v, setV] = useState((value || []).join("\n")); return <div style={{ marginBottom: 8 }}><label style={{ fontSize: 11, color: "#8b95a5", display: "block", marginBottom: 4 }}>{label} (un par ligne)</label><textarea value={v} onChange={e => setV(e.target.value)} onBlur={() => onSave(v.split("\n").filter((x: string) => x.trim()))} rows={4} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} /></div> }
-  const savCfg = async (updates: any) => { if (config?.id) { await supabase.from('platform_config').update(updates).eq('id', config.id) } else { await supabase.from('platform_config').insert(updates) }; onRefresh() }
+  const savCfg = async (updates: any) => { if (config?.id) { await supabase.from('platform_config').update(updates).eq('id', config.id) } else { await supabase.from('platform_config').insert(updates) }; setCfgSaved(true); setTimeout(() => setCfgSaved(false), 2000) }
   const savP = async (id: string, u: any) => { await supabase.from('personas').update(u).eq('id', id); onRefresh() }
   const savF = async (id: string, u: any) => { await supabase.from('formations').update(u).eq('id', id); onRefresh() }
 
@@ -1147,6 +1149,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 
         {/* Manual config sections */}
         <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
+          {cfgSaved && <div style={{ position: "sticky", top: 0, zIndex: 10, background: "rgba(35,134,54,0.15)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 8, padding: "8px 16px", marginBottom: 12, textAlign: "center", color: "#63c397", fontSize: 13, fontWeight: 600 }}>Enregistré !</div>}
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Contexte global</div>
           <EF label="Nom de l'entreprise" value={config.company_name} onSave={(v: string) => savCfg({ company_name: v })} />
           <EF label="Secteur d'activité" value={config.company_sector} onSave={(v: string) => savCfg({ company_sector: v })} />
