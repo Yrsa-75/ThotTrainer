@@ -1270,9 +1270,110 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 }
 
 // ============================================
-// SCORING EDITOR — CRUD complet
+// SCORING EDITOR — with Save button + editable points
 // ============================================
 function ScoringEditor({ supabase, scoring, onRefresh }: any) {
+  const [pos, setPos] = useState<any[]>(scoring?.positive || [])
+  const [neg, setNeg] = useState<any[]>(scoring?.negative || [])
+  const [startScores, setStartScores] = useState({
+    level1: scoring?.level1_start_score ?? scoring?.start_scores?.level1 ?? 20,
+    level2: scoring?.level2_start_score ?? scoring?.start_scores?.level2 ?? 5,
+    level3: scoring?.level3_start_score ?? scoring?.start_scores?.level3 ?? -15
+  })
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const markDirty = () => { setDirty(true); setSaved(false) }
+
+  const save = async () => {
+    setSaving(true)
+    const updates = {
+      positive: pos,
+      negative: neg,
+      level1_start_score: startScores.level1,
+      level2_start_score: startScores.level2,
+      level3_start_score: startScores.level3,
+    }
+    if (scoring?.id) {
+      await supabase.from('scoring_rules').update(updates).eq('id', scoring.id)
+    } else {
+      await supabase.from('scoring_rules').update(updates).eq('is_active', true).eq('organisation_id', scoring?.organisation_id)
+    }
+    setSaving(false)
+    setDirty(false)
+    setSaved(true)
+    onRefresh()
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const updatePos = (idx: number, key: string, val: any) => {
+    const n = [...pos]; n[idx] = { ...n[idx], [key]: val }; setPos(n); markDirty()
+  }
+  const updateNeg = (idx: number, key: string, val: any) => {
+    const n = [...neg]; n[idx] = { ...n[idx], [key]: val }; setNeg(n); markDirty()
+  }
+  const addPos = () => { setPos([...pos, { key: "new_" + Date.now(), label: "Nouveau critère positif", points: 5 }]); markDirty() }
+  const addNeg = () => { setNeg([...neg, { key: "new_" + Date.now(), label: "Nouveau critère négatif", points: -5 }]); markDirty() }
+  const removePos = (idx: number) => { setPos(pos.filter((_: any, i: number) => i !== idx)); markDirty() }
+  const removeNeg = (idx: number) => { setNeg(neg.filter((_: any, i: number) => i !== idx)); markDirty() }
+
+  const iS: any = { width: "100%", padding: "8px 12px", background: "#0f1219", border: "1px solid #1e2530", borderRadius: 8, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }
+
+  const CriteriaRow = ({ item, idx, color, onUpdate, onRemove }: any) => (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+      <input value={item.label} onChange={e => onUpdate(idx, "label", e.target.value)} style={{ ...iS, flex: 1 }} />
+      <input type="number" value={item.points} onChange={e => onUpdate(idx, "points", parseInt(e.target.value) || 0)} style={{ ...iS, width: 70, textAlign: "center", color, fontWeight: 700 }} />
+      <button onClick={() => onRemove(idx)} style={{ background: "none", border: "none", color: "#f85149", cursor: "pointer", fontSize: 18, padding: "4px 8px" }}>×</button>
+    </div>
+  )
+
+  return (
+    <div style={{ padding: 20 }}>
+      {/* Save bar */}
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, marginBottom: 20, position: "sticky", top: 0, zIndex: 10, background: "#111621", padding: "12px 0" }}>
+        {saved && <span style={{ color: "#63c397", fontSize: 13 }}>Enregistré !</span>}
+        {dirty && <span style={{ color: "#d29922", fontSize: 12 }}>Modifications non sauvegardées</span>}
+        <button onClick={save} disabled={saving || !dirty} style={{ padding: "10px 24px", background: dirty ? "#238636" : "#1e2530", border: "none", borderRadius: 8, color: dirty ? "#fff" : "#555", fontSize: 14, fontWeight: 600, cursor: dirty ? "pointer" : "default" }}>
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </button>
+      </div>
+
+      {/* Positive criteria */}
+      <div style={{ background: "rgba(99,195,151,0.05)", borderRadius: 12, border: "1px solid rgba(99,195,151,0.15)", padding: 20, marginBottom: 20 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#63c397", marginBottom: 4 }}>Critères positifs</div>
+        <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 12 }}>Points gagnés quand le vendeur applique ces bonnes pratiques</div>
+        {pos.map((item: any, idx: number) => (
+          <CriteriaRow key={idx} item={item} idx={idx} color="#63c397" onUpdate={updatePos} onRemove={removePos} />
+        ))}
+        <button onClick={addPos} style={{ background: "none", border: "1px dashed rgba(99,195,151,0.3)", borderRadius: 8, color: "#63c397", padding: "8px 16px", cursor: "pointer", fontSize: 13, width: "100%" }}>+ Ajouter un critère positif</button>
+      </div>
+
+      {/* Negative criteria */}
+      <div style={{ background: "rgba(248,81,73,0.05)", borderRadius: 12, border: "1px solid rgba(248,81,73,0.15)", padding: 20, marginBottom: 20 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#f85149", marginBottom: 4 }}>Critères négatifs</div>
+        <div style={{ fontSize: 12, color: "#8b95a5", marginBottom: 12 }}>Points retirés quand le vendeur commet ces erreurs</div>
+        {neg.map((item: any, idx: number) => (
+          <CriteriaRow key={idx} item={item} idx={idx} color="#f85149" onUpdate={updateNeg} onRemove={removeNeg} />
+        ))}
+        <button onClick={addNeg} style={{ background: "none", border: "1px dashed rgba(248,81,73,0.3)", borderRadius: 8, color: "#f85149", padding: "8px 16px", cursor: "pointer", fontSize: 13, width: "100%" }}>+ Ajouter un critère négatif</button>
+      </div>
+
+      {/* Start scores */}
+      <div style={{ background: "#111621", borderRadius: 12, border: "1px solid #1e2530", padding: 20 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 12 }}>Score de départ par niveau</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          {[{ label: "Niveau 1 (facile)", key: "level1", color: "#63c397" }, { label: "Niveau 2 (moyen)", key: "level2", color: "#eab308" }, { label: "Niveau 3 (difficile)", key: "level3", color: "#f85149" }].map(lv => (
+            <div key={lv.key}>
+              <div style={{ fontSize: 12, color: lv.color, marginBottom: 6 }}>{lv.label}</div>
+              <input type="number" value={startScores[lv.key as keyof typeof startScores]} onChange={e => { setStartScores({ ...startScores, [lv.key]: parseInt(e.target.value) || 0 }); markDirty() }} style={{ ...iS, textAlign: "center", fontWeight: 700 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}: any) {
   const [pos, setPos] = useState<any[]>(scoring?.positive || [])
   const [neg, setNeg] = useState<any[]>(scoring?.negative || [])
   const [bonus, setBonus] = useState<any[]>(scoring?.phase_bonus || [])
