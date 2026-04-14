@@ -1551,7 +1551,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
                 {o.status==='trialing' && daysLeft!==null && <div style={{ fontSize:12, color:daysLeft<=2?"#ef4444":"#f59e0b" }}>{daysLeft>0?daysLeft+" j d'essai restants":"Essai expire"}</div>}
                 {o.status==='active' && periodEnd && <div style={{ fontSize:12, color:"#8b95a5" }}>Renouvellement le {periodEnd}</div>}
                 <button onClick={() => setExtendId(isExtending ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(99,195,151,0.1)", border:"1px solid rgba(99,195,151,0.3)", borderRadius:6, color:"#63c397", cursor:"pointer" }}>
-                  + Essai gratuit
+                  + Ajouter des jours d'essai
                 </button>
                 <button onClick={() => setAddSessionsId(addSessionsId === o.id ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", borderRadius:6, color:"#3b82f6", cursor:"pointer" }}>
                   + Ajouter des sessions
@@ -1573,7 +1573,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
         {org.status === 'trialing' && <div style={{ marginTop:24, padding:24, background:"linear-gradient(135deg, rgba(99,195,151,0.1), rgba(59,130,246,0.1))", borderRadius:14, border:"1px solid rgba(99,195,151,0.3)", textAlign:"center" }}>
           <div style={{ fontSize:18, fontWeight:800, color:"#fff", marginBottom:8 }}>Passez en illimité</div>
           <div style={{ fontSize:13, color:"#8b95a5", marginBottom:16 }}>Activez votre forfait pour débloquer toutes vos sessions et accéder à l'ensemble des fonctionnalités.</div>
-          <button onClick={async () => { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'}}); const d = await r.json(); if(d.url) window.location.href = d.url; }} style={{ padding:"14px 32px", background:"#63c397", border:"none", borderRadius:10, color:"#0f1219", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 4px 12px rgba(99,195,151,0.3)" }}>
+          <button onClick={async () => { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orgId:org.id,adminEmail:profile?.email})}); const d = await r.json(); if(d.url) window.location.href = d.url; }} style={{ padding:"14px 32px", background:"#63c397", border:"none", borderRadius:10, color:"#0f1219", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 4px 12px rgba(99,195,151,0.3)" }}>
             Activer mon forfait et débloquer mes sessions
           </button>
         </div>}
