@@ -1410,7 +1410,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
   const PC = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa', cancelled:'#8b95a5' }
   const SL = { trialing:'Essai gratuit', active:'Actif', past_due:'Impaye', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
-  const PLAN_SESSIONS = { trial:0, starter:25, business:100, premium:250 }
+  const PLAN_SESSIONS = { trial:0, starter:25, business:100, premium:200 }
   
   const filtered = (orgs||[]).filter(o => !search || o.name.toLowerCase().includes(search.toLowerCase()))
   const totalActive = (orgs||[]).filter(o => o.status==='active'||o.status==='trialing').length
@@ -1501,7 +1501,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
               <option value="trial">Trial (0 sessions)</option>
               <option value="starter">Starter (25 sessions)</option>
               <option value="business">Business (100 sessions)</option>
-              <option value="premium">Premium (250 sessions)</option>
+              <option value="premium">Premium (200 sessions)</option>
             </select>
           </div>
           <div>
@@ -1612,9 +1612,9 @@ function BillingScreen({ org, profile, onRefresh }) {
   const SL = { trialing:'Essai gratuit en cours', active:'Actif', past_due:'Paiement en retard', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
   const PLANS = [
-    { id:'starter', name:'Starter', price:249, sessions:25, color:'#63c397', features:["Jusqu'à 5 vendeurs",'Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
-    { id:'business', name:'Business', price:489, sessions:100, color:'#3b82f6', popular:true, features:['Onboarding complet géré par IA',"Jusqu'à 20 vendeurs",'Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support prioritaire'] },
-    { id:'premium', name:'Premium', price:990, sessions:250, color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support dédié & SLA','Domaine custom'] },
+    { id:'starter', name:'Starter', price:229, sessions:25, color:'#63c397', features:["Jusqu'à 5 vendeurs",'Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
+    { id:'business', name:'Business', price:549, sessions:100, color:'#3b82f6', popular:true, features:['Onboarding complet géré par IA',"Jusqu'à 20 vendeurs",'Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support prioritaire'] },
+    { id:'premium', name:'Premium', price:990, sessions:200, color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support dédié & SLA','Domaine custom'] },
   ]
 
   const upgrade = async (planId) => {
