@@ -1607,9 +1607,9 @@ function BillingScreen({ org, profile, onRefresh }) {
   const SL = { trialing:'Essai gratuit en cours', active:'Actif', past_due:'Paiement en retard', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
   const PLANS = [
-    { id:'starter', name:'Starter', price:249, sessions:25, color:'#63c397', features:['25 sessions / mois','Personas IA illimites','Analyse post-session','Support email'] },
-    { id:'business', name:'Business', price:489, sessions:100, color:'#3b82f6', popular:true, features:['100 sessions / mois','Personas IA illimites','Analyse post-session','Dashboard admin','Support prioritaire'] },
-    { id:'premium', name:'Premium', price:990, sessions:250, color:'#a78bfa', features:['250 sessions / mois','Personas IA illimites','Analyse post-session','Dashboard admin','Support dedie','Onboarding personnalise'] },
+    { id:'starter', name:'Starter', price:249, sessions:25, color:'#63c397', features:["Jusqu'à 5 vendeurs",'Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
+    { id:'business', name:'Business', price:489, sessions:100, color:'#3b82f6', popular:true, features:["Jusqu'à 20 vendeurs",'Prospects IA illimités','Chat prospect text + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support prioritaire'] },
+    { id:'premium', name:'Premium', price:990, sessions:250, color:'#a78bfa', features:['Vendeurs illimités','Chat prospect text + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support dédié & SLA','Domaine custom','Onboarding dédié (visio)'] },
   ]
 
   const upgrade = async (planId) => {
