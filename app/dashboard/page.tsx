@@ -1909,15 +1909,15 @@ function SuperAdminRevenue({ orgs }: any) {
 // ============================================
 function SuperAdminSettings({ orgs, onRefresh }: any) {
   const PLANS = [
-    { id:'starter', name:'Starter', color:'#63c397', defaultPrice:249, defaultSessions:25 },
-    { id:'business', name:'Business', color:'#3b82f6', defaultPrice:489, defaultSessions:100 },
-    { id:'premium', name:'Premium', color:'#a78bfa', defaultPrice:990, defaultSessions:250 },
+    { id:'starter', name:'Starter', color:'#63c397', defaultPrice:229, defaultSessions:25 },
+    { id:'business', name:'Business', color:'#3b82f6', defaultPrice:549, defaultSessions:100 },
+    { id:'premium', name:'Premium', color:'#a78bfa', defaultPrice:990, defaultSessions:200 },
   ]
 
   const [configs, setConfigs] = useState<any>({
-    starter: { sessions: 25, price: 249 },
-    business: { sessions: 100, price: 489 },
-    premium: { sessions: 250, price: 990 },
+    starter: { sessions: 25, price: 229 },
+    business: { sessions: 100, price: 549 },
+    premium: { sessions: 200, price: 990 },
   })
   const [saving, setSaving] = useState<string|null>(null)
   const [results, setResults] = useState<any>({})
