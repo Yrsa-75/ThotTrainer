@@ -1,9 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceSupabase } from '@/lib/supabase-server'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' as any })
-const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 const PLAN_PRICES: Record<string, string> = {
   starter: 'price_1TJJzoRpbK02np6XEHDbWqsX',
@@ -11,26 +10,19 @@ const PLAN_PRICES: Record<string, string> = {
   premium: 'price_1TJJzpRpbK02np6XtDXEDD9s',
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    // Get user from auth header
-    const authHeader = req.headers.get('authorization')
-    const token = authHeader?.replace('Bearer ', '')
-    if (!token) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    const { orgId, adminEmail } = await req.json()
+    if (!orgId) return NextResponse.json({ error: 'orgId requis' }, { status: 400 })
 
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-    if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    const supabase = createServiceSupabase()
 
-    const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', user.id).single()
-    if (!profile || profile.role !== 'admin') return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
-
-    const { data: org } = await supabaseAdmin.from('organisations').select('*').eq('id', profile.organisation_id).single()
-    if (!org) return NextResponse.json({ error: 'Organisation non trouvée' }, { status: 404 })
+    const { data: org } = await supabase.from('organisations').select('*').eq('id', orgId).single()
+    if (!org) return NextResponse.json({ error: 'Organisation introuvable' }, { status: 404 })
 
     const priceId = PLAN_PRICES[org.plan]
     if (!priceId) return NextResponse.json({ error: 'Forfait invalide' }, { status: 400 })
 
-    // If already has a Stripe subscription, redirect to portal
     if (org.stripe_subscription_id) {
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: org.stripe_customer_id,
@@ -39,19 +31,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ url: portalSession.url })
     }
 
-    // Create or get Stripe customer
     let customerId = org.stripe_customer_id
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: profile.email || user.email,
+        email: adminEmail || org.name,
         name: org.name,
         metadata: { org_id: org.id },
       })
       customerId = customer.id
-      await supabaseAdmin.from('organisations').update({ stripe_customer_id: customerId }).eq('id', org.id)
+      await supabase.from('organisations').update({ stripe_customer_id: customerId }).eq('id', org.id)
     }
 
-    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -64,8 +54,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (e: any) {
-    console.error('activate-subscription error:', e)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
