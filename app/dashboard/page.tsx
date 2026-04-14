@@ -1573,6 +1573,17 @@ function SuperAdminClients({ orgs, onRefresh }) {
         <button onClick={() => setExtendId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
             </div>}
 
+            {/* Add sessions inline */}
+            {addSessionsId === o.id && <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14, padding:"12px 14px", background:"rgba(59,130,246,0.05)", borderRadius:10, border:"1px solid rgba(59,130,246,0.2)" }}>
+              <span style={{ fontSize:13, color:"#ccc" }}>Ajouter</span>
+              <input type="number" min="1" max="500" value={addSessionsCount} onChange={e => setAddSessionsCount(parseInt(e.target.value)||1)} style={{ width:70, padding:"6px 10px", background:"#0f1219", border:"1px solid #2a2f3a", borderRadius:8, color:"#3b82f6", fontSize:14, fontWeight:700, textAlign:"center" }} />
+              <span style={{ fontSize:13, color:"#ccc" }}>session(s)</span>
+              <button onClick={() => addSessionsToOrg(o.id)} disabled={addingSessions} style={{ padding:"7px 16px", background:"#3b82f6", border:"none", borderRadius:8, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", opacity:addingSessions?0.6:1 }}>
+                {addingSessions ? "..." : "Confirmer"}
+              </button>
+              <button onClick={() => setAddSessionsId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
+            </div>}
+
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
               <div style={{ flex:1 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#8b95a5", marginBottom:4 }}>
