@@ -5,9 +5,9 @@ import Stripe from 'stripe'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' as any })
 
 const PLAN_PRICES: Record<string, string> = {
-  starter: 'price_1TJJzoRpbK02np6XEHDbWqsX',
-  business: 'price_1TJJzoRpbK02np6XCMclag3r',
-  premium: 'price_1TJJzpRpbK02np6XtDXEDD9s',
+  starter: 'price_1TME57RpbK02np6XkykAfZxj',
+  business: 'price_1TMDyGRpbK02np6XrvLNU9lZ',
+  premium: 'price_1TMDyORpbK02np6X9XPIDQee',
 }
 
 export async function POST(req: NextRequest) {
