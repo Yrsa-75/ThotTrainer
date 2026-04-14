@@ -1570,14 +1570,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
               
 
         {/* Activate subscription */}
-        {org.status === 'trialing' && <div style={{ marginTop:24, padding:24, background:"linear-gradient(135deg, rgba(99,195,151,0.1), rgba(59,130,246,0.1))", borderRadius:14, border:"1px solid rgba(99,195,151,0.3)", textAlign:"center" }}>
-          <div style={{ fontSize:18, fontWeight:800, color:"#fff", marginBottom:8 }}>Passez en illimité</div>
-          <div style={{ fontSize:13, color:"#8b95a5", marginBottom:16 }}>Activez votre forfait pour débloquer toutes vos sessions et accéder à l'ensemble des fonctionnalités.</div>
-          <button onClick={async () => { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orgId:org.id,adminEmail:profile?.email})}); const d = await r.json(); if(d.url) window.location.href = d.url; }} style={{ padding:"14px 32px", background:"#63c397", border:"none", borderRadius:10, color:"#0f1219", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 4px 12px rgba(99,195,151,0.3)" }}>
-            Activer mon forfait et débloquer mes sessions
-          </button>
-        </div>}
-<button onClick={() => setExtendId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
+        <button onClick={() => setExtendId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
             </div>}
 
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -1676,6 +1669,16 @@ function BillingScreen({ org, profile, onRefresh }) {
             Gerer la facturation
           </button>}
         </div>
+
+                {/* CTA Activation trial */}
+        {org.status === 'trialing' && <div style={{ marginTop:0, marginBottom:24, padding:28, background:'linear-gradient(135deg, rgba(99,195,151,0.08), rgba(59,130,246,0.08))', borderRadius:14, border:'1px solid rgba(99,195,151,0.25)', textAlign:'center' }}>
+          <div style={{ fontSize:20, fontWeight:800, color:'#fff', marginBottom:8 }}>D\u00e9bloquez toutes vos sessions</div>
+          <div style={{ fontSize:13, color:'#8b95a5', marginBottom:20, maxWidth:500, margin:'0 auto 20px' }}>Pendant l'essai gratuit, vous \u00eates limit\u00e9 \u00e0 5 sessions. Activez votre forfait pour acc\u00e9der \u00e0 toutes vos sessions et fonctionnalit\u00e9s.</div>
+          <button onClick={async () => { setLoading(true); try { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orgId:org.id,adminEmail:profile?.email})}); const d = await r.json(); if(d.url) window.location.href = d.url; else setMsg(d.error||'Erreur'); } catch(e){ setMsg(e.message) } setLoading(false) }} disabled={loading} style={{ padding:'16px 36px', background:'#63c397', border:'none', borderRadius:12, color:'#0f1219', fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(99,195,151,0.35)' }}>
+            Activer mon forfait et d\u00e9bloquer mes sessions
+          </button>
+          {msg && <div style={{ marginTop:12, color:'#f85149', fontSize:13 }}>{msg}</div>}
+        </div>}
 
         {/* Barre sessions */}
         <div>
