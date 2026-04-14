@@ -5,7 +5,7 @@ const PLANS = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 249,
+    price: 229,
     sessions: 25,
     color: '#63c397',
     priceId: 'price_1TJJzoRpbK02np6XEHDbWqsX',
@@ -14,7 +14,7 @@ const PLANS = [
   {
     id: 'business',
     name: 'Business',
-    price: 489,
+    price: 549,
     sessions: 100,
     color: '#3b82f6',
     popular: true,
@@ -28,7 +28,7 @@ const PLANS = [
     sessions: 250,
     color: '#a78bfa',
     priceId: 'price_1TJJzpRpbK02np6XtDXEDD9s',
-    features: ['250 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Dashboard admin', 'Support dédié', 'Onboarding personnalisé'],
+    features: ['200 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Dashboard admin', 'Support dédié', 'Onboarding personnalisé'],
   },
 ]
 
