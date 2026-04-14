@@ -1396,6 +1396,9 @@ function SuperAdminClients({ orgs, onRefresh }) {
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [extendId, setExtendId] = useState(null)
+  const [addSessionsId, setAddSessionsId] = useState(null)
+  const [addSessionsCount, setAddSessionsCount] = useState(10)
+  const [addingSessions, setAddingSessions] = useState(false)
   const [extendDays, setExtendDays] = useState(7)
   const [form, setForm] = useState({ orgName:'', adminName:'', email:'', password:'', plan:'starter', trialDays:7 })
   const [creating, setCreating] = useState(false)
@@ -1443,6 +1446,19 @@ function SuperAdminClients({ orgs, onRefresh }) {
     } catch(e) { alert('Erreur: ' + e.message) }
     setExtending(false)
   }
+  const addSessionsToOrg = async (orgId) => {
+    setAddingSessions(true)
+    try {
+      const r = await fetch('/api/admin/add-sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ orgId, sessions: addSessionsCount }) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      setMsg('+' + addSessionsCount + ' sessions ajoutées')
+      setAddSessionsId(null)
+      onRefresh()
+    } catch(e) { setMsg('Erreur: '+e.message) }
+    setAddingSessions(false)
+  }
+
 
   const iS = { width:'100%', padding:'10px 14px', background:'#0f1219', border:'1px solid #2a2f3a', borderRadius:8, color:'#fff', fontSize:13, outline:'none', marginBottom:12, boxSizing:'border-box' }
 
@@ -1536,6 +1552,9 @@ function SuperAdminClients({ orgs, onRefresh }) {
                 <button onClick={() => setExtendId(isExtending ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(99,195,151,0.1)", border:"1px solid rgba(99,195,151,0.3)", borderRadius:6, color:"#63c397", cursor:"pointer" }}>
                   + Essai gratuit
                 </button>
+                <button onClick={() => setAddSessionsId(addSessionsId === o.id ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", borderRadius:6, color:"#3b82f6", cursor:"pointer" }}>
+                  + Ajouter des sessions
+                </button>
               </div>
             </div>
 
@@ -1547,7 +1566,17 @@ function SuperAdminClients({ orgs, onRefresh }) {
               <button onClick={() => extendTrial(o.id)} disabled={extending} style={{ padding:"7px 16px", background:"#63c397", border:"none", borderRadius:8, color:"#0f1219", fontSize:13, fontWeight:700, cursor:"pointer", opacity:extending?0.6:1 }}>
                 {extending ? '...' : 'Confirmer'}
               </button>
-              <button onClick={() => setExtendId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
+              
+
+        {/* Activate subscription */}
+        {org.status === 'trialing' && <div style={{ marginTop:24, padding:24, background:"linear-gradient(135deg, rgba(99,195,151,0.1), rgba(59,130,246,0.1))", borderRadius:14, border:"1px solid rgba(99,195,151,0.3)", textAlign:"center" }}>
+          <div style={{ fontSize:18, fontWeight:800, color:"#fff", marginBottom:8 }}>Passez en illimité</div>
+          <div style={{ fontSize:13, color:"#8b95a5", marginBottom:16 }}>Activez votre forfait pour débloquer toutes vos sessions et accéder à l'ensemble des fonctionnalités.</div>
+          <button onClick={async () => { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'}}); const d = await r.json(); if(d.url) window.location.href = d.url; }} style={{ padding:"14px 32px", background:"#63c397", border:"none", borderRadius:10, color:"#0f1219", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 4px 12px rgba(99,195,151,0.3)" }}>
+            Activer mon forfait et débloquer mes sessions
+          </button>
+        </div>}
+<button onClick={() => setExtendId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
             </div>}
 
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
