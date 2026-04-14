@@ -8,7 +8,7 @@ const PLANS = [
     price: 229,
     sessions: 25,
     color: '#63c397',
-    priceId: 'price_1TJJzoRpbK02np6XEHDbWqsX',
+    priceId: 'price_1TME57RpbK02np6XkykAfZxj',
     features: ['25 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Support email'],
   },
   {
@@ -18,7 +18,7 @@ const PLANS = [
     sessions: 100,
     color: '#3b82f6',
     popular: true,
-    priceId: 'price_1TJJzoRpbK02np6XCMclag3r',
+    priceId: 'price_1TMDyGRpbK02np6XrvLNU9lZ',
     features: ['100 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Dashboard admin', 'Support prioritaire'],
   },
   {
@@ -27,7 +27,7 @@ const PLANS = [
     price: 990,
     sessions: 250,
     color: '#a78bfa',
-    priceId: 'price_1TJJzpRpbK02np6XtDXEDD9s',
+    priceId: 'price_1TMDyORpbK02np6X9XPIDQee',
     features: ['200 sessions / mois', 'Personas IA illimitées', 'Analyse post-session', 'Dashboard admin', 'Support dédié', 'Onboarding personnalisé'],
   },
 ]
