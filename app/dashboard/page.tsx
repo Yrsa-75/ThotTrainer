@@ -1672,10 +1672,10 @@ function BillingScreen({ org, profile, onRefresh }) {
 
                 {/* CTA Activation trial */}
         {org.status === 'trialing' && <div style={{ marginTop:0, marginBottom:24, padding:28, background:'linear-gradient(135deg, rgba(99,195,151,0.08), rgba(59,130,246,0.08))', borderRadius:14, border:'1px solid rgba(99,195,151,0.25)', textAlign:'center' }}>
-          <div style={{ fontSize:20, fontWeight:800, color:'#fff', marginBottom:8 }}>D\u00e9bloquez toutes vos sessions</div>
-          <div style={{ fontSize:13, color:'#8b95a5', marginBottom:20, maxWidth:500, margin:'0 auto 20px' }}>Pendant l'essai gratuit, vous \u00eates limit\u00e9 \u00e0 5 sessions. Activez votre forfait pour acc\u00e9der \u00e0 toutes vos sessions et fonctionnalit\u00e9s.</div>
+          <div style={{ fontSize:20, fontWeight:800, color:'#fff', marginBottom:8 }}>Débloquez toutes vos sessions</div>
+          <div style={{ fontSize:13, color:'#8b95a5', marginBottom:20, maxWidth:500, margin:'0 auto 20px' }}>Pendant l'essai gratuit, vous êtes limité à 5 sessions. Activez votre forfait pour accéder à toutes vos sessions et fonctionnalités.</div>
           <button onClick={async () => { setLoading(true); try { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orgId:org.id,adminEmail:profile?.email})}); const d = await r.json(); if(d.url) window.location.href = d.url; else setMsg(d.error||'Erreur'); } catch(e){ setMsg(e.message) } setLoading(false) }} disabled={loading} style={{ padding:'16px 36px', background:'#63c397', border:'none', borderRadius:12, color:'#0f1219', fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(99,195,151,0.35)' }}>
-            Activer mon forfait et d\u00e9bloquer mes sessions
+            Activer mon forfait et débloquer mes sessions
           </button>
           {msg && <div style={{ marginTop:12, color:'#f85149', fontSize:13 }}>{msg}</div>}
         </div>}
