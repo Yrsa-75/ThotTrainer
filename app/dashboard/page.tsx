@@ -201,6 +201,7 @@ const bS = (c: string): React.CSSProperties => ({ padding: "5px 12px", backgroun
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(null); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
+  const [sessionQuota, setSessionQuota] = useState<any>(null)
   const [lightMode, setLightMode] = useState(false)
   useEffect(() => { const saved = localStorage.getItem('thot-light-mode'); if (saved === 'true') setLightMode(true) }, [])
   useEffect(() => { localStorage.setItem('thot-light-mode', String(lightMode)); document.body.style.filter = lightMode ? 'invert(1) hue-rotate(180deg)' : 'none'; document.body.style.background = lightMode ? '#000' : '#0f1219' }, [lightMode])
@@ -215,6 +216,7 @@ export default function DashboardPage() {
     if (p.role === 'admin' || p.role === 'super_admin') {
       const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
     } else {
+    try { const qr = await fetch('/api/sessions/allocate'); if(qr.ok){ const qd = await qr.json(); setSessionQuota(qd) } } catch(e) {}
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
     }
     let f_data = null; // Super admin: charger les orgs meme sans organisation_id
@@ -345,7 +347,7 @@ export default function DashboardPage() {
         {screen === "revenue" && profile.role === "super_admin" && <SuperAdminRevenue orgs={allOrgs} />}
         {screen === "settings" && profile.role === "super_admin" && <SuperAdminSettings orgs={allOrgs} onRefresh={loadData} />}
         {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen org={org} profile={profile} onRefresh={loadData} />}
-        {screen === "admin" && isAdmin && <AdminPanel supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
+        {screen === "admin" && isAdmin && <AdminPanel sessionQuota={sessionQuota} supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
     </div>
   )
@@ -1048,6 +1050,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
   return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
     <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
+    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Équipe" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "credits", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
     {/* ===== CONTEXT ===== */}
     {tab === "context" && <div>
@@ -1274,6 +1277,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
           </div>
         )}
         {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
+        {tab === "credits" && <CreditsPanel supabase={supabase} profiles={profiles} sessionQuota={sessionQuota} onRefresh={loadData} />}
 
     
   </div>)
@@ -1914,6 +1918,112 @@ function SuperAdminRevenue({ orgs }: any) {
 // ============================================
 // SUPER ADMIN — PARAMÈTRES GLOBAUX
 // ============================================
+function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
+  const [allocations, setAllocations] = React.useState<Record<string, number>>({})
+  const [saving, setSaving] = React.useState<string | null>(null)
+  const [msg, setMsg] = React.useState('')
+
+  React.useEffect(() => {
+    if (sessionQuota?.vendors) {
+      const init: Record<string, number> = {}
+      sessionQuota.vendors.forEach((v: any) => { init[v.id] = v.sessions_allocated || 0 })
+      setAllocations(init)
+    }
+  }, [sessionQuota])
+
+  const save = async (vendorId: string) => {
+    setSaving(vendorId); setMsg('')
+    const res = await fetch('/api/sessions/allocate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendorId, sessions_allocated: allocations[vendorId] || 0 })
+    })
+    const d = await res.json()
+    if (d.success) { setMsg('✅ Crédits mis à jour'); onRefresh() }
+    else setMsg('❌ ' + d.error)
+    setSaving(null)
+  }
+
+  const org = sessionQuota?.org
+  const vendors = sessionQuota?.vendors || []
+  const unallocated = org ? org.sessions_limit - org.total_allocated : 0
+
+  return (
+    <div style={{ padding: '0 0 24px' }}>
+      {/* Pool orga */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 24 }}>
+        {[
+          { label: 'Sessions totales', value: org?.sessions_limit || 0, color: '#e2e8f0' },
+          { label: 'Non allouées (vous)', value: unallocated, color: unallocated > 0 ? '#63c397' : '#ef4444' },
+          { label: 'Utilisées (org)', value: org?.sessions_used || 0, color: '#8b95a5' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: '#0f1219', borderRadius: 10, padding: '14px 16px', border: '1px solid #1e2530' }}>
+            <div style={{ fontSize: 11, color: '#8b95a5', marginBottom: 6 }}>{s.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Warning si pas de sessions non allouées */}
+      {unallocated === 0 && (
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#ef4444' }}>
+          ⚠️ Toutes vos sessions sont allouées — vous ne pouvez plus en lancer vous-même sans retirer des crédits à un vendeur.
+        </div>
+      )}
+
+      {/* Table vendeurs */}
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#8b95a5', marginBottom: 12 }}>Attribution par vendeur</div>
+      {vendors.length === 0 ? (
+        <div style={{ fontSize: 13, color: '#8b95a5', textAlign: 'center', padding: 24 }}>Aucun vendeur dans votre équipe</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {vendors.map((v: any) => {
+            const alloc = allocations[v.id] ?? v.sessions_allocated ?? 0
+            const used = v.sessions_used || 0
+            const remaining = Math.max(0, alloc - used)
+            const pct = alloc > 0 ? Math.min(100, Math.round(used / alloc * 100)) : 0
+            return (
+              <div key={v.id} style={{ background: '#0f1219', border: '1px solid #1e2530', borderRadius: 12, padding: '16px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{v.full_name}</div>
+                    <div style={{ fontSize: 12, color: '#8b95a5' }}>{v.email}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontSize: 12, color: '#8b95a5' }}>
+                      {used} utilisées · <span style={{ color: remaining > 0 ? '#63c397' : '#ef4444', fontWeight: 600 }}>{remaining} restantes</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Barre de progression */}
+                <div style={{ background: '#1a1e27', borderRadius: 4, height: 4, marginBottom: 12 }}>
+                  <div style={{ background: remaining > 0 ? '#63c397' : '#ef4444', borderRadius: 4, height: 4, width: pct+'%', transition: 'width .3s' }} />
+                </div>
+                {/* Contrôle allocation */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 12, color: '#8b95a5', flexShrink: 0 }}>Crédits alloués :</div>
+                  <button onClick={() => setAllocations(a => ({ ...a, [v.id]: Math.max(0, (a[v.id] ?? 0) - 1) }))}
+                    style={{ width: 28, height: 28, borderRadius: 6, background: '#1a1e27', border: '1px solid #2a2f3a', color: '#e2e8f0', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                  <input type="number" min="0" max={org?.sessions_limit || 999} value={alloc}
+                    onChange={e => setAllocations(a => ({ ...a, [v.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                    style={{ width: 64, textAlign: 'center', background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: 6, color: '#fff', fontSize: 14, fontWeight: 700, padding: '4px 8px' }} />
+                  <button onClick={() => setAllocations(a => ({ ...a, [v.id]: (a[v.id] ?? 0) + 1 }))}
+                    style={{ width: 28, height: 28, borderRadius: 6, background: '#1a1e27', border: '1px solid #2a2f3a', color: '#e2e8f0', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  <button onClick={() => save(v.id)} disabled={saving === v.id}
+                    style={{ padding: '6px 16px', background: 'linear-gradient(135deg,#63c397,#4aa87a)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving === v.id ? 0.6 : 1 }}>
+                    {saving === v.id ? '...' : 'Enregistrer'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {msg && <div style={{ marginTop: 16, fontSize: 13, color: msg.startsWith('✅') ? '#63c397' : '#ef4444' }}>{msg}</div>}
+    </div>
+  )
+}
+
 function SuperAdminSettings({ orgs, onRefresh }: any) {
   const PLANS = [
     { id:'starter', name:'Starter', color:'#63c397', defaultPrice:229, defaultSessions:25 },
