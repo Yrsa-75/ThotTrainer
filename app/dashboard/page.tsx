@@ -430,7 +430,6 @@ function NewSession({ personas, formations, config, onStart }: any) {
         <div style={{ fontSize: 13, color: "#8b95a5", marginTop: 8 }}>Le prospect sera choisi au hasard au lancement de la session. Vous ne saurez pas à qui vous avez affaire.</div>
       </div>
     ) : (
-      <>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>{
               
               personas.map((p: any) => <button key={p.id} onClick={() => pickSpecific(p.id)} style={{ padding: "14px 16px", background: pId === p.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${pId === p.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 20 }}>{p.emoji}</span><div><div style={{ fontSize: 14, fontWeight: 700 }}>{p.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{p.subtitle}</div></div></div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 6, lineHeight: 1.4 }}>{p.age} ans • {p.profession}</div></button>)}</div>
@@ -456,6 +455,7 @@ function NewSession({ personas, formations, config, onStart }: any) {
 // CHAT SESSION — Voix + config dynamique
 // ============================================
 function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd, onCancel }: any) {
+  const [showIntro, setShowIntro] = useState(true)
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(true); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null)
@@ -537,9 +537,9 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     createInitialSession()
   }, [])
 
-  useEffect(() => { if (!isUnlimited) { if (showIntro) return
+  useEffect(() => { if (!isUnlimited) {
+    if (showIntro) return
     timerRef.current = setInterval(() => { setTimeLeft((prev: number) => { if (prev <= 1) { clearInterval(timerRef.current); setEnded(true); setResult("timeout"); return 0 } return prev - 1 }) }, 1000) } return (
-    </>
     ) => clearInterval(timerRef.current) }, [isUnlimited])
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
   useEffect(() => { if (!thinking && !ended && !listening) inputRef.current?.focus() }, [thinking, ended, listening])
@@ -602,6 +602,55 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const MicIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill={listening ? "#ef4444" : "currentColor"} stroke={listening ? "#ef4444" : "currentColor"} strokeWidth="1"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" fill="none" strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" fill="none" strokeWidth="2"/></svg>
   const VolumeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14" opacity={voiceOn ? 1 : 0.3}/><path d="M15.54 8.46a5 5 0 0 1 0 7.07" opacity={voiceOn ? 1 : 0.3}/></svg>
   return (<div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {showIntro&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"#111621",borderRadius:16,border:"1px solid #1e2530",padding:"36px 40px",maxWidth:480,width:"90%",maxHeight:"90vh",overflowY:"auto"}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
+      <div style={{fontSize:11,color:"#8b95a5",letterSpacing:"0.08em",marginBottom:6}}>SIMULATION PRETE</div>
+      <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:2}}>{persona?.name}</div>
+      <div style={{fontSize:13,color:"#8b95a5"}}>{formation?.name} - Niveau {sessionData.level}</div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:14,background:"#0f1219",borderRadius:10,padding:"12px 14px",border:"1px solid #1e2530"}}>
+      <div style={{flexShrink:0,paddingTop:2}}>
+      <div style={{background:"#1a1e27",border:"1px solid #2a2f3a",borderRadius:8,padding:"5px 8px",display:"flex",alignItems:"center",gap:5}}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#63c397" strokeWidth="2" strokeLinecap="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      <div style={{width:28,height:14,background:"#63c397",borderRadius:7,position:"relative"}}><div style={{width:10,height:10,background:"#fff",borderRadius:"50%",position:"absolute",right:2,top:2}}/></div>
+      </div></div>
+      <div><div style={{fontSize:13,color:"#e2e8f0",fontWeight:500,marginBottom:2}}>Lecture vocale du prospect</div>
+      <div style={{fontSize:12,color:"#8b95a5",lineHeight:"1.5"}}>Activez ou desactivez la voix du prospect avec le bouton en haut a droite.</div></div>
+      </div>
+      <div style={{display:"flex",alignItems:"flex-start",gap:14,background:"#0f1219",borderRadius:10,padding:"12px 14px",border:"1px solid #1e2530"}}>
+      <div style={{flexShrink:0,paddingTop:2}}>
+      <div style={{background:"#1a1e27",border:"1px solid #2a2f3a",borderRadius:"50%",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#63c397" strokeWidth="2" strokeLinecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+      </div></div>
+      <div><div style={{fontSize:13,color:"#e2e8f0",fontWeight:500,marginBottom:2}}>Dictee vocale</div>
+      <div style={{fontSize:12,color:"#8b95a5",lineHeight:"1.5"}}>Appuyez sur le micro en bas a gauche pour dicter votre reponse.</div></div>
+      </div>
+      <div style={{display:"flex",alignItems:"flex-start",gap:14,background:"#0f1219",borderRadius:10,padding:"12px 14px",border:"1px solid #1e2530"}}>
+      <div style={{flexShrink:0,paddingTop:5}}>
+      <div style={{background:"#1a1e27",border:"1px solid #2a2f3a",borderRadius:8,padding:"4px 6px",display:"flex",alignItems:"center",gap:3}}>
+      <div style={{width:6,height:6,borderRadius:"50%",background:"#8b95a5"}}/>
+      <div style={{width:6,height:6,borderRadius:"50%",background:"#8b95a5",opacity:0.5}}/>
+      <div style={{width:6,height:6,borderRadius:"50%",background:"#8b95a5",opacity:0.2}}/>
+      </div></div>
+      <div><div style={{fontSize:13,color:"#e2e8f0",fontWeight:500,marginBottom:2}}>Temps de reponse</div>
+      <div style={{fontSize:12,color:"#8b95a5",lineHeight:"1.5"}}>Le prospect met 1 a 5 s a repondre. La lecture vocale demarre 2 s apres affichage.</div></div>
+      </div>
+      <div style={{display:"flex",alignItems:"flex-start",gap:14,background:"#0f1219",borderRadius:10,padding:"12px 14px",border:"1px solid #1e2530"}}>
+      <div style={{flexShrink:0,paddingTop:2}}>
+      <div style={{background:"#1a1e27",border:"1px solid #ef4444",borderRadius:8,padding:"5px 10px",display:"flex",alignItems:"center",gap:5}}>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      <span style={{fontSize:11,color:"#ef4444",fontWeight:600}}>Arreter</span>
+      </div></div>
+      <div><div style={{fontSize:13,color:"#e2e8f0",fontWeight:500,marginBottom:2}}>Arreter la session</div>
+      <div style={{fontSize:12,color:"#8b95a5",lineHeight:"1.5"}}>Mettez fin a la simulation avec le bouton Arreter en haut a gauche.</div></div>
+      </div>
+      </div>
+      <div style={{fontSize:12,color:"#8b95a5",textAlign:"center",marginBottom:18}}>Le chrono demarrera quand vous cliquerez ci-dessous.</div>
+      <button onClick={()=>setShowIntro(false)} style={{width:"100%",padding:"14px",background:"linear-gradient(135deg,#63c397,#4aa87a)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer"}}>Commencer la simulation</button>
+      </div></div>}
+      
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 24 }}>{p?.emoji}</span><div><div style={{ fontSize: 15, fontWeight: 700 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {sd.level} • {f?.name || "Mode libre"}</div></div></div><div style={{ display: "flex", alignItems: "center", gap: 12 }}><button onClick={() => { const nv = !voiceOn; setVoiceOn(nv); if (!nv) { window.speechSynthesis?.cancel(); if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }; setSpeaking(false) } }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: voiceOn ? "rgba(99,195,151,0.15)" : "#1a1e27", border: `1px solid ${voiceOn ? "#63c397" : "#2a2f3a"}`, borderRadius: 8, color: voiceOn ? "#63c397" : "#8b95a5", fontSize: 11, fontWeight: 600, cursor: "pointer" }}><VolumeIcon /> {voiceOn ? "Voix ON" : "Voix OFF"}</button><Timer seconds={timeLeft} maxSeconds={sd.duration} danger={!isUnlimited && timeLeft < 60} /><button onClick={handleStop} disabled={ended} style={{ padding: "7px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, color: "#ef4444", fontSize: 12, fontWeight: 700, cursor: ended ? "default" : "pointer", opacity: ended ? 0.4 : 1, marginLeft: 8 }}>Arreter</button></div></div>
     <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
       {msgs.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#8b95a5" }}><div style={{ fontSize: 36, marginBottom: 12 }}>📞</div><div style={{ fontSize: 14, fontWeight: 600 }}>Le prospect décroche...</div><div style={{ fontSize: 12, marginTop: 4 }}>C'est à vous de lancer l'échange.</div></div>}
@@ -666,7 +715,6 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
   const [visibleCount, setVisibleCount] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
-  const [showIntro, setShowIntro] = useState(true)
   const timerRef = useRef<any>(null)
   const chatRef = useRef<HTMLDivElement>(null)
   const p = personas.find((x: any) => x.id === session.persona_id)
@@ -1336,8 +1384,6 @@ function ScoringEditor({ supabase, scoring, onRefresh }: any) {
   )
 
   return (
-    <>
-
       {showIntro && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div style={{background:"#111621",borderRadius:16,border:"1px solid #1e2530",padding:"36px 40px",maxWidth:480,width:"90%",maxHeight:"90vh",overflowY:"auto"}}>
