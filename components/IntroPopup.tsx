@@ -16,17 +16,12 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#111621', borderRadius: 16, border: '1px solid #1e2530', padding: '36px 40px', maxWidth: 480, width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
-
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ fontSize: 11, color: '#8b95a5', letterSpacing: '0.08em', marginBottom: 6 }}>SIMULATION PRETE</div>
           <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{persona?.name}</div>
-          <div style={{ fontSize: 13, color: '#8b95a5' }}>
-            {formation?.name}{level ? ' · Niveau ' + level : ''}{minutes ? ' · ' + minutes + ' min' : ''}
-          </div>
+          <div style={{ fontSize: 13, color: '#8b95a5' }}>{formation?.name}{level ? ' · Niveau ' + level : ''}{minutes ? ' · ' + minutes + ' min' : ''}</div>
         </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 2 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: 8, padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -38,10 +33,9 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
             <div>
               <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500, marginBottom: 2 }}>Lecture vocale du prospect</div>
-              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Activez ou desactivez la voix du prospect avec le bouton en haut a droite.</div>
+              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Activez ou desactivez la voix avec le bouton en haut a droite.</div>
             </div>
           </div>
-
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 2 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: '50%', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -50,10 +44,9 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
             <div>
               <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500, marginBottom: 2 }}>Dictee vocale</div>
-              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Appuyez sur le micro en bas a gauche pour dicter votre reponse.</div>
+              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Appuyez sur le micro en bas a gauche pour dicter.</div>
             </div>
           </div>
-
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 5 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: 8, padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -64,10 +57,9 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
             <div>
               <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500, marginBottom: 2 }}>Temps de reponse</div>
-              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Le prospect met 1 a 5 s a repondre. La lecture vocale demarre 2 s apres affichage.</div>
+              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Le prospect met 1-5s a repondre. La voix demarre 2s apres affichage.</div>
             </div>
           </div>
-
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 2 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #ef4444', borderRadius: 8, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -77,20 +69,14 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
             <div>
               <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500, marginBottom: 2 }}>Arreter la session</div>
-              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Mettez fin a la simulation avec le bouton Arreter en haut a gauche.</div>
+              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Bouton Arreter en haut a gauche pour stopper.</div>
             </div>
           </div>
-
         </div>
-
         <div style={{ fontSize: 12, color: '#8b95a5', textAlign: 'center', marginBottom: 18 }}>Le chrono demarrera quand vous cliquerez ci-dessous.</div>
-        <button
-          onClick={onStart}
-          style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#63c397,#4aa87a)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
-        >
+        <button onClick={onStart} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#63c397,#4aa87a)', border: 'none', borderRadius: 12, color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
           Commencer la simulation
         </button>
-
       </div>
     </div>
   )
