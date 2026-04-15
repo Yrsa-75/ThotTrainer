@@ -4,32 +4,21 @@ import React from 'react'
 interface Props {
   show: boolean
   onStart: () => void
-  persona: any
-  formation: any
-  level: number
-  duration: number
 }
 
-export default function IntroPopup({ show, onStart, persona, formation, level, duration }: Props) {
+export default function IntroPopup({ show, onStart }: Props) {
   if (!show) return null
-  const minutes = duration > 0 ? Math.floor(duration / 60) : null
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#111621', borderRadius: 16, border: '1px solid #1e2530', padding: '36px 40px', maxWidth: 480, width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 11, color: '#8b95a5', letterSpacing: '0.08em', marginBottom: 6 }}>SIMULATION PRETE</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{persona?.name}</div>
-          <div style={{ fontSize: 13, color: '#8b95a5' }}>
-            {formation?.name}
-            {level ? ` · Niveau ${level}` : ''}
-            {minutes ? ` · ${minutes} min` : ''}
-          </div>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ fontSize: 11, color: '#8b95a5', letterSpacing: '0.08em', marginBottom: 8 }}>SIMULATION PRÊTE</div>
+          <div style={{ fontSize: 16, color: '#8b95a5' }}>Prenez un moment pour vous préparer</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
 
-          {/* Lecture vocale */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 2 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: 8, padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -47,7 +36,6 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
           </div>
 
-          {/* Dictee vocale */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 2 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: '50%', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -62,7 +50,6 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
           </div>
 
-          {/* Delai reponse */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 5 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: 8, padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -73,11 +60,10 @@ export default function IntroPopup({ show, onStart, persona, formation, level, d
             </div>
             <div>
               <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500, marginBottom: 2 }}>Temps de réponse du prospect</div>
-              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Le prospect met 1 à 5 secondes à répondre. La lecture vocale démarre 2 s après l’affichage.</div>
+              <div style={{ fontSize: 12, color: '#8b95a5', lineHeight: '1.5' }}>Le prospect met 1 à 5 secondes à répondre. La lecture vocale démarre 2 s après l’affichage.</div>
             </div>
           </div>
 
-          {/* Arreter */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: '#0f1219', borderRadius: 10, padding: '12px 14px', border: '1px solid #1e2530' }}>
             <div style={{ flexShrink: 0, paddingTop: 2 }}>
               <div style={{ background: '#1a1e27', border: '1px solid #ef4444', borderRadius: 8, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
