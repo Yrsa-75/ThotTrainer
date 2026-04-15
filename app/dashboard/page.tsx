@@ -540,11 +540,10 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     createInitialSession()
   }, [])
 
-  if (showIntro) return
   useEffect(() => { if (!isUnlimited) { timerRef.current = setInterval(() => { setTimeLeft((prev: number) => { if (prev <= 1) { clearInterval(timerRef.current); setEnded(true); setResult("timeout"); return 0 } return prev - 1 }) }, 1000) } return () => clearInterval(timerRef.current) }, [isUnlimited])
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
   useEffect(() => { if (!thinking && !ended && !listening) inputRef.current?.focus() }, [thinking, ended, listening])
-  useEffect(() => { if (typeof window !== 'undefined' && window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [showIntro])
+  useEffect(() => { if (typeof window !== 'undefined' && window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [])
   useEffect(() => { return () => { window.speechSynthesis?.cancel(); listeningRef.current = false; recRef.current?.stop(); if (audioRef.current) audioRef.current.pause() } }, [])
 
   const finish = useCallback(async (m: any[], r: string) => {
