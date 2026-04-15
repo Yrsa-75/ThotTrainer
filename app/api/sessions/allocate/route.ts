@@ -1,33 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 
-function createServiceClient() {
+function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
-async function getAuthUser(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) return null
-  const token = authHeader.replace('Bearer ', '')
-  const admin = createServiceClient()
-  const { data: { user }, error } = await admin.auth.getUser(token)
-  if (error || !user) return null
-  return user
+function anonClient(request: NextRequest) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set() {},
+        remove() {},
+      },
+    }
+  )
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthUser(request)
-    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    const supabase = anonClient(request)
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    const admin = createServiceClient()
-
+    const admin = serviceClient()
     const { data: profile } = await admin.from('profiles')
       .select('role, organisation_id').eq('id', user.id).single()
-    if (!profile?.organisation_id) return NextResponse.json({ error: 'Org non trouvée' }, { status: 400 })
+
+    if (!profile?.organisation_id)
+      return NextResponse.json({ error: 'Org non trouvée' }, { status: 400 })
     if (profile.role !== 'admin' && profile.role !== 'super_admin')
       return NextResponse.json({ error: 'Admin requis' }, { status: 403 })
 
@@ -41,7 +50,7 @@ export async function GET(request: NextRequest) {
       .select('vendor_id').eq('organisation_id', orgId).eq('counted', true)
 
     const usedByVendor: Record<string, number> = {}
-    sessionCounts?.forEach(s => {
+    sessionCounts?.forEach((s: any) => {
       usedByVendor[s.vendor_id] = (usedByVendor[s.vendor_id] || 0) + 1
     })
 
@@ -52,10 +61,10 @@ export async function GET(request: NextRequest) {
     const { data: org } = await admin.from('organisations')
       .select('sessions_limit, sessions_used').eq('id', orgId).single()
 
-    const totalAllocated = vendors?.reduce((s, v) => s + (v.sessions_allocated || 0), 0) || 0
+    const totalAllocated = vendors?.reduce((s: number, v: any) => s + (v.sessions_allocated || 0), 0) || 0
 
     return NextResponse.json({
-      vendors: vendors?.map(v => ({
+      vendors: vendors?.map((v: any) => ({
         ...v,
         sessions_used: usedByVendor[v.id] || 0,
         sessions_remaining: Math.max(0, (v.sessions_allocated || 0) - (usedByVendor[v.id] || 0))
@@ -76,10 +85,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthUser(request)
-    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    const supabase = anonClient(request)
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-    const admin = createServiceClient()
+    const admin = serviceClient()
     const { data: profile } = await admin.from('profiles')
       .select('role, organisation_id').eq('id', user.id).single()
     if (profile?.role !== 'admin' && profile?.role !== 'super_admin')
@@ -97,16 +107,17 @@ export async function POST(request: NextRequest) {
     const { data: org } = await admin.from('organisations')
       .select('sessions_limit').eq('id', profile.organisation_id).single()
     const { data: allVendors } = await admin.from('profiles')
-      .select('id, sessions_allocated').eq('organisation_id', profile.organisation_id).eq('role', 'vendor')
+      .select('id, sessions_allocated')
+      .eq('organisation_id', profile.organisation_id).eq('role', 'vendor')
 
-    const totalOthers = allVendors?.filter(v => v.id !== vendorId)
-      .reduce((s, v) => s + (v.sessions_allocated || 0), 0) || 0
+    const totalOthers = allVendors
+      ?.filter((v: any) => v.id !== vendorId)
+      .reduce((s: number, v: any) => s + (v.sessions_allocated || 0), 0) || 0
 
-    if (totalOthers + sessions_allocated > (org?.sessions_limit || 0)) {
+    if (totalOthers + sessions_allocated > (org?.sessions_limit || 0))
       return NextResponse.json({
         error: `Total alloué (${totalOthers + sessions_allocated}) > limite (${org?.sessions_limit})`
       }, { status: 400 })
-    }
 
     await admin.from('profiles').update({ sessions_allocated }).eq('id', vendorId)
     return NextResponse.json({ success: true, sessions_allocated })
