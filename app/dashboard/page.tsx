@@ -216,7 +216,7 @@ export default function DashboardPage() {
     if (p.role === 'admin' || p.role === 'super_admin') {
       const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
     } else {
-    try { const qr = await fetch('/api/sessions/allocate'); if(qr.ok){ const qd = await qr.json(); setSessionQuota(qd) } } catch(e) {}
+    try { const qr = await fetch('/api/sessions/allocate',{headers:{Authorization:'Bearer '+((await supabase.auth.getSession()).data.session?.access_token||'')}}); if(qr.ok){ const qd = await qr.json(); setSessionQuota(qd) } } catch(e) {}
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
     }
     let f_data = null; // Super admin: charger les orgs meme sans organisation_id
