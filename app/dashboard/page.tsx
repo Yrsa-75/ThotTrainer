@@ -546,7 +546,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   useEffect(() => { chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" }) }, [msgs, thinking])
   useEffect(() => { if (!thinking && !ended && !listening) inputRef.current?.focus() }, [thinking, ended, listening])
   useEffect(() => { if (typeof window !== 'undefined' && window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices() } }, [showIntro])
-  useEffect(() => { return () => { window.speechSynthesis?.cancel(); listeningRef.current = false; recRef.current?.stop(); if (audioRef.current) audioRef.current.pause() } }, [])
+  useEffect(() => { return () => { window.speechSynthesis?.cancel(); listeningRef.current = false; recRef.current?.stop(); if (audioRef.current) audioRef.current.pause() } }, [showIntro])
 
   const finish = useCallback(async (m: any[], r: string) => {
     window.speechSynthesis?.cancel(); recRef.current?.stop(); listeningRef.current = false; if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
