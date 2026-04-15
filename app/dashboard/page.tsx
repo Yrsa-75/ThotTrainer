@@ -793,7 +793,7 @@ function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
 // ============================================
 // ADMIN — CRUD + Paramétrage global + BYOK
 // ============================================
-function AdminPanel({ supabase, personas, formations, scoring, config, profiles, onRefresh }: any) {
+function AdminPanel({ supabase, personas, formations, scoring, config, profiles, onRefresh, sessionQuota }: any) {
   const [tab, setTab] = useState("context"); const [editId, setEditId] = useState<string | null>(null)
   const [nn, setNn] = useState(""); const [ne, setNe] = useState(""); const [np, setNp] = useState(""); const [msg, setMsg] = useState("")
   const [genDesc, setGenDesc] = useState(""); const [generating, setGenerating] = useState(false); const [genResult, setGenResult] = useState<any>(null)
