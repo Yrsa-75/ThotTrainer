@@ -1918,11 +1918,11 @@ function SuperAdminRevenue({ orgs }: any) {
 // SUPER ADMIN — PARAMÈTRES GLOBAUX
 // ============================================
 function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
-  const [allocations, setAllocations] = React.useState<Record<string, number>>({})
-  const [saving, setSaving] = React.useState<string | null>(null)
-  const [msg, setMsg] = React.useState('')
+  const [allocations, setAllocations] = useState<Record<string, number>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+  const [msg, setMsg] = useState('')
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (sessionQuota?.vendors) {
       const init: Record<string, number> = {}
       sessionQuota.vendors.forEach((v: any) => { init[v.id] = v.sessions_allocated || 0 })
