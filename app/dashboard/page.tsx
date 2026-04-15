@@ -1276,7 +1276,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
           </div>
         )}
         {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
-        {tab === "credits" && <CreditsPanel supabase={supabase} profiles={profiles} sessionQuota={sessionQuota} onRefresh={loadData} />}
+        {tab === "credits" && <CreditsPanel supabase={supabase} profiles={profiles} sessionQuota={sessionQuota} onRefresh={onRefresh} />}
 
     
   </div>)
