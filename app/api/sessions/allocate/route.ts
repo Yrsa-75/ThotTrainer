@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Valeur invalide' }, { status: 400 })
 
     const { data: vendor } = await admin.from('profiles')
-      .select('organisation_id, role, sessions_allocated as current_allocated').eq('id', vendorId).single()
+      .select('organisation_id, role, sessions_allocated').eq('id', vendorId).single()
     if (!vendor || vendor.organisation_id !== profile.organisation_id || vendor.role !== 'vendor')
       return NextResponse.json({ error: 'Vendeur non trouvé' }, { status: 404 })
 
