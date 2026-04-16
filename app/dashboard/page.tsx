@@ -323,7 +323,7 @@ export default function DashboardPage() {
       </div>
       <div style={{ marginLeft: 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
-        {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { setSessionData(sd); setScreen("chat") }} />}
+        {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { if(profile.role==='vendor'){ const usedCount=sessions.filter((s:any)=>s.vendor_id===profile.id&&s.counted).length; if(usedCount>=(profile.sessions_allocated||0)){ alert('Vous n\'avez plus de crédits de session disponibles. Contactez votre manager pour en obtenir.'); return } } setSessionData(sd); setScreen("chat") }} />}
         {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onCancel={() => setScreen("new_session")} onEnd={async (sess: any) => {
           const newSessions = [sess, ...sessions]
           setSessions(newSessions)
@@ -406,7 +406,7 @@ function Dashboard({ profile, sessions, personas, formations, config, profiles, 
 // ============================================
 // NEW SESSION — Random mystère, profil conditionnel, durée custom/illimitée
 // ============================================
-function NewSession({ personas, formations, config, onStart }: any) {
+function NewSession({ personas, formations, config, onStart, profile, sessions }: any) {
   const [pId, setPId] = useState<string | null>(null); const [fId, setFId] = useState<string | null>(null); const [level, setLevel] = useState(2)
   const [durMin, setDurMin] = useState(20); const [unlimited, setUnlimited] = useState(false)
   const [isRandom, setIsRandom] = useState(false)
@@ -424,7 +424,7 @@ function NewSession({ personas, formations, config, onStart }: any) {
   }
 
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
-    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Nouvelle session</div><div style={{ fontSize: 13, color: "#8b95a5", marginBottom: 28 }}>Choisis un prospect et optionnellement un produit/service cible</div>
+    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Nouvelle session</div>{(() => { if(profile?.role==='vendor'){ const used=sessions?.filter((s:any)=>s.vendor_id===profile.id&&s.counted).length||0; const alloc=profile.sessions_allocated||0; const rem=Math.max(0,alloc-used); return (<div id="quotaWarning" style={{marginBottom:16}}>{rem===0?<div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:10,padding:'12px 16px',fontSize:13,color:'#ef4444'}}>⚠️ Vous n&apos;avez aucun crédit de session. Contactez votre manager.</div>:<div style={{background:'rgba(99,195,151,0.06)',border:'1px solid rgba(99,195,151,0.2)',borderRadius:10,padding:'12px 16px',fontSize:13,color:'#63c397'}}>🎯 {rem} session{rem>1?'s':''} disponible{rem>1?'s':''} sur {alloc} allouée{alloc>1?'s':''}</div>}</div>)} return null })()}<div style={{ fontSize: 13, color: "#8b95a5", marginBottom: 28 }}>Choisis un prospect et optionnellement un produit/service cible</div>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Prospect à convaincre</div><button onClick={pickRandom} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: isRandom ? "rgba(99,195,151,0.15)" : "rgba(99,195,151,0.1)", border: `1px solid ${isRandom ? "#63c397" : "rgba(99,195,151,0.3)"}`, borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Shuffle /> Aléatoire</button></div>
 
     {isRandom ? (
