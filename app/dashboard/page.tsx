@@ -1947,6 +1947,7 @@ function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
   const org = sessionQuota?.org
   const vendors = sessionQuota?.vendors || []
   const unallocated = org ? org.sessions_limit - org.total_allocated : 0
+  const orgRemaining = org ? Math.max(0, (org.sessions_limit || 0) - (org.sessions_used || 0)) : 0
 
   return (
     <div style={{ padding: '0 0 24px' }}>
@@ -1982,6 +1983,7 @@ function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
             const used = v.sessions_used || 0
             const remaining = Math.max(0, alloc - used)
             const pct = alloc > 0 ? Math.min(100, Math.round(used / alloc * 100)) : 0
+            const totalVR = vendors.reduce((s: number, vv: any) => { const a2 = allocations[vv.id] ?? vv.sessions_allocated ?? 0; return s + Math.max(0, a2 - (vv.sessions_used||0)) }, 0); const canAdd = totalVR < orgRemaining; const canSub = alloc > used
             return (
               <div key={v.id} style={{ background: '#0f1219', border: '1px solid #1e2530', borderRadius: 12, padding: '16px 18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -2002,13 +2004,13 @@ function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
                 {/* Contrôle allocation */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ fontSize: 12, color: '#8b95a5', flexShrink: 0 }}>Crédits alloués :</div>
-                  <button onClick={() => setAllocations(a => ({ ...a, [v.id]: Math.max(0, (a[v.id] ?? 0) - 1) }))}
-                    style={{ width: 28, height: 28, borderRadius: 6, background: '#1a1e27', border: '1px solid #2a2f3a', color: '#e2e8f0', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                  <button onClick={() => canSub && setAllocations(a => ({ ...a, [v.id]: Math.max(0, (a[v.id] ?? 0) - 1) }))} disabled={!canSub}
+                    style={{ width: 28, height: 28, borderRadius: 6, background: '#1a1e27', border: '1px solid #2a2f3a', color: canSub ? '#e2e8f0' : '#4a4f5a', cursor: canSub ? 'pointer' : 'not-allowed', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canSub ? 1 : 0.4 }}>−</button>
                   <input type="number" min="0" max={org?.sessions_limit || 999} value={alloc}
                     onChange={e => setAllocations(a => ({ ...a, [v.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
                     style={{ width: 64, textAlign: 'center', background: '#1a1e27', border: '1px solid #2a2f3a', borderRadius: 6, color: '#fff', fontSize: 14, fontWeight: 700, padding: '4px 8px' }} />
-                  <button onClick={() => setAllocations(a => ({ ...a, [v.id]: (a[v.id] ?? 0) + 1 }))}
-                    style={{ width: 28, height: 28, borderRadius: 6, background: '#1a1e27', border: '1px solid #2a2f3a', color: '#e2e8f0', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                  <button onClick={() => canAdd && setAllocations(a => ({ ...a, [v.id]: (a[v.id] ?? 0) + 1 }))} disabled={!canAdd}
+                    style={{ width: 28, height: 28, borderRadius: 6, background: '#1a1e27', border: '1px solid #2a2f3a', color: canAdd ? '#e2e8f0' : '#4a4f5a', cursor: canAdd ? 'pointer' : 'not-allowed', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canAdd ? 1 : 0.4 }}>+</button>
                   <button onClick={() => save(v.id)} disabled={saving === v.id}
                     style={{ padding: '6px 16px', background: 'linear-gradient(135deg,#63c397,#4aa87a)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving === v.id ? 0.6 : 1 }}>
                     {saving === v.id ? '...' : 'Enregistrer'}
