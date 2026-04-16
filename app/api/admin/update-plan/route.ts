@@ -68,6 +68,16 @@ export async function POST(req: NextRequest) {
       results.oldPriceId = currentPriceId
     }
 
+    
+    // Mettre à jour le catalogue si sessions/price fournis
+    if (sessions || price) {
+      const catalogData: any = {}
+      if (sessions) catalogData.sessions = sessions
+      if (price) catalogData.price = price
+      catalogData.updated_at = new Date().toISOString()
+      await supabase.from('plan_catalog').update(catalogData).eq('plan_id', planId)
+    }
+
     return NextResponse.json({ success: true, ...results })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
