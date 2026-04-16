@@ -1511,7 +1511,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
             <select value={form.plan} onChange={e => setForm(f => ({...f, plan:e.target.value}))} style={{...iS, marginBottom:0}}>
               <option value="trial">Trial (0 sessions)</option>
               <option value="starter">Starter (25 sessions)</option>
-              <option value="business">Business (100 sessions)</option>
+              <option value="business">Business (75 sessions)</option>
               <option value="premium">Premium (200 sessions)</option>
             </select>
           </div>
@@ -2029,13 +2029,13 @@ function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
 function SuperAdminSettings({ orgs, onRefresh }: any) {
   const PLANS = [
     { id:'starter', name:'Starter', color:'#63c397', defaultPrice:229, defaultSessions:25 },
-    { id:'business', name:'Business', color:'#3b82f6', defaultPrice:549, defaultSessions:100 },
+    { id:'business', name:'Business', color:'#3b82f6', defaultPrice:549, defaultSessions:75 },
     { id:'premium', name:'Premium', color:'#a78bfa', defaultPrice:990, defaultSessions:200 },
   ]
 
   const [configs, setConfigs] = useState<any>({
     starter: { sessions: 25, price: 229 },
-    business: { sessions: 100, price: 549 },
+    business: { sessions: 75, price: 549 },
     premium: { sessions: 200, price: 990 },
   })
   const [saving, setSaving] = useState<string|null>(null)
