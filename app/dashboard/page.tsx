@@ -215,6 +215,7 @@ export default function DashboardPage() {
     const { data: sess } = (p.role === 'admin' || p.role === 'super_admin') ? await supabase.from('sessions').select('*').order('created_at', { ascending: false }) : await supabase.from('sessions').select('*').eq('vendor_id', user.id).order('created_at', { ascending: false }); setSessions(normSessions(sess))
     if (p.role === 'admin' || p.role === 'super_admin') {
       const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
+      try { const qr2 = await fetch('/api/sessions/allocate',{headers:{Authorization:'Bearer '+((await supabase.auth.getSession()).data.session?.access_token||'')}}); if(qr2.ok){ const qd2 = await qr2.json(); setSessionQuota(qd2) } } catch(e) { console.error('sessionQuota load error:', e) }
     } else {
     try { const qr = await fetch('/api/sessions/allocate',{headers:{Authorization:'Bearer '+((await supabase.auth.getSession()).data.session?.access_token||'')}}); if(qr.ok){ const qd = await qr.json(); setSessionQuota(qd) } } catch(e) {}
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
