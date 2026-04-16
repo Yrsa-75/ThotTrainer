@@ -1954,9 +1954,9 @@ function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
       {/* Pool orga */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Sessions totales', value: org?.sessions_limit || 0, color: '#e2e8f0' },
-          { label: 'Non allouées (vous)', value: unallocated, color: unallocated > 0 ? '#63c397' : '#ef4444' },
-          { label: 'Utilisées (org)', value: org?.sessions_used || 0, color: '#8b95a5' },
+          { label: 'Sessions restantes', value: Math.max(0, (org?.sessions_limit || 0) - (org?.sessions_used || 0)), color: '#63c397' },
+          { label: 'Sessions non allouées', value: unallocated, color: unallocated > 0 ? '#63c397' : '#ef4444' },
+          { label: 'Sessions utilisées', value: (org?.sessions_used || 0) + '/' + (org?.sessions_limit || 0), color: '#8b95a5' },
         ].map((s, i) => (
           <div key={i} style={{ background: '#0f1219', borderRadius: 10, padding: '14px 16px', border: '1px solid #1e2530' }}>
             <div style={{ fontSize: 11, color: '#8b95a5', marginBottom: 6 }}>{s.label}</div>
