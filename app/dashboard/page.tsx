@@ -1625,22 +1625,11 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
   const SL = { trialing:'Essai gratuit en cours', active:'Actif', past_due:'Paiement en retard', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
   const PLANS = [
-    { id:'starter', name:'Starter', price:229, sessions:25, color:'#63c397', features:(() => {
-        const display: any = {
-          starter: { name:'Starter', color:'#63c397', features:['Jusqu\'à 5 vendeurs','Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
-          business: { name:'Business', color:'#3b82f6', popular:true, features:['Onboarding complet géré par IA','Jusqu\'à 20 vendeurs','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement \u0026 gamification','Dashboard manager','Support prioritaire'] },
-          premium: { name:'Premium', color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement \u0026 gamification','Dashboard manager','Support dédié \u0026 SLA','Domaine custom'] },
-        }
-        return (planCatalog||[]).filter((p:any) => p.plan_id !== 'trial').map((p:any) => ({
-          id: p.plan_id,
-          name: display[p.plan_id]?.name || p.plan_id,
-          price: p.price,
-          sessions: p.sessions,
-          color: display[p.plan_id]?.color || '#8b95a5',
-          popular: display[p.plan_id]?.popular || false,
-          features: display[p.plan_id]?.features || [],
-        }))
-      })() },
+    { id:'starter', name:'Starter', price:229, sessions:25, color:'#63c397', features:[
+          { id:'starter', name:'Starter', price: (planCatalog||[]).find((p:any)=>p.plan_id==='starter')?.price || 229, sessions: (planCatalog||[]).find((p:any)=>p.plan_id==='starter')?.sessions || 25, color:'#63c397', features:['Jusqu\'à 5 vendeurs','Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
+          { id:'business', name:'Business', price: (planCatalog||[]).find((p:any)=>p.plan_id==='business')?.price || 549, sessions: (planCatalog||[]).find((p:any)=>p.plan_id==='business')?.sessions || 75, color:'#3b82f6', popular:true, features:['Onboarding complet géré par IA','Jusqu\'à 20 vendeurs','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement \u0026 gamification','Dashboard manager','Support prioritaire'] },
+          { id:'premium', name:'Premium', price: (planCatalog||[]).find((p:any)=>p.plan_id==='premium')?.price || 990, sessions: (planCatalog||[]).find((p:any)=>p.plan_id==='premium')?.sessions || 200, color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement \u0026 gamification','Dashboard manager','Support dédié \u0026 SLA','Domaine custom'] },
+        ] },
     { id:'premium', name:'Premium', price:990, sessions:200, color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support dédié & SLA','Domaine custom'] },
   ]
 
