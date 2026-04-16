@@ -202,6 +202,7 @@ const bS = (c: string): React.CSSProperties => ({ padding: "5px 12px", backgroun
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(null); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
   const [sessionQuota, setSessionQuota] = useState<any>(null)
+  const [planCatalog, setPlanCatalog] = useState<any[]>([])
   const [lightMode, setLightMode] = useState(false)
   useEffect(() => { const saved = localStorage.getItem('thot-light-mode'); if (saved === 'true') setLightMode(true) }, [])
   useEffect(() => { localStorage.setItem('thot-light-mode', String(lightMode)); document.body.style.filter = lightMode ? 'invert(1) hue-rotate(180deg)' : 'none'; document.body.style.background = lightMode ? '#000' : '#0f1219' }, [lightMode])
@@ -216,6 +217,7 @@ export default function DashboardPage() {
     if (p.role === 'admin' || p.role === 'super_admin') {
       const { data: profs } = await supabase.from('profiles').select('*'); setProfiles(profs || [])
       try { const qr2 = await fetch('/api/sessions/allocate',{headers:{Authorization:'Bearer '+((await supabase.auth.getSession()).data.session?.access_token||'')}}); if(qr2.ok){ const qd2 = await qr2.json(); setSessionQuota(qd2) } } catch(e) { console.error('sessionQuota load error:', e) }
+      try { const pr = await fetch('/api/plans'); if(pr.ok){ const pd = await pr.json(); setPlanCatalog(pd) } } catch(e) { console.error('planCatalog error:', e) }
     } else {
     try { const qr = await fetch('/api/sessions/allocate',{headers:{Authorization:'Bearer '+((await supabase.auth.getSession()).data.session?.access_token||'')}}); if(qr.ok){ const qd = await qr.json(); setSessionQuota(qd) } } catch(e) {}
       const { data: profs } = await supabase.from('profiles').select('id, full_name, role'); setProfiles(profs || [])
@@ -346,8 +348,8 @@ export default function DashboardPage() {
         {screen === "clients" && profile.role === "super_admin" && <SuperAdminClients orgs={allOrgs} onRefresh={loadData} />}
         {screen === "overview" && profile.role === "super_admin" && <SuperAdminOverview orgs={allOrgs} />}
         {screen === "revenue" && profile.role === "super_admin" && <SuperAdminRevenue orgs={allOrgs} />}
-        {screen === "settings" && profile.role === "super_admin" && <SuperAdminSettings orgs={allOrgs} onRefresh={loadData} />}
-        {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen org={org} profile={profile} onRefresh={loadData} />}
+        {screen === "settings" && profile.role === "super_admin" && <SuperAdminSettings planCatalog={planCatalog} orgs={allOrgs} onRefresh={loadData} />}
+        {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen planCatalog={planCatalog} org={org} profile={profile} onRefresh={loadData} />}
         {screen === "admin" && isAdmin && <AdminPanel sessionQuota={sessionQuota} supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
       </div>
     </div>
@@ -1421,7 +1423,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
   const PC = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa', cancelled:'#8b95a5' }
   const SL = { trialing:'Essai gratuit', active:'Actif', past_due:'Impaye', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
-  const PLAN_SESSIONS = { trial:0, starter:25, business:75, premium:200 }
+  const PLAN_SESSIONS: Record<string,number> = { trial:0, starter:25, business:75, premium:200 }
   
   const filtered = (orgs||[]).filter(o => !search || o.name.toLowerCase().includes(search.toLowerCase()))
   const totalActive = (orgs||[]).filter(o => o.status==='active'||o.status==='trialing').length
@@ -1614,7 +1616,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
   )
 }
 
-function BillingScreen({ org, profile, onRefresh }) {
+function BillingScreen({ org, profile, onRefresh , planCatalog}) {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -1623,8 +1625,22 @@ function BillingScreen({ org, profile, onRefresh }) {
   const SL = { trialing:'Essai gratuit en cours', active:'Actif', past_due:'Paiement en retard', cancelled:'Annule', paused:'Pause' }
   const SC = { trialing:'#f59e0b', active:'#63c397', past_due:'#ef4444', cancelled:'#8b95a5', paused:'#8b95a5' }
   const PLANS = [
-    { id:'starter', name:'Starter', price:229, sessions:25, color:'#63c397', features:["Jusqu'à 5 vendeurs",'Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
-    { id:'business', name:'Business', price:549, sessions:75, color:'#3b82f6', popular:true, features:['Onboarding complet géré par IA',"Jusqu'à 20 vendeurs",'Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support prioritaire'] },
+    { id:'starter', name:'Starter', price:229, sessions:25, color:'#63c397', features:(() => {
+        const display: any = {
+          starter: { name:'Starter', color:'#63c397', features:['Jusqu\'à 5 vendeurs','Prospects IA illimités','Chat prospect par texte','Dashboard manager','Support par email'] },
+          business: { name:'Business', color:'#3b82f6', popular:true, features:['Onboarding complet géré par IA','Jusqu\'à 20 vendeurs','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement \u0026 gamification','Dashboard manager','Support prioritaire'] },
+          premium: { name:'Premium', color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement \u0026 gamification','Dashboard manager','Support dédié \u0026 SLA','Domaine custom'] },
+        }
+        return (planCatalog||[]).filter((p:any) => p.plan_id !== 'trial').map((p:any) => ({
+          id: p.plan_id,
+          name: display[p.plan_id]?.name || p.plan_id,
+          price: p.price,
+          sessions: p.sessions,
+          color: display[p.plan_id]?.color || '#8b95a5',
+          popular: display[p.plan_id]?.popular || false,
+          features: display[p.plan_id]?.features || [],
+        }))
+      })() },
     { id:'premium', name:'Premium', price:990, sessions:200, color:'#a78bfa', features:['Onboarding et paramétrage dédié (visio)','Vendeurs illimités','Prospects IA illimités','Chat prospect texte + vocal','Analyse + replay sessions','Classement & gamification','Dashboard manager','Support dédié & SLA','Domaine custom'] },
   ]
 
@@ -2026,7 +2042,7 @@ function CreditsPanel({ supabase, profiles, sessionQuota, onRefresh }: any) {
   )
 }
 
-function SuperAdminSettings({ orgs, onRefresh }: any) {
+function SuperAdminSettings({ orgs, onRefresh, planCatalog }: any) {
   const PLANS = [
     { id:'starter', name:'Starter', color:'#63c397', defaultPrice:229, defaultSessions:25 },
     { id:'business', name:'Business', color:'#3b82f6', defaultPrice:549, defaultSessions:75 },
@@ -2048,7 +2064,7 @@ function SuperAdminSettings({ orgs, onRefresh }: any) {
       const planOrgs = (orgs||[]).filter((o:any) => o.plan === p.id)
       const firstOrg = planOrgs[0]
       counts[p.id] = {
-        sessions: firstOrg?.sessions_limit || p.defaultSessions,
+        sessions: (planCatalog||[]).find((pc:any)=>pc.plan_id===p.id)?.sessions || firstOrg?.sessions_limit || p.defaultSessions,
         price: p.defaultPrice,
         orgCount: planOrgs.length,
       }
@@ -2057,6 +2073,9 @@ function SuperAdminSettings({ orgs, onRefresh }: any) {
   }, [orgs])
 
   const savePlan = async (planId: string) => {
+    // Sync plan_catalog directement
+    const { error: catErr } = await supabase.from('plan_catalog').update({ sessions: configs[planId].sessions, price: configs[planId].price, updated_at: new Date().toISOString() }).eq('plan_id', planId)
+    if (catErr) console.error('plan_catalog sync error:', catErr)
     setSaving(planId)
     setResults((r:any) => ({ ...r, [planId]: null }))
     try {
