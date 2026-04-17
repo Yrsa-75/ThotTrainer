@@ -424,7 +424,7 @@ export default function DashboardPage() {
         {screen === "revenue" && profile.role === "super_admin" && <SuperAdminRevenue orgs={allOrgs} />}
         {screen === "settings" && profile.role === "super_admin" && <SuperAdminSettings planCatalog={planCatalog} orgs={allOrgs} onRefresh={loadData} />}
         {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen planCatalog={planCatalog} org={org} profile={profile} onRefresh={loadData} />}
-        {screen === "admin" && isAdmin && <AdminPanel sessionQuota={sessionQuota} supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} />}
+        {screen === "admin" && isAdmin && <AdminPanel sessionQuota={sessionQuota} supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} saleDocuments={saleDocuments} />}
       </div>
     </div>
   )
