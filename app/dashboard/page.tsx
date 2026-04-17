@@ -806,6 +806,75 @@ function AdminPanel({ supabase, personas, formations, scoring, config, profiles,
   const [wizardAnswers, setWizardAnswers] = useState<{[k:number]:string}>({})
   const [wizardFullResult, setWizardFullResult] = useState<any>(null)
   const [dragIdx, setDragIdx] = useState<number|null>(null)
+  // ═══ Fix étapes de vente : state local + bouton Enregistrer + auto-save 5s ═══
+  const [localSalesProcess, setLocalSalesProcess] = useState<any[] | null>(null)
+  const [spDirty, setSpDirty] = useState(false)
+  const [spSaving, setSpSaving] = useState(false)
+  const [spSavedAt, setSpSavedAt] = useState<Date | null>(null)
+  const spTimerRef = useRef<any>(null)
+  const localSPRef = useRef<any[]>([])
+  useEffect(() => { localSPRef.current = localSalesProcess || [] }, [localSalesProcess])
+  useEffect(() => {
+    if (!spDirty && !spSaving) {
+      setLocalSalesProcess(config?.sales_process || [])
+    }
+  }, [config?.sales_process])
+  const saveSalesProcess = async () => {
+    if (spSaving) return
+    if (spTimerRef.current) { clearTimeout(spTimerRef.current); spTimerRef.current = null }
+    const current = localSPRef.current
+    if (!current) return
+    setSpSaving(true)
+    try {
+      if (config?.id) {
+        await supabase.from('platform_config').update({ sales_process: current }).eq('id', config.id)
+      }
+      setSpDirty(false)
+      setSpSavedAt(new Date())
+      onRefresh()
+    } finally {
+      setSpSaving(false)
+    }
+  }
+  const updateLocalSP = (newArray: any[]) => {
+    setLocalSalesProcess(newArray)
+    setSpDirty(true)
+    if (spTimerRef.current) clearTimeout(spTimerRef.current)
+    spTimerRef.current = setTimeout(() => { saveSalesProcess() }, 5000)
+  }
+  const commitAndSave = async (newArray: any[]) => {
+    if (spTimerRef.current) { clearTimeout(spTimerRef.current); spTimerRef.current = null }
+    setLocalSalesProcess(newArray)
+    setSpSaving(true)
+    try {
+      if (config?.id) {
+        await supabase.from('platform_config').update({ sales_process: newArray }).eq('id', config.id)
+      }
+      setSpDirty(false)
+      setSpSavedAt(new Date())
+      onRefresh()
+    } finally {
+      setSpSaving(false)
+    }
+  }
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's' && spDirty) {
+        e.preventDefault()
+        saveSalesProcess()
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [spDirty])
+  useEffect(() => {
+    const h = (e: BeforeUnloadEvent) => {
+      if (spDirty) { e.preventDefault(); e.returnValue = '' }
+    }
+    window.addEventListener('beforeunload', h)
+    return () => window.removeEventListener('beforeunload', h)
+  }, [spDirty])
+  // ═══ Fin fix étapes de vente ═══
   const isFirstSetup = !config?.company_name || config.company_name === 'Mon Entreprise' || config.company_name === ''
 
   const EF = ({ label, value, onSave, rows = 1 }
@@ -1042,11 +1111,12 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
   const handleDragOver = (e: any) => e.preventDefault()
   const handleDrop = (targetIdx: number) => {
     if (dragIdx === null || dragIdx === targetIdx) return
-    const steps = [...(config.sales_process || [])]
+    const base = localSalesProcess || config.sales_process || []
+    const steps = [...base]
     const [moved] = steps.splice(dragIdx, 1)
     steps.splice(targetIdx, 0, moved)
     const reindexed = steps.map((s: any, i: number) => ({ ...s, step: i + 1 }))
-    savCfg({ sales_process: reindexed })
+    commitAndSave(reindexed)
     setDragIdx(null)
   }
 
@@ -1175,16 +1245,16 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 
         {/* Sales process with drag & drop */}
         <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 16, fontWeight: 700 }}>Étapes du processus de vente</div><button onClick={() => savCfg({ sales_process: [...(config.sales_process || []), { step: (config.sales_process?.length || 0) + 1, name: "Nouvelle étape", description: "À définir" }] })} style={{ ...bS("#63c397") }}><I.Plus /> Ajouter</button></div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}><span>Étapes du processus de vente</span>{spDirty && !spSaving && <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 500 }}>● Modifié</span>}{spSaving && <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 500 }}>⏳ Enregistrement…</span>}{!spDirty && !spSaving && spSavedAt && <span style={{ fontSize: 11, color: '#63c397', fontWeight: 500 }}>✓ Enregistré</span>}</div><><button onClick={saveSalesProcess} disabled={!spDirty || spSaving} style={{ ...bS("#63c397"), marginRight: 8, opacity: spDirty && !spSaving ? 1 : 0.4, cursor: spDirty && !spSaving ? 'pointer' : 'not-allowed' }}>💾 Enregistrer</button><button onClick={() => { const current = localSalesProcess || config.sales_process || []; commitAndSave([...current, { step: current.length + 1, name: "Nouvelle étape", description: "À définir" }]) }} style={{ ...bS("#63c397") }}><I.Plus /> Ajouter</button></></div>
           <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 12 }}>↕ Glissez-déposez pour réorganiser les étapes</div>
-          {(config.sales_process || []).map((step: any, i: number) => (
+          {(localSalesProcess || config.sales_process || []).map((step: any, i: number) => (
             <div key={i} draggable onDragStart={() => handleDragStart(i)} onDragOver={handleDragOver} onDrop={() => handleDrop(i)} style={{ display: "flex", gap: 10, alignItems: "start", marginBottom: 8, padding: 12, background: dragIdx === i ? "rgba(99,195,151,0.1)" : "#1a1e27", borderRadius: 8, border: dragIdx === i ? "1px dashed #63c397" : "1px solid transparent", cursor: "grab", transition: "all 0.2s" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: "#63c397", minWidth: 28, cursor: "grab", userSelect: "none" }}>☰ {step.step}</div>
               <div style={{ flex: 1 }}>
-                <input value={step.name} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], name: e.target.value }; savCfg({ sales_process: np }) }} style={{ ...iS, marginBottom: 4 } as any} placeholder="Nom de l'étape" />
-                <textarea value={step.description} onChange={e => { const np = [...config.sales_process]; np[i] = { ...np[i], description: e.target.value }; savCfg({ sales_process: np }) }} rows={2} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} placeholder="Description" />
+                <input value={step.name} onChange={e => { const np = [...(localSalesProcess || config.sales_process)]; np[i] = { ...np[i], name: e.target.value }; updateLocalSP(np) }} style={{ ...iS, marginBottom: 4 } as any} placeholder="Nom de l'étape" />
+                <textarea value={step.description} onChange={e => { const np = [...(localSalesProcess || config.sales_process)]; np[i] = { ...np[i], description: e.target.value }; updateLocalSP(np) }} rows={2} style={{ ...iS, marginBottom: 0, resize: "vertical" } as any} placeholder="Description" />
               </div>
-              <button onClick={() => { const np = config.sales_process.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); savCfg({ sales_process: np }) }} style={bS("#ef4444")}><I.Trash /></button>
+              <button onClick={() => { const current = localSalesProcess || config.sales_process; const np = current.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); commitAndSave(np) }} style={bS("#ef4444")}><I.Trash /></button>
             </div>
           ))}
         </div>
