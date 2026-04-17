@@ -8,8 +8,8 @@ const STRIPE_PRICE_IDS: Record<string, string> = {
 }
 
 const PLAN_DISPLAY: Record<string, any> = {
-  starter: { name: 'Starter', color: '#63c397', features: ['Jusqu\'à 5 vendeurs', 'Prospects IA illimités', 'Chat prospect par texte', 'Dashboard manager', 'Support par email'] },
-  business: { name: 'Business', color: '#3b82f6', popular: true, features: ['Onboarding complet géré par IA', 'Jusqu\'à 20 vendeurs', 'Prospects IA illimités', 'Chat prospect texte + vocal', 'Analyse + replay sessions', 'Classement & gamification', 'Dashboard manager', 'Support prioritaire'] },
+  starter: { name: 'Starter', color: '#63c397', features: ["Jusqu'à 5 vendeurs", 'Prospects IA illimités', 'Chat prospect par texte', 'Dashboard manager', 'Support par email'] },
+  business: { name: 'Business', color: '#3b82f6', popular: true, features: ['Onboarding complet géré par IA', "Jusqu'à 20 vendeurs", 'Prospects IA illimités', 'Chat prospect texte + vocal', 'Analyse + replay sessions', 'Classement & gamification', 'Dashboard manager', 'Support prioritaire'] },
   premium: { name: 'Premium', color: '#a78bfa', features: ['Onboarding et paramétrage dédié (visio)', 'Vendeurs illimités', 'Prospects IA illimités', 'Chat prospect texte + vocal', 'Analyse + replay sessions', 'Classement & gamification', 'Dashboard manager', 'Support dédié & SLA', 'Domaine custom'] },
 }
 
@@ -19,103 +19,55 @@ const FALLBACK_PLANS = [
   { id: 'premium', price: 990, sessions: 200 },
 ]
 
+function buildPlans(catalog: any[]) {
+  const src = catalog?.length ? catalog.filter(p => p.plan_id !== 'trial').map(p => ({ id: p.plan_id, price: p.price, sessions: p.sessions })) : FALLBACK_PLANS
+  return src.map(p => ({
+    ...p,
+    name: PLAN_DISPLAY[p.id]?.name || p.id,
+    color: PLAN_DISPLAY[p.id]?.color || '#8b95a5',
+    popular: PLAN_DISPLAY[p.id]?.popular || false,
+    priceId: STRIPE_PRICE_IDS[p.id] || '',
+    features: [p.sessions + ' sessions / mois', ...(PLAN_DISPLAY[p.id]?.features || [])],
+  }))
+}
+
 export default function RegisterPage() {
   const [form, setForm] = useState({ company: '', name: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [plans, setPlans] = useState<any[]>([])
+  const [plans, setPlans] = useState<any[]>(buildPlans([]))
 
   useEffect(() => {
-    fetch('/api/plans').then(r => r.json()).then((catalog: any[]) => {
-      const merged = (catalog || []).filter(p => p.plan_id !== 'trial').map(p => ({
-        id: p.plan_id,
-        name: PLAN_DISPLAY[p.plan_id]?.name || p.plan_id,
-        price: p.price,
-        sessions: p.sessions,
-        color: PLAN_DISPLAY[p.plan_id]?.color || '#8b95a5',
-        popular: PLAN_DISPLAY[p.plan_id]?.popular || false,
-        priceId: STRIPE_PRICE_IDS[p.plan_id] || '',
-        features: [p.sessions + ' sessions / mois', ...(PLAN_DISPLAY[p.plan_id]?.features || [])],
-      }))
-      setPlans(merged.length ? merged : FALLBACK_PLANS.map(f => ({
-        ...f,
-        name: PLAN_DISPLAY[f.id]?.name || f.id,
-        color: PLAN_DISPLAY[f.id]?.color || '#8b95a5',
-        popular: PLAN_DISPLAY[f.id]?.popular || false,
-        priceId: STRIPE_PRICE_IDS[f.id] || '',
-        features: [f.sessions + ' sessions / mois', ...(PLAN_DISPLAY[f.id]?.features || [])],
-      })))
-    }).catch(() => {
-      setPlans(FALLBACK_PLANS.map(f => ({
-        ...f,
-        name: PLAN_DISPLAY[f.id]?.name || f.id,
-        color: PLAN_DISPLAY[f.id]?.color || '#8b95a5',
-        popular: PLAN_DISPLAY[f.id]?.popular || false,
-        priceId: STRIPE_PRICE_IDS[f.id] || '',
-        features: [f.sessions + ' sessions / mois', ...(PLAN_DISPLAY[f.id]?.features || [])],
-      })))
-    })
+    fetch('/api/plans').then(r => r.json()).then(d => setPlans(buildPlans(d))).catch(() => {})
   }, [])
 
   const isFormValid = form.company.trim() && form.name.trim() && form.email.trim() && form.password.length >= 6
 
   async function handlePlanClick(plan: any) {
-    if (!isFormValid) {
-      setError('Veuillez remplir tous les champs (mot de passe : 6 caractères minimum)')
-      return
-    }
-    setLoading(true)
-    setError('')
+    if (!isFormValid) { setError('Veuillez remplir tous les champs (mot de passe : 6 caractères minimum)'); return }
+    setLoading(true); setError('')
     try {
       const regRes = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          companyName: form.company.trim(),
-          adminName: form.name.trim(),
-          email: form.email.trim().toLowerCase(),
-          password: form.password,
-          plan: plan.id,
-          sessionsLimit: plan.sessions,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName: form.company.trim(), adminName: form.name.trim(), email: form.email.trim().toLowerCase(), password: form.password, plan: plan.id, sessionsLimit: plan.sessions }),
       })
       const regData = await regRes.json()
-      if (!regRes.ok) {
-        setError(regData.error || 'Erreur lors de la création du compte')
-        setLoading(false)
-        return
-      }
+      if (!regRes.ok) { setError(regData.error || 'Erreur lors de la création du compte'); setLoading(false); return }
       const stripeRes = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: plan.priceId,
-          orgName: form.company.trim(),
-          adminEmail: form.email.trim().toLowerCase(),
-          adminName: form.name.trim(),
-          orgId: regData.orgId,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: plan.priceId, orgName: form.company.trim(), adminEmail: form.email.trim().toLowerCase(), adminName: form.name.trim(), orgId: regData.orgId }),
       })
       const stripeData = await stripeRes.json()
-      if (stripeData.url) {
-        window.location.href = stripeData.url
-      } else {
-        setError('Erreur Stripe : ' + (stripeData.error || 'URL manquante'))
-        setLoading(false)
-      }
-    } catch (e: any) {
-      setError(e.message || 'Erreur inconnue')
-      setLoading(false)
-    }
+      if (stripeData.url) { window.location.href = stripeData.url }
+      else { setError('Erreur Stripe : ' + (stripeData.error || 'URL manquante')); setLoading(false) }
+    } catch (e: any) { setError(e.message || 'Erreur inconnue'); setLoading(false) }
   }
 
-  const iS: React.CSSProperties = {
-    width: '100%', padding: '14px 18px', background: '#111621', border: '1px solid #2a2f3a',
-    borderRadius: 12, color: '#fff', fontSize: 15, outline: 'none', marginBottom: 12, boxSizing: 'border-box',
-  }
+  const iS: React.CSSProperties = { width: '100%', padding: '14px 18px', background: '#111621', border: '1px solid #2a2f3a', borderRadius: 12, color: '#fff', fontSize: 15, outline: 'none', marginBottom: 12, boxSizing: 'border-box', fontFamily: 'Outfit, system-ui, sans-serif' }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0e17', color: '#e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0e17', color: '#e2e8f0', fontFamily: 'Outfit, system-ui, sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');`}</style>
       <div style={{ marginBottom: 32, textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
           <svg width="36" height="36" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#63c397"/><text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fill="#0a0e17" fontWeight="900" fontSize="18" fontFamily="system-ui">TT</text></svg>
@@ -137,13 +89,13 @@ export default function RegisterPage() {
           <div key={plan.id} style={{ background: '#111621', borderRadius: 16, padding: '28px 24px', border: plan.popular ? `2px solid ${plan.color}` : '1px solid #1e2530', position: 'relative' }}>
             {plan.popular && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: plan.color, color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 14px', borderRadius: 20 }}>Populaire</div>}
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{plan.name}</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: plan.color }}>{plan.price}\u20AC</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: plan.color }}>{plan.price}€</div>
             <div style={{ fontSize: 13, color: '#8b95a5', marginBottom: 12 }}>par mois HT</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: plan.color, marginBottom: 16 }}>{plan.sessions} sessions / mois</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
               {plan.features.map((f: string, i: number) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                  <span style={{ color: plan.color }}>\u2714</span>
+                  <span style={{ color: plan.color }}>✔</span>
                   <span>{f}</span>
                 </div>
               ))}
