@@ -71,9 +71,12 @@ export function buildSystemPrompt(persona: any, formation: any, level: number, s
   const cfg = config || DEFAULT_CONFIG;
   const companyName = cfg.company_name || 'l\'entreprise';
   
-  // Build sales process section
-  const processSteps = (cfg.sales_process || []).length > 0
-    ? (cfg.sales_process as any[]).map((s: any) => `${s.step}. ${s.name} — ${s.description}`).join('\n')
+  // Build sales process section — processus alternatif du produit si défini, sinon processus global
+  const activeSalesProcess = (formation?.alternative_sales_process?.length > 0)
+    ? formation.alternative_sales_process
+    : (cfg.sales_process || []);
+  const processSteps = activeSalesProcess.length > 0
+    ? activeSalesProcess.map((s: any) => `${s.step}. ${s.name} — ${s.description}`).join('\n')
     : 'Aucun processus défini — le vendeur gère librement la conversation.';
 
   return `Tu es un prospect virtuel dans une simulation d'entraînement commercial pour "${companyName}".
@@ -157,16 +160,26 @@ Ne termine la session qu'après minimum 8-10 échanges sauf erreur grave du vend
 // ============================================
 // ANALYSIS PROMPT BUILDER
 // ============================================
-export function buildAnalysisPrompt(messages: any[], persona: any, formation: any, level: number, duration: number, result: string, config?: any) {
+export function buildAnalysisPrompt(messages: any[], persona: any, formation: any, level: number, duration: number, result: string, config?: any, saleDocuments?: any[]) {
   const cfg = config || DEFAULT_CONFIG;
   const convo = messages.map((m: any) => `${m.sender === "vendor" ? "VENDEUR" : "PROSPECT"}: ${m.content}`).join("\n");
   
-  const processNames = (cfg.sales_process || []).map((s: any) => s.name).join(', ') || 'Libre';
+  // Utiliser le processus alternatif du produit si défini, sinon le processus global
+  const activeSalesProcess = (formation?.alternative_sales_process?.length > 0)
+    ? formation.alternative_sales_process
+    : (cfg.sales_process || []);
+  const processNames = activeSalesProcess.map((s: any) => s.name).join(', ') || 'Libre';
+  const isAlternativeProcess = formation?.alternative_sales_process?.length > 0;
+
+  // Documents de méthodologie (pour juger la conformité du vendeur)
+  const docsSection = (saleDocuments && saleDocuments.length > 0)
+    ? `\n\nDOCUMENTS DE MÉTHODOLOGIE DE L'ENTREPRISE (utilise-les pour évaluer si le vendeur respecte la méthodologie propre à cette entreprise) :\n${saleDocuments.map((d: any) => `--- ${d.name} ---\n${d.content}`).join('\n\n')}\n`
+    : '';
   
   return `Coach commercial expert pour "${cfg.company_name || 'l\'entreprise'}". Analyse cette session.
 
 CONTEXTE : ${cfg.company_description || 'Simulation de vente.'}
-Processus attendu : ${processNames}
+Processus attendu${isAlternativeProcess ? ` (spécifique au produit "${formation.name}")` : ''} : ${processNames}${docsSection}
 
 Prospect: ${persona.name} — ${persona.subtitle}, ${persona.age} ans, ${persona.profession}
 Niveau: ${level}/3
@@ -184,7 +197,7 @@ Réponds en JSON avec cette structure EXACTE :
   "strengths": ["<Point fort 1>", ...],
   "improvements": ["<Axe d'amélioration 1>", ...],
   "objections": [{"objection": "<>", "response_quality": "<bien_traitée|partiellement_traitée|ignorée|mal_traitée>", "suggestion": "<>"}],
-  "phase_coverage": {${(cfg.sales_process || []).map((s: any) => `\n    "${s.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}": {"covered": <true/false>, "quality": "<bien|moyen|insuffisant>", "note": "<>"}`).join(',')}
+  "phase_coverage": {${activeSalesProcess.map((s: any) => `\n    "${s.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}": {"covered": <true/false>, "quality": "<bien|moyen|insuffisant>", "note": "<>"}`).join(',')}
   },
   "skills": {"ecoute": <0-10>, "empathie": <0-10>, "argumentation": <0-10>, "gestion_objections": <0-10>, "structure_rdv": <0-10>, "connaissance_produit": <0-10>, "closing": <0-10>},
   "main_advice": "<Le conseil principal>"

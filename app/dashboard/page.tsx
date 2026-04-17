@@ -8,6 +8,79 @@ import IntroPopup from '../components/IntroPopup'
 async function callChat(system: string, messages: any[]) { const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system, messages }) }); return (await r.json()).text || '...' }
 async function callAnalyze(prompt: string) { const r = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) }); return (await r.json()).text || '{}' }
 
+function AltProcessEditor({ formation, supabase, onRefresh }: any) {
+  const [steps, setSteps] = useState<any[]>(formation.alternative_sales_process || [])
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => { setSteps(formation.alternative_sales_process || []); setDirty(false) }, [formation.id, formation.alternative_sales_process])
+  const save = async (newSteps: any[] | null) => {
+    setSaving(true)
+    await supabase.from('formations').update({ alternative_sales_process: newSteps }).eq('id', formation.id)
+    setDirty(false); setSaving(false); onRefresh()
+  }
+  const addStep = () => { const n = [...steps, { step: steps.length + 1, name: 'Nouvelle étape', description: 'À définir' }]; setSteps(n); setDirty(true) }
+  const removeStep = (i: number) => { const n = steps.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); setSteps(n); setDirty(true) }
+  const updateStep = (i: number, field: string, val: string) => { const n = [...steps]; n[i] = { ...n[i], [field]: val }; setSteps(n); setDirty(true) }
+  const removeAll = () => { if (confirm('Supprimer le processus alternatif ? Le processus global reprendra pour ce produit.')) { setSteps([]); save(null) } }
+  return (<div style={{ marginTop: 16, padding: 14, background: '#0c1017', borderRadius: 10, border: '1px solid #1e2530' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div><div style={{ fontSize: 13, fontWeight: 600 }}>⦿ Processus de vente alternatif <span style={{ fontSize: 10, color: '#8b95a5', fontWeight: 400 }}>optionnel</span></div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Si défini, remplace le processus global quand ce produit est le focus d'une session.</div></div>
+      {dirty && <button onClick={() => save(steps)} disabled={saving} style={{ ...bS('#63c397'), opacity: saving ? 0.5 : 1 }}>{saving ? '...' : '💾 Enregistrer'}</button>}
+    </div>
+    {steps.length === 0 ? (<button onClick={addStep} style={{ width: '100%', padding: 10, background: 'transparent', border: '1px dashed #2a3140', borderRadius: 8, color: '#8b95a5', fontSize: 12, cursor: 'pointer' }}>+ Définir un processus alternatif</button>) : (<>
+      {steps.map((s: any, i: number) => (<div key={i} style={{ display: 'flex', gap: 8, alignItems: 'start', marginBottom: 6, padding: 8, background: '#1a1e27', borderRadius: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#63c397', minWidth: 20 }}>{s.step}</div>
+        <div style={{ flex: 1 }}>
+          <input value={s.name} onChange={e => updateStep(i, 'name', e.target.value)} style={{ ...iS, marginBottom: 4, fontSize: 12 } as any} placeholder="Nom de l'étape" />
+          <textarea value={s.description} onChange={e => updateStep(i, 'description', e.target.value)} rows={1} style={{ ...iS, marginBottom: 0, fontSize: 12, resize: 'vertical' } as any} placeholder="Description" />
+        </div>
+        <button onClick={() => removeStep(i)} style={bS('#ef4444')}><I.Trash /></button>
+      </div>))}
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button onClick={addStep} style={{ ...bS('#63c397'), fontSize: 12 }}><I.Plus /> Étape</button>
+        <button onClick={removeAll} style={{ ...bS('#8b95a5'), fontSize: 11 }}>Supprimer le processus alternatif</button>
+      </div>
+    </>)}
+  </div>)
+}
+
+
+function MethodologyDocsEditor({ supabase, saleDocuments, onRefresh, profile }: any) {
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [adding, setAdding] = useState(false)
+  const startEdit = (d: any) => { setEditId(d.id); setEditName(d.name); setEditContent(d.content); setAdding(false) }
+  const startAdd = () => { setEditId(null); setEditName(''); setEditContent(''); setAdding(true) }
+  const saveEdit = async () => {
+    if (!editName.trim()) return
+    if (adding) {
+      await supabase.from('sale_documents').insert({ name: editName, content: editContent, document_type: 'script', organisation_id: profile?.organisation_id, uploaded_by: profile?.id })
+    } else if (editId) {
+      await supabase.from('sale_documents').update({ name: editName, content: editContent }).eq('id', editId)
+    }
+    setEditId(null); setAdding(false); setEditName(''); setEditContent(''); onRefresh()
+  }
+  const cancelEdit = () => { setEditId(null); setAdding(false); setEditName(''); setEditContent('') }
+  const removeDoc = async (id: string) => { if (!confirm('Supprimer ce document ?')) return; await supabase.from('sale_documents').delete().eq('id', id); onRefresh() }
+  return (<>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div><div style={{ fontSize: 16, fontWeight: 700 }}>Documents d'aide à la vente</div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Trames, scripts, méthodologies utilisés pour l'analyse post-session des échanges.</div></div>
+      {!adding && !editId && <button onClick={startAdd} style={bS('#63c397')}><I.Plus /> Ajouter</button>}
+    </div>
+    {(adding || editId) && (<div style={{ marginBottom: 14, padding: 14, background: '#0c1017', borderRadius: 10, border: '1px solid #2a3140' }}>
+      <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Nom du document" style={{ ...iS, marginBottom: 8 } as any} />
+      <textarea value={editContent} onChange={e => setEditContent(e.target.value)} placeholder="Contenu du document (texte brut : trame, script, méthodologie...)" rows={10} style={{ ...iS, marginBottom: 10, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 } as any} />
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button onClick={cancelEdit} style={bS('#8b95a5')}>Annuler</button>
+        <button onClick={saveEdit} style={bS('#63c397')}>{adding ? 'Créer' : 'Enregistrer'}</button>
+      </div>
+    </div>)}
+    {(!saleDocuments || saleDocuments.length === 0) ? (!adding && <div style={{ padding: 20, textAlign: 'center', color: '#8b95a5', fontSize: 12, background: '#0c1017', borderRadius: 8 }}>Aucun document. Ajoutez vos trames et scripts pour enrichir l'analyse post-session.</div>) : (saleDocuments.map((d: any) => (editId === d.id ? null : <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#1a1e27', borderRadius: 8, marginBottom: 6 }}><div><div style={{ fontSize: 13, fontWeight: 600 }}>{d.name}</div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>{(d.content?.length || 0).toLocaleString('fr-FR')} caractères · {d.document_type || 'document'}</div></div><div style={{ display: 'flex', gap: 6 }}><button onClick={() => startEdit(d)} style={bS('#63c397')}>Modifier</button><button onClick={() => removeDoc(d.id)} style={bS('#ef4444')}><I.Trash /></button></div></div>)))}
+  </>)
+}
+
+
 // ============================================
 // BADGES
 // ============================================
@@ -200,7 +273,8 @@ const iS: React.CSSProperties = { width: "100%", padding: "10px 14px", backgroun
 const bS = (c: string): React.CSSProperties => ({ padding: "5px 12px", background: "none", border: `1px solid ${c}33`, borderRadius: 6, color: c, fontSize: 11, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 })
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(null); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<any>(null); const [screen, setScreen] = useState('dashboard'); const [sessions, setSessions] = useState<any[]>([]); const [profiles, setProfiles] = useState<any[]>([]); const [formations, setFormations] = useState<any[]>([])
+  const [saleDocuments, setSaleDocuments] = useState<any[]>([]); const [personas, setPersonas] = useState<any[]>([]); const [scoring, setScoring] = useState<any>(null); const [config, setConfig] = useState<any>(DEFAULT_CONFIG); const [sessionData, setSessionData] = useState<any>(null); const [viewSession, setViewSession] = useState<any>(null); const [loading, setLoading] = useState(true)
   const [sessionQuota, setSessionQuota] = useState<any>(null)
   const [planCatalog, setPlanCatalog] = useState<any[]>([])
   const [lightMode, setLightMode] = useState(false)
@@ -232,7 +306,7 @@ export default function DashboardPage() {
           }
         } catch(e) { console.error('super admin orgs error:', e) }
       }
-      if (p.organisation_id) { const { data: fRes } = await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', p.organisation_id).order('created_at', { ascending: false }); f_data = fRes }; setFormations(f_data?.length ? f_data : (p.organisation_id ? DEFAULT_FORMATIONS : []))
+      if (p.organisation_id) { const { data: fRes } = await supabase.from('formations').select('*').eq('is_active', true).eq('organisation_id', p.organisation_id).order('created_at', { ascending: false }); f_data = fRes }; if (p.organisation_id) { const { data: sdRes } = await supabase.from('sale_documents').select('*').eq('organisation_id', p.organisation_id).order('created_at', { ascending: false }); setSaleDocuments(sdRes || []) }; setFormations(f_data?.length ? f_data : (p.organisation_id ? DEFAULT_FORMATIONS : []))
     // Super admin: charger les orgs même sans organisation_id
       if (p.role === 'super_admin') {
         const { data: orgs2 } = await supabase.from('organisations').select('*').order('created_at', { ascending: false })
@@ -445,9 +519,10 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
     )}
 
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Produit / Service <span style={{ fontSize: 11, color: "#8b95a5", fontWeight: 400 }}>(optionnel)</span></div>{fId && <button onClick={() => setFId(null)} style={bS("#8b95a5")}>Aucun (mode libre)</button>}</div>
+    {formations.some((f: any) => f.alternative_sales_process?.length > 0) && <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 12, fontStyle: 'italic' }}>Les produits marqués d'un ⦿ suivent un processus de vente spécifique qui peut être différent du processus classique.</div>}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 24 }}>{
               
-              formations.map((f: any) => <button key={f.id} onClick={() => setFId(fId === f.id ? null : f.id)} style={{ padding: "14px 16px", background: fId === f.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${fId === f.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ fontSize: 14, fontWeight: 700 }}>{f.name}</div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 4, lineHeight: 1.3 }}>{f.description?.slice(0, 80)}...</div></button>)}</div>
+              formations.map((f: any) => <button key={f.id} onClick={() => setFId(fId === f.id ? null : f.id)} style={{ padding: "14px 16px", background: fId === f.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${fId === f.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ fontSize: 14, fontWeight: 700 }}>{f.alternative_sales_process?.length > 0 ? '⦿ ' : ''}{f.name}</div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 4, lineHeight: 1.3 }}>{f.description?.slice(0, 80)}...</div></button>)}</div>
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Niveau</div><div style={{ display: "flex", gap: 8 }}>{[{ v: 1, l: "Ouvert" }, { v: 2, l: "Sceptique" }, { v: 3, l: "Hostile" }].map(d => <button key={d.v} onClick={() => setLevel(d.v)} style={{ flex: 1, padding: "10px 8px", background: level === d.v ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${level === d.v ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: level === d.v ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{d.l}</button>)}</div></div>
@@ -557,7 +632,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const finish = useCallback(async (m: any[], r: string) => {
     window.speechSynthesis?.cancel(); recRef.current?.stop(); listeningRef.current = false; if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     clearInterval(timerRef.current); const elapsed = Math.round((Date.now() - startRef.current) / 1000); let analysis: any = null, score = 50
-    try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r, config)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
+    try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r, config, saleDocuments)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
     const ins: any = {
       vendor_id: profile.id, persona_id: sd.personaId,
       difficulty_level: sd.level, result: r, performance_score: score,
@@ -1259,6 +1334,11 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
           ))}
         </div>
 
+        {/* Documents de méthodologie */}
+        <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}>
+          <MethodologyDocsEditor supabase={supabase} saleDocuments={saleDocuments} onRefresh={onRefresh} profile={profile} />
+        </div>
+
         {/* Display options */}
         <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Options d'affichage</div>
@@ -1336,7 +1416,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
       <div style={{ marginBottom: 16 }}><button onClick={async () => { await supabase.from('formations').insert({ name: "Nouveau produit/service", description: "À définir", price: "À configurer", key_arguments: ["Argument 1"], common_objections: ["Objection 1"] }); onRefresh() }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(99,195,151,0.1)", border: "1px solid rgba(99,195,151,0.3)", borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Plus /> Ajouter un produit/service</button></div>
       {formations.map((f: any) => <div key={f.id} style={{ padding: 18, background: "#111621", borderRadius: 12, border: `1px solid ${editId === f.id ? "#63c397" : "#1e2530"}`, marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div><div style={{ fontSize: 15, fontWeight: 700 }}>{f.name}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{f.price}</div></div><div style={{ display: "flex", gap: 6 }}><button onClick={() => setEditId(editId === f.id ? null : f.id)} style={bS("#63c397")}>{editId === f.id ? "Fermer" : "Modifier"}</button><button onClick={async () => { if (confirm("Supprimer ?")) { await supabase.from('formations').delete().eq('id', f.id); onRefresh() } }} style={bS("#ef4444")}><I.Trash /></button></div></div>
-        {editId === f.id && <div style={{ marginTop: 14 }}><EF label="Nom" value={f.name} onSave={(v: string) => savF(f.id, { name: v })} /><EF label="Description" value={f.description} onSave={(v: string) => savF(f.id, { description: v })} rows={3} /><EF label="Prix" value={f.price} onSave={(v: string) => savF(f.id, { price: v })} /><EA label="Arguments" value={f.key_arguments || f.arguments} onSave={(v: string[]) => savF(f.id, { key_arguments: v })} /><EA label="Objections" value={f.common_objections || f.objections} onSave={(v: string[]) => savF(f.id, { common_objections: v })} /></div>}
+        {editId === f.id && <div style={{ marginTop: 14 }}><EF label="Nom" value={f.name} onSave={(v: string) => savF(f.id, { name: v })} /><EF label="Description" value={f.description} onSave={(v: string) => savF(f.id, { description: v })} rows={3} /><EF label="Prix" value={f.price} onSave={(v: string) => savF(f.id, { price: v })} /><EA label="Arguments" value={f.key_arguments || f.arguments} onSave={(v: string[]) => savF(f.id, { key_arguments: v })} /><EA label="Objections" value={f.common_objections || f.objections} onSave={(v: string[]) => savF(f.id, { common_objections: v })} /><AltProcessEditor formation={f} supabase={supabase} onRefresh={onRefresh} /></div>}
       </div>)}
     </div>}
 
