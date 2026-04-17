@@ -1341,11 +1341,6 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
           ))}
         </div>
 
-        {/* Documents de méthodologie */}
-        <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}>
-          <MethodologyDocsEditor supabase={supabase} profile={profile} />
-        </div>
-
         {/* Display options */}
         <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Options d'affichage</div>
