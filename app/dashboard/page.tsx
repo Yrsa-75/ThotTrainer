@@ -457,7 +457,7 @@ export default function DashboardPage() {
         {screen === "revenue" && profile.role === "super_admin" && <SuperAdminRevenue orgs={allOrgs} />}
         {screen === "settings" && profile.role === "super_admin" && <SuperAdminSettings planCatalog={planCatalog} orgs={allOrgs} onRefresh={loadData} />}
         {screen === "billing" && isAdmin && profile.role !== "super_admin" && <BillingScreen planCatalog={planCatalog} org={org} profile={profile} onRefresh={loadData} />}
-        {screen === "admin" && isAdmin && <AdminPanel sessionQuota={sessionQuota} supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} saleDocuments={saleDocuments} />}
+        {screen === "admin" && isAdmin && <AdminPanel sessionQuota={sessionQuota} supabase={supabase} personas={personas} formations={formations} scoring={scoring} config={config} profiles={profiles} onRefresh={loadData} saleDocuments={saleDocuments} profile={profile} />}
       </div>
     </div>
   )
@@ -552,7 +552,7 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
     )}
 
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Produit / Service <span style={{ fontSize: 11, color: "#8b95a5", fontWeight: 400 }}>(optionnel)</span></div>{fId && <button onClick={() => setFId(null)} style={bS("#8b95a5")}>Aucun (mode libre)</button>}</div>
-    {formations.some((f: any) => f.alternative_sales_process?.length > 0) && <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 12, fontStyle: 'italic' }}>Les produits marqués d'un ⦿ suivent un processus de vente spécifique qui peut être différent du processus classique.</div>}
+    {formations.some((f: any) => f.alternative_sales_process?.length > 0) && <div style={{ fontSize: 14, color: "rgb(222, 225, 231)", marginBottom: 12, fontStyle: 'italic' }}>Les produits marqués d'un ⦿ suivent un processus de vente spécifique qui peut être différent du processus classique.</div>}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 24 }}>{
               
               formations.map((f: any) => <button key={f.id} onClick={() => setFId(fId === f.id ? null : f.id)} style={{ padding: "14px 16px", background: fId === f.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${fId === f.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ fontSize: 14, fontWeight: 700 }}>{f.alternative_sales_process?.length > 0 ? '⦿ ' : ''}{f.name}</div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 4, lineHeight: 1.3 }}>{f.description?.slice(0, 80)}...</div></button>)}</div>
@@ -904,7 +904,7 @@ function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
 // ============================================
 // ADMIN — CRUD + Paramétrage global + BYOK
 // ============================================
-function AdminPanel({ supabase, personas, formations, scoring, config, profiles, onRefresh, sessionQuota }: any) {
+function AdminPanel({ supabase, personas, formations, scoring, config, profiles, onRefresh, sessionQuota, profile, saleDocuments }: any) {
   const [tab, setTab] = useState("context"); const [editId, setEditId] = useState<string | null>(null)
   const [nn, setNn] = useState(""); const [ne, setNe] = useState(""); const [np, setNp] = useState(""); const [msg, setMsg] = useState("")
   const [genDesc, setGenDesc] = useState(""); const [generating, setGenerating] = useState(false); const [genResult, setGenResult] = useState<any>(null)
@@ -1230,7 +1230,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 
   return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
-    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Gestion de l'équipe" }, { id: "credits", l: "💳 Gestion des crédits" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
+    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Gestion de l'équipe" }, { id: "credits", l: "💳 Gestion des crédits" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }, { id: "documents", l: "📚 Documents" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
     {/* ===== CONTEXT ===== */}
     {tab === "context" && <div>
@@ -1458,6 +1458,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
         )}
         {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
         {tab === "credits" && <CreditsPanel supabase={supabase} profiles={profiles} sessionQuota={sessionQuota} onRefresh={onRefresh} />}
+        {tab === "documents" && <MethodologyDocsEditor supabase={supabase} profile={profile} />}
 
     
   </div>)
