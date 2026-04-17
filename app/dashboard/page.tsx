@@ -12,19 +12,45 @@ function AltProcessEditor({ formation, supabase, onRefresh }: any) {
   const [steps, setSteps] = useState<any[]>(formation.alternative_sales_process || [])
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
-  useEffect(() => { setSteps(formation.alternative_sales_process || []); setDirty(false) }, [formation.id, formation.alternative_sales_process])
+  const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const timerRef = useRef<any>(null)
+  const stepsRef = useRef<any[]>(steps)
+  useEffect(() => { stepsRef.current = steps }, [steps])
+  useEffect(() => {
+    setSteps(formation.alternative_sales_process || [])
+    setDirty(false); setSavedAt(null)
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+  }, [formation.id])
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
   const save = async (newSteps: any[] | null) => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
     setSaving(true)
     await supabase.from('formations').update({ alternative_sales_process: newSteps }).eq('id', formation.id)
-    setDirty(false); setSaving(false); onRefresh()
+    setDirty(false); setSaving(false); setSavedAt(new Date()); onRefresh()
   }
-  const addStep = () => { const n = [...steps, { step: steps.length + 1, name: 'Nouvelle étape', description: 'À définir' }]; setSteps(n); setDirty(true) }
-  const removeStep = (i: number) => { const n = steps.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 })); setSteps(n); setDirty(true) }
-  const updateStep = (i: number, field: string, val: string) => { const n = [...steps]; n[i] = { ...n[i], [field]: val }; setSteps(n); setDirty(true) }
+  const markDirty = (newSteps: any[]) => {
+    setSteps(newSteps); setDirty(true)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => { save(stepsRef.current) }, 5000)
+  }
+  const addStep = () => { markDirty([...steps, { step: steps.length + 1, name: 'Nouvelle étape', description: 'À définir' }]) }
+  const removeStep = (i: number) => { markDirty(steps.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 }))) }
+  const updateStep = (i: number, field: string, val: string) => { const n = [...steps]; n[i] = { ...n[i], [field]: val }; markDirty(n) }
   const removeAll = () => { if (confirm('Supprimer le processus alternatif ? Le processus global reprendra pour ce produit.')) { setSteps([]); save(null) } }
   return (<div style={{ marginTop: 16, padding: 14, background: '#0c1017', borderRadius: 10, border: '1px solid #1e2530' }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-      <div><div style={{ fontSize: 13, fontWeight: 600 }}>⦿ Processus de vente alternatif <span style={{ fontSize: 10, color: '#8b95a5', fontWeight: 400 }}>optionnel</span></div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Si défini, remplace le processus global quand ce produit est le focus d'une session.</div></div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>⦿ Processus de vente alternatif</span>
+          <span style={{ fontSize: 10, color: '#8b95a5', fontWeight: 400 }}>optionnel</span>
+          {dirty && !saving && <span style={{ fontSize: 10, color: '#f59e0b', fontWeight: 500 }}>● Modifié</span>}
+          {saving && <span style={{ fontSize: 10, color: '#3b82f6', fontWeight: 500 }}>⏳ Enregistrement…</span>}
+          {!dirty && !saving && savedAt && <span style={{ fontSize: 10, color: '#63c397', fontWeight: 500 }}>✓ Enregistré</span>}
+        </div>
+        <div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Si défini, remplace le processus global quand ce produit est le focus d'une session.</div>
+      </div>
       {dirty && <button onClick={() => save(steps)} disabled={saving} style={{ ...bS('#63c397'), opacity: saving ? 0.5 : 1 }}>{saving ? '...' : '💾 Enregistrer'}</button>}
     </div>
     {steps.length === 0 ? (<button onClick={addStep} style={{ width: '100%', padding: 10, background: 'transparent', border: '1px dashed #2a3140', borderRadius: 8, color: '#8b95a5', fontSize: 12, cursor: 'pointer' }}>+ Définir un processus alternatif</button>) : (<>
