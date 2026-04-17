@@ -45,7 +45,14 @@ function AltProcessEditor({ formation, supabase, onRefresh }: any) {
 }
 
 
-function MethodologyDocsEditor({ supabase, saleDocuments, onRefresh, profile }: any) {
+function MethodologyDocsEditor({ supabase, profile }: any) {
+  const [saleDocuments, setSaleDocuments] = useState<any[]>([])
+  const fetchDocs = async () => {
+    if (!profile?.organisation_id) return
+    const { data } = await supabase.from('sale_documents').select('*').eq('organisation_id', profile.organisation_id).order('created_at', { ascending: false })
+    setSaleDocuments(data || [])
+  }
+  useEffect(() => { fetchDocs() }, [profile?.organisation_id])
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editContent, setEditContent] = useState('')
@@ -59,10 +66,10 @@ function MethodologyDocsEditor({ supabase, saleDocuments, onRefresh, profile }: 
     } else if (editId) {
       await supabase.from('sale_documents').update({ name: editName, content: editContent }).eq('id', editId)
     }
-    setEditId(null); setAdding(false); setEditName(''); setEditContent(''); onRefresh()
+    setEditId(null); setAdding(false); setEditName(''); setEditContent(''); fetchDocs()
   }
   const cancelEdit = () => { setEditId(null); setAdding(false); setEditName(''); setEditContent('') }
-  const removeDoc = async (id: string) => { if (!confirm('Supprimer ce document ?')) return; await supabase.from('sale_documents').delete().eq('id', id); onRefresh() }
+  const removeDoc = async (id: string) => { if (!confirm('Supprimer ce document ?')) return; await supabase.from('sale_documents').delete().eq('id', id); fetchDocs() }
   return (<>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
       <div><div style={{ fontSize: 16, fontWeight: 700 }}>Documents d'aide à la vente</div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Trames, scripts, méthodologies utilisés pour l'analyse post-session des échanges.</div></div>
@@ -1336,7 +1343,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 
         {/* Documents de méthodologie */}
         <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}>
-          <MethodologyDocsEditor supabase={supabase} saleDocuments={saleDocuments} onRefresh={onRefresh} profile={profile} />
+          <MethodologyDocsEditor supabase={supabase} profile={profile} />
         </div>
 
         {/* Display options */}
