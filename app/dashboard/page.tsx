@@ -453,7 +453,7 @@ export default function DashboardPage() {
       <div style={{ marginLeft: 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
         {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { if(profile.role==='vendor'){ const usedCount=new Set(sessions.filter((s:any)=>s.vendor_id===profile.id&&s.counted).map((s:any)=>s.id)).size; if(usedCount>=(profile.sessions_allocated||0)){ alert('Vous n\'avez plus de crédits de session disponibles. Contactez votre manager pour en obtenir.'); return } } setSessionData(sd); setScreen("chat") }} />}
-        {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} onCancel={() => setScreen("new_session")} onEnd={async (sess: any) => {
+        {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} saleDocuments={saleDocuments} onCancel={() => setScreen("new_session")} onEnd={async (sess: any) => {
           const newSessions = [sess, ...sessions]
           setSessions(newSessions)
           // Compute and save badges
@@ -590,7 +590,7 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
 // ============================================
 // CHAT SESSION — Voix + config dynamique
 // ============================================
-function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd, onCancel }: any) {
+function ChatSession({ profile, personas, formations, scoring, config, sd, supabase, onEnd, onCancel, saleDocuments }: any) {
   const [showIntro, setShowIntro] = useState(true)
   const [timerActive, setTimerActive] = useState(false)
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
