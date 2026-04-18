@@ -15,7 +15,9 @@ function Logo() {
 export default function SuccessPage() {
   const router = useRouter()
   useEffect(() => {
-    const t = setTimeout(() => router.push('/dashboard'), 4000)
+    // Force dark mode for new users (clear any leftover light-mode preference)
+    try { localStorage.removeItem('thot-light-mode') } catch {}
+    const t = setTimeout(() => router.push('/dashboard'), 10000)
     return () => clearTimeout(t)
   }, [router])
 
