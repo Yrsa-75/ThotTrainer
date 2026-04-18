@@ -1777,6 +1777,8 @@ function SuperAdminClients({ orgs, onRefresh }) {
         const daysLeft = o.trial_ends_at ? Math.max(0, Math.ceil((new Date(o.trial_ends_at).getTime()-Date.now())/86400000)) : null
         const periodEnd = o.current_period_end ? new Date(o.current_period_end).toLocaleDateString('fr-FR') : null
         const isExtending = extendId === o.id
+        const expectedLimit = o.status === 'trialing' ? 7 : ({ starter:25, business:75, premium:200 }[o.plan] || 0)
+        const bonus = Math.max(0, (o.sessions_limit || 0) - expectedLimit)
 
         return (
           <div key={o.id} style={{ padding:20, background:"#111621", borderRadius:14, border:"1px solid #1e2530", marginBottom:12 }}>
@@ -1786,6 +1788,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
                   <div style={{ fontSize:16, fontWeight:800 }}>{o.name}</div>
                   <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:(PC[o.plan]||'#8b95a5')+'22', color:PC[o.plan]||'#8b95a5', border:"1px solid "+(PC[o.plan]||'#8b95a5')+'44' }}>{PL[o.plan]||o.plan}</span>
                   <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:(SC[o.status]||'#8b95a5')+'22', color:SC[o.status]||'#8b95a5', border:"1px solid "+(SC[o.status]||'#8b95a5')+'44' }}>{SL[o.status]||o.status}</span>
+                  {bonus > 0 && <span style={{ fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:20, background:"rgba(167,139,250,0.2)", color:"#a78bfa", border:"1px solid rgba(167,139,250,0.4)" }}>+{bonus} bonus</span>}
                 </div>
                 {o.adminProfile && <div style={{ fontSize:12, color:"#8b95a5" }}>{o.adminProfile.full_name} — {o.adminProfile.email}</div>}
               </div>
