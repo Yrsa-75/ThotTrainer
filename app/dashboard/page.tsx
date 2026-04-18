@@ -8,82 +8,70 @@ import IntroPopup from '../components/IntroPopup'
 async function callChat(system: string, messages: any[]) { const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system, messages }) }); return (await r.json()).text || '...' }
 async function callAnalyze(prompt: string) { const r = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) }); return (await r.json()).text || '{}' }
 
-function AltProcessEditor({ formation, supabase, onRefresh }
+function AltProcessEditor({ formation, supabase, onRefresh }: any) {
+  const [steps, setSteps] = useState<any[]>(formation.alternative_sales_process || [])
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const timerRef = useRef<any>(null)
+  const stepsRef = useRef<any[]>(steps)
+  useEffect(() => { stepsRef.current = steps }, [steps])
+  useEffect(() => {
+    setSteps(formation.alternative_sales_process || [])
+    setDirty(false); setSavedAt(null)
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+  }, [formation.id])
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
+  const save = async (newSteps: any[] | null) => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+    setSaving(true)
+    await supabase.from('formations').update({ alternative_sales_process: newSteps }).eq('id', formation.id)
+    setDirty(false); setSaving(false); setSavedAt(new Date()); onRefresh()
+  }
+  const markDirty = (newSteps: any[]) => {
+    setSteps(newSteps); setDirty(true)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => { save(stepsRef.current) }, 5000)
+  }
+  const addStep = () => { markDirty([...steps, { step: steps.length + 1, name: 'Nouvelle étape', description: 'À définir' }]) }
+  const removeStep = (i: number) => { markDirty(steps.filter((_: any, j: number) => j !== i).map((s: any, j: number) => ({ ...s, step: j + 1 }))) }
+  const updateStep = (i: number, field: string, val: string) => { const n = [...steps]; n[i] = { ...n[i], [field]: val }; markDirty(n) }
+  const removeAll = () => { if (confirm('Supprimer le processus alternatif ? Le processus global reprendra pour ce produit.')) { setSteps([]); save(null) } }
+  return (<div style={{ marginTop: 16, padding: 14, background: '#0c1017', borderRadius: 10, border: '1px solid #1e2530' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>⦿ Processus de vente alternatif</span>
+          <span style={{ fontSize: 10, color: '#8b95a5', fontWeight: 400 }}>optionnel</span>
+          {dirty && !saving && <span style={{ fontSize: 10, color: '#f59e0b', fontWeight: 500 }}>● Modifié</span>}
+          {saving && <span style={{ fontSize: 10, color: '#3b82f6', fontWeight: 500 }}>⏳ Enregistrement…</span>}
+          {!dirty && !saving && savedAt && <span style={{ fontSize: 10, color: '#63c397', fontWeight: 500 }}>✓ Enregistré</span>}
+        </div>
+        <div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Si défini, remplace le processus global quand ce produit est le focus d'une session.</div>
+      </div>
+      {dirty && <button onClick={() => save(steps)} disabled={saving} style={{ ...bS('#63c397'), opacity: saving ? 0.5 : 1 }}>{saving ? '...' : '💾 Enregistrer'}</button>}
+    </div>
+    {steps.length === 0 ? (<button onClick={addStep} style={{ width: '100%', padding: 10, background: 'transparent', border: '1px dashed #2a3140', borderRadius: 8, color: '#8b95a5', fontSize: 12, cursor: 'pointer' }}>+ Définir un processus alternatif</button>) : (<>
+      {steps.map((s: any, i: number) => (<div key={i} style={{ display: 'flex', gap: 8, alignItems: 'start', marginBottom: 6, padding: 8, background: '#1a1e27', borderRadius: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#63c397', minWidth: 20 }}>{s.step}</div>
+        <div style={{ flex: 1 }}>
+          <input value={s.name} onChange={e => updateStep(i, 'name', e.target.value)} style={{ ...iS, marginBottom: 4, fontSize: 12 } as any} placeholder="Nom de l'étape" />
+          <textarea value={s.description} onChange={e => updateStep(i, 'description', e.target.value)} rows={1} style={{ ...iS, marginBottom: 0, fontSize: 12, resize: 'vertical' } as any} placeholder="Description" />
+        </div>
+        <button onClick={() => removeStep(i)} style={bS('#ef4444')}><I.Trash /></button>
+      </div>))}
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button onClick={addStep} style={{ ...bS('#63c397'), fontSize: 12 }}><I.Plus /> Étape</button>
+        <button onClick={removeAll} style={{ ...bS('#8b95a5'), fontSize: 11 }}>Supprimer le processus alternatif</button>
+      </div>
+    </>)}
+  </div>)
+}
 
 
 function MethodologyDocsEditor({ supabase, profile }: any) {
-  const [saleDocuments, setSaleDocuments] = useState<any[]>([])
-  const fetchDocs = async () => {
-    if (!profile?.organisation_id) return
-    const { data } = await supabase.from('sale_documents').select('*').eq('organisation_id', profile.organisation_id).order('created_at', { ascending: false })
-    setSaleDocuments(data || [])
-  }
-  useEffect(() => { fetchDocs() }, [profile?.organisation_id])
-  const [editId, setEditId] = useState<string | null>(null)
-  const [editName, setEditName] = useState('')
-  const [editContent, setEditContent] = useState('')
-  const [adding, setAdding] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const handleFileUpload = async (e: any) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true); setUploadError(null)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/extract-document', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
-      if (!editName.trim()) setEditName(data.filename || '')
-      setEditContent(data.text || '')
-    } catch (err: any) {
-      setUploadError(err.message || 'Erreur d\'extraction')
-    } finally {
-      setUploading(false)
-      e.target.value = ''
-    }
-  }
-  const startEdit = (d: any) => { setEditId(d.id); setEditName(d.name); setEditContent(d.content); setAdding(false); setUploadError(null) }
-  const startAdd = () => { setEditId(null); setEditName(''); setEditContent(''); setAdding(true); setUploadError(null) }
-  const saveEdit = async () => {
-    if (!editName.trim()) return
-    if (adding) {
-      await supabase.from('sale_documents').insert({ name: editName, content: editContent, document_type: 'script', organisation_id: profile?.organisation_id, uploaded_by: profile?.id })
-    } else if (editId) {
-      await supabase.from('sale_documents').update({ name: editName, content: editContent }).eq('id', editId)
-    }
-    setEditId(null); setAdding(false); setEditName(''); setEditContent(''); fetchDocs()
-  }
-  const cancelEdit = () => { setEditId(null); setAdding(false); setEditName(''); setEditContent(''); setUploadError(null) }
-  const removeDoc = async (id: string) => { if (!confirm('Supprimer ce document ?')) return; await supabase.from('sale_documents').delete().eq('id', id); fetchDocs() }
-  return (<>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-      <div><div style={{ fontSize: 16, fontWeight: 700 }}>Documents d'aide à la vente</div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>Trames, scripts, méthodologies utilisés pour l'analyse post-session des échanges.</div></div>
-      {!adding && !editId && <button onClick={startAdd} style={bS('#63c397')}><I.Plus /> Ajouter</button>}
-    </div>
-    {(adding || editId) && (<div style={{ marginBottom: 14, padding: 14, background: '#0c1017', borderRadius: 10, border: '1px solid #2a3140' }}>
-      {adding && (<div style={{ marginBottom: 12, padding: 12, background: '#111621', borderRadius: 8, border: '1px dashed #2a3140' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <div style={{ fontSize: 11, color: '#8b95a5' }}>📎 Importer un fichier <span style={{ color: '#5a6578' }}>(optionnel — PDF, DOCX, TXT, max 10 MB)</span></div>
-        </div>
-        <input type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" onChange={handleFileUpload} disabled={uploading} style={{ fontSize: 12, color: '#c9c9d0', width: '100%' }} />
-        {uploading && <div style={{ fontSize: 11, color: '#3b82f6', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}><span>⏳</span><span>Extraction du texte en cours…</span></div>}
-        {uploadError && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 8 }}>❌ {uploadError}</div>}
-      </div>)}
-      <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Nom du document" style={{ ...iS, marginBottom: 8 } as any} />
-      <textarea value={editContent} onChange={e => setEditContent(e.target.value)} placeholder={adding ? "Contenu (sera pré-rempli par l'upload, ou saisie manuelle)" : "Contenu du document"} rows={10} style={{ ...iS, marginBottom: 10, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 } as any} />
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 11, color: '#8b95a5' }}>{editContent.length > 0 && `${editContent.length.toLocaleString('fr-FR')} caractères`}</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={cancelEdit} style={bS('#8b95a5')}>Annuler</button>
-          <button onClick={saveEdit} style={bS('#63c397')}>{adding ? 'Créer' : 'Enregistrer'}</button>
-        </div>
-      </div>
-    </div>)}
-    {(!saleDocuments || saleDocuments.length === 0) ? (!adding && <div style={{ padding: 20, textAlign: 'center', color: '#8b95a5', fontSize: 12, background: '#0c1017', borderRadius: 8 }}>Aucun document. Ajoutez vos trames et scripts pour enrichir l'analyse post-session.</div>) : (saleDocuments.map((d: any) => (editId === d.id ? null : <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#1a1e27', borderRadius: 8, marginBottom: 6 }}><div><div style={{ fontSize: 13, fontWeight: 600 }}>{d.name}</div><div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2 }}>{(d.content?.length || 0).toLocaleString('fr-FR')} caractères · {d.document_type || 'document'}</div></div><div style={{ display: 'flex', gap: 6 }}><button onClick={() => startEdit(d)} style={bS('#63c397')}>Modifier</button><button onClick={() => removeDoc(d.id)} style={bS('#ef4444')}><I.Trash /></button></div></div>)))}
-  </>)
-}: any) {
   const [saleDocuments, setSaleDocuments] = useState<any[]>([])
   const fetchDocs = async () => {
     if (!profile?.organisation_id) return
