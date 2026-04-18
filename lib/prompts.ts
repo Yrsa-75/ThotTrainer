@@ -173,7 +173,7 @@ export function buildAnalysisPrompt(messages: any[], persona: any, formation: an
 
   // Documents de méthodologie (pour juger la conformité du vendeur)
   const docsSection = (saleDocuments && saleDocuments.length > 0)
-    ? `\n\nDOCUMENTS DE MÉTHODOLOGIE DE L'ENTREPRISE (utilise-les pour évaluer si le vendeur respecte la méthodologie propre à cette entreprise) :\n${saleDocuments.map((d: any) => `--- ${d.name} ---\n${d.content}`).join('\n\n')}\n`
+    ? `\n\nDOCUMENTS DE MÉTHODOLOGIE DE L'ENTREPRISE (utilise-les pour évaluer si le vendeur respecte la méthodologie propre à cette entreprise) :\n${saleDocuments.map((d: any) => `--- ${d.name} ---\n${((d.content || '').length > 4000 ? (d.content || '').slice(0, 4000) + '\n...[document tronqué pour l\'analyse]' : d.content)}`).join('\n\n')}\n`
     : '';
   
   return `Coach commercial expert pour "${cfg.company_name || 'l\'entreprise'}". Analyse cette session.
