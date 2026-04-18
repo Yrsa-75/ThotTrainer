@@ -1642,6 +1642,9 @@ function SuperAdminClients({ orgs, onRefresh }) {
   const [addSessionsId, setAddSessionsId] = useState(null)
   const [addSessionsCount, setAddSessionsCount] = useState(10)
   const [addingSessions, setAddingSessions] = useState(false)
+  const [removeSessionsId, setRemoveSessionsId] = useState(null)
+  const [removeSessionsCount, setRemoveSessionsCount] = useState(5)
+  const [removingSessions, setRemovingSessions] = useState(false)
   const [extendDays, setExtendDays] = useState(7)
   const [form, setForm] = useState({ orgName:'', adminName:'', email:'', password:'', plan:'starter', trialDays:7 })
   const [creating, setCreating] = useState(false)
@@ -1700,6 +1703,20 @@ function SuperAdminClients({ orgs, onRefresh }) {
       onRefresh()
     } catch(e) { setMsg('Erreur: '+e.message) }
     setAddingSessions(false)
+  }
+  const removeSessionsFromOrg = async (orgId) => {
+    setRemovingSessions(true)
+    try {
+      const r = await fetch('/api/admin/remove-sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ orgId, sessions: removeSessionsCount }) })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      const removed = d.actual_removed
+      if (removed < removeSessionsCount) setMsg('-' + removed + ' sessions retirees (plafonne pour ne pas descendre sous les sessions deja utilisees)')
+      else setMsg('-' + removed + ' sessions retirees')
+      setRemoveSessionsId(null)
+      onRefresh()
+    } catch(e) { setMsg('Erreur: '+e.message) }
+    setRemovingSessions(false)
   }
 
 
@@ -1801,6 +1818,9 @@ function SuperAdminClients({ orgs, onRefresh }) {
                 <button onClick={() => setAddSessionsId(addSessionsId === o.id ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", borderRadius:6, color:"#3b82f6", cursor:"pointer" }}>
                   + Ajouter des sessions
                 </button>
+                <button onClick={() => setRemoveSessionsId(removeSessionsId === o.id ? null : o.id)} style={{ fontSize:11, padding:"4px 10px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:6, color:"#ef4444", cursor:"pointer" }}>
+                  - Retirer des sessions
+                </button>
               </div>
             </div>
 
@@ -1827,6 +1847,17 @@ function SuperAdminClients({ orgs, onRefresh }) {
                 {addingSessions ? "..." : "Confirmer"}
               </button>
               <button onClick={() => setAddSessionsId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
+            </div>}
+
+            {/* Remove sessions inline */}
+            {removeSessionsId === o.id && <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14, padding:"12px 14px", background:"rgba(239,68,68,0.05)", borderRadius:10, border:"1px solid rgba(239,68,68,0.2)" }}>
+              <span style={{ fontSize:13, color:"#ccc" }}>Retirer</span>
+              <input type="number" min="1" max="500" value={removeSessionsCount} onChange={e => setRemoveSessionsCount(parseInt(e.target.value)||1)} style={{ width:70, padding:"6px 10px", background:"#0f1219", border:"1px solid #2a2f3a", borderRadius:8, color:"#ef4444", fontSize:14, fontWeight:700, textAlign:"center" }} />
+              <span style={{ fontSize:13, color:"#ccc" }}>session(s)</span>
+              <button onClick={() => removeSessionsFromOrg(o.id)} disabled={removingSessions} style={{ padding:"7px 16px", background:"#ef4444", border:"none", borderRadius:8, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", opacity:removingSessions?0.6:1 }}>
+                {removingSessions ? "..." : "Confirmer"}
+              </button>
+              <button onClick={() => setRemoveSessionsId(null)} style={{ padding:"7px 12px", background:"transparent", border:"1px solid #2a2f3a", borderRadius:8, color:"#8b95a5", fontSize:13, cursor:"pointer" }}>Annuler</button>
             </div>}
 
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
