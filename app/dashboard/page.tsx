@@ -1250,7 +1250,7 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
 
   return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Administration</div>
-    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Gestion de l'équipe" }, { id: "credits", l: "💳 Gestion des crédits" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }, { id: "documents", l: "📚 Documents" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
+    <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>{[{ id: "context", l: "⚙️ Paramétrage" }, { id: "team", l: "👥 Gestion de l'équipe" }, { id: "credits", l: "💳 Gestion des crédits" }, { id: "personas", l: "🎭 Prospects" }, { id: "formations", l: "📦 Produits/Services" }, { id: "scoring", l: "📊 Scoring" }].map(t => <button key={t.id} onClick={() => { setTab(t.id); setEditId(null) }} style={{ padding: "10px 16px", background: tab === t.id ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${tab === t.id ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: tab === t.id ? "#63c397" : "#8b95a5", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}</div>
 
     {/* ===== CONTEXT ===== */}
     {tab === "context" && <div>
@@ -1399,6 +1399,10 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
     </div>}
 
     {/* ===== TEAM ===== */}
+    {tab === "context" && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginTop: 20 }}>
+      <MethodologyDocsEditor supabase={supabase} profile={profile} />
+    </div>}
+
     {tab === "team" && <div>
       <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}>
         <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Ajouter un vendeur</div>
@@ -1478,7 +1482,6 @@ Génère 3-5 personas variés, 2-4 produits, 4-8 étapes de vente, scoring compl
         )}
         {tab === "scoring" && <ScoringEditor supabase={supabase} scoring={scoring} onRefresh={onRefresh} />}
         {tab === "credits" && <CreditsPanel supabase={supabase} profiles={profiles} sessionQuota={sessionQuota} onRefresh={onRefresh} />}
-        {tab === "documents" && <MethodologyDocsEditor supabase={supabase} profile={profile} />}
 
     
   </div>)
