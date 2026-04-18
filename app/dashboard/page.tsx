@@ -446,7 +446,7 @@ export default function DashboardPage() {
           <div style={{ padding: "14px 16px", borderTop: "1px solid #1e2530", background: "linear-gradient(135deg, rgba(99,195,151,0.12), rgba(99,195,151,0.04))" }}>
             <div style={{ fontSize: 10, color: "#63c397", fontWeight: 800, letterSpacing: 0.5, marginBottom: 8 }}>🎁 PÉRIODE D'ESSAI</div>
             <div style={{ fontSize: 12, color: "#e8eaed", lineHeight: 1.5, marginBottom: 6 }}>Encore <strong style={{ color: "#63c397" }}>{org?.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 7}</strong> jours sur 7 avant début de la facturation.</div>
-            <div style={{ fontSize: 11, color: "#8b95a5", marginBottom: 10 }}>{org?.sessions_used || 0} / 7 sessions d'essai utilisées</div>
+            <div style={{ fontSize: 13, color: "#8b95a5", marginBottom: 10 }}>{org?.sessions_used || 0} / 7 sessions d'essai utilisées</div>
             <button onClick={() => setScreen("billing")} style={{ padding: "9px 12px", background: "#63c397", color: "#0a0a0b", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit" }}>Activer mon forfait →</button>
           </div>
         )}
