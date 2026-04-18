@@ -685,7 +685,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const finish = useCallback(async (m: any[], r: string) => {
     window.speechSynthesis?.cancel(); recRef.current?.stop(); listeningRef.current = false; if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     clearInterval(timerRef.current); const elapsed = Math.round((Date.now() - startRef.current) / 1000); let analysis: any = null, score = 50
-    try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r, config, saleDocuments)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch {}
+    try { const raw = await callAnalyze(buildAnalysisPrompt(m, p, f, sd.level, elapsed, r, config, saleDocuments)); analysis = JSON.parse(raw.replace(/```json\s*/g, "").replace(/```/g, "").trim()); score = analysis.score || 50 } catch(e: any) { console.error("[ANALYZE_FAIL]", e?.message, e?.stack) }
     const ins: any = {
       vendor_id: profile.id, persona_id: sd.personaId,
       difficulty_level: sd.level, result: r, performance_score: score,
