@@ -499,6 +499,21 @@ function Dashboard({ profile, sessions, personas, formations, config, profiles, 
   return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
     <div style={{ marginBottom: 32 }}><div style={{ fontSize: 24, fontWeight: 800 }}>Bienvenue, {profile.full_name?.split(' ')[0]}</div><div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{isAdmin ? `Vue d'ensemble — ${config.company_name || 'Plateforme'}` : `Entraîne-toi à convertir des prospects pour ${config.company_name || 'ton entreprise'}`}</div></div>
 
+    {isAdmin && (!config?.company_name || config.company_name === 'Mon Entreprise' || config.company_name === '') && (
+      <div style={{ marginBottom: 32, padding: 28, background: "linear-gradient(135deg, rgba(99,195,151,0.15), rgba(99,195,151,0.05))", border: "1px solid rgba(99,195,151,0.4)", borderRadius: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 32 }}>⚙️</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#e8eaed", marginBottom: 4 }}>Votre plateforme n'est pas encore configurée</div>
+            <div style={{ fontSize: 13, color: "#8b95a5", lineHeight: 1.5 }}>Avant de pouvoir lancer des sessions d'entraînement, configurez le contexte de votre entreprise, vos prospects type et votre processus de vente. Ça prend environ 5 minutes.</div>
+          </div>
+        </div>
+        <button onClick={() => setScreen("admin")} style={{ padding: "14px 32px", background: "#63c397", color: "#0a0a0b", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
+          Configurez votre plateforme dès maintenant →
+        </button>
+      </div>
+    )}
+
     {isAdmin ? (<>
       {/* Admin: stats par vendeur */}
       <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Performance par vendeur</div>
