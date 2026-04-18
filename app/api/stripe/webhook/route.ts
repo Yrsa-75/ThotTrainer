@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       await supabase.from('organisations').update({
         stripe_customer_id: session.customer as string,
         stripe_subscription_id: session.subscription as string,
-        plan, sessions_limit: PLAN_LIMITS[plan] || 50, sessions_used: 0,
+        plan, sessions_limit: sub.status === 'trialing' ? 7 : (PLAN_LIMITS[plan] || 50), sessions_used: 0,
         status: sub.status === 'trialing' ? 'trialing' : 'active',
         trial_ends_at: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
         subscription_started_at: new Date(sub.current_period_start * 1000).toISOString(),
