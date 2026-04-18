@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getApiKeys } from '@/lib/api-keys'
 
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json()
