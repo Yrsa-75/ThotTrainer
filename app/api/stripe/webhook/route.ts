@@ -45,10 +45,22 @@ export async function POST(req: NextRequest) {
     }
     case 'invoice.payment_succeeded': {
       const invoice = event.data.object as any
-      if (invoice.billing_reason !== 'subscription_cycle') break
+      const reason = invoice.billing_reason
+      if (reason !== 'subscription_create' && reason !== 'subscription_cycle') break
       const sub = await stripe.subscriptions.retrieve(invoice.subscription as string)
-      const { data: org } = await supabase.from('organisations').select('id').eq('stripe_subscription_id', invoice.subscription).single()
+      const priceId = sub.items.data[0]?.price.id
+      const plan = priceId ? (PRICE_TO_PLAN[priceId] || 'starter') : 'starter'
+      const { data: org } = await supabase.from('organisations').select('id, status').eq('stripe_subscription_id', invoice.subscription).single()
       if (org) {
+        // Fin de trial (subscription_create) ou bascule defensive : bump sessions_limit au plan
+        if (reason === 'subscription_create' || org.status === 'trialing') {
+          await supabase.from('organisations').update({
+            status: 'active',
+            plan,
+            sessions_limit: PLAN_LIMITS[plan] || 50,
+          }).eq('id', org.id)
+        }
+        // Reset sessions_used + dates de periode (preserve sessions_limit pour les gestes commerciaux)
         await supabase.rpc('reset_session_counter', {
           org_id: org.id,
           new_period_start: new Date(sub.current_period_start * 1000).toISOString(),
