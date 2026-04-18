@@ -49,7 +49,7 @@ export default function RegisterPage() {
     try {
       const regRes = await fetch('/api/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyName: form.company.trim(), adminName: form.name.trim(), email: form.email.trim().toLowerCase(), password: form.password, plan: plan.id, sessionsLimit: plan.sessions }),
+        body: JSON.stringify({ orgName: form.company.trim(), adminName: form.name.trim(), adminEmail: form.email.trim().toLowerCase(), password: form.password, plan: plan.id, sessionsLimit: plan.sessions }),
       })
       const regData = await regRes.json()
       if (!regRes.ok) { setError(regData.error || 'Erreur lors de la création du compte'); setLoading(false); return }
