@@ -4,7 +4,7 @@ import { createServiceSupabase } from '@/lib/supabase-server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' as any })
 
-const PLAN_LIMITS: Record<string, number> = { starter: 25, business: 100, premium: 250 }
+const PLAN_LIMITS: Record<string, number> = { starter: 25, business: 75, premium: 200 }
 const PRICE_TO_PLAN: Record<string, string> = {
   [process.env.STRIPE_PRICE_STARTER!]: 'starter',
   [process.env.STRIPE_PRICE_BUSINESS!]: 'business',
