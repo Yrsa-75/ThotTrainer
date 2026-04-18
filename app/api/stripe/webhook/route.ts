@@ -52,15 +52,15 @@ export async function POST(req: NextRequest) {
       const plan = priceId ? (PRICE_TO_PLAN[priceId] || 'starter') : 'starter'
       const { data: org } = await supabase.from('organisations').select('id, status').eq('stripe_subscription_id', invoice.subscription).single()
       if (org) {
-        // Fin de trial (subscription_create) ou bascule defensive : bump sessions_limit au plan
-        if (reason === 'subscription_create' || org.status === 'trialing') {
-          await supabase.from('organisations').update({
-            status: 'active',
-            plan,
-            sessions_limit: PLAN_LIMITS[plan] || 50,
-          }).eq('id', org.id)
-        }
-        // Reset sessions_used + dates de periode (preserve sessions_limit pour les gestes commerciaux)
+        // Option B "geste commercial one-shot" : on reset TOUJOURS sessions_limit à la valeur du plan.
+        // Cela signifie que les bonus ajoutés par le super admin sont valables pour le mois en cours
+        // uniquement, et seront écrasés au prochain renouvellement.
+        await supabase.from('organisations').update({
+          status: 'active',
+          plan,
+          sessions_limit: PLAN_LIMITS[plan] || 50,
+        }).eq('id', org.id)
+        // Reset sessions_used + dates de periode
         await supabase.rpc('reset_session_counter', {
           org_id: org.id,
           new_period_start: new Date(sub.current_period_start * 1000).toISOString(),
