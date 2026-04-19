@@ -470,12 +470,14 @@ export default function DashboardPage() {
         <div onClick={() => setDrawerOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 99 }} />
       )}
       {isMobile && (
-        <div style={{ position: "sticky", top: 0, zIndex: 90, height: 56, background: "#111621", borderBottom: "1px solid #1e2530", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button onClick={() => setDrawerOpen(true)} aria-label="Menu" style={{ background: "none", border: "none", padding: 6, cursor: "pointer", display: "flex", flexDirection: "column", justifyContent: "space-between", width: 24, height: 18 }}>
-              <span style={{ display: "block", height: 2, background: "#fff", borderRadius: 1 }} />
-              <span style={{ display: "block", height: 2, background: "#fff", borderRadius: 1 }} />
-              <span style={{ display: "block", height: 2, background: "#fff", borderRadius: 1 }} />
+        <div style={{ position: "sticky", top: 0, zIndex: 90, height: 56, background: "#111621", borderBottom: "1px solid #1e2530", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 0 8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => setDrawerOpen(true)} aria-label="Menu" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 8, color: "#fff" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Logo size={24} />
