@@ -594,6 +594,13 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
   const [pId, setPId] = useState<string | null>(null); const [fId, setFId] = useState<string | null>(null); const [level, setLevel] = useState(2)
   const [durMin, setDurMin] = useState(20); const [unlimited, setUnlimited] = useState(false)
   const [isRandom, setIsRandom] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const sel = !isRandom ? personas.find((p: any) => p.id === pId) : null
   const showFull = config?.show_full_profile !== false
 
@@ -619,7 +626,7 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
       </div>
     ) : (
       <>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>{
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>{
               
               personas.map((p: any) => <button key={p.id} onClick={() => pickSpecific(p.id)} style={{ padding: "14px 16px", background: pId === p.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${pId === p.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 20 }}>{p.emoji}</span><div><div style={{ fontSize: 14, fontWeight: 700 }}>{p.name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{p.subtitle}</div></div></div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 6, lineHeight: 1.4 }}>{p.age} ans • {p.profession}</div></button>)}</div>
         {sel && showFull && <div style={{ padding: 18, background: "#111621", borderRadius: 14, border: "1px solid #63c397", marginBottom: 24 }}><div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}><span style={{ fontSize: 28 }}>{sel.emoji}</span><div><div style={{ fontSize: 16, fontWeight: 800 }}>{sel.name} — {sel.subtitle}</div><div style={{ fontSize: 12, color: "#8b95a5" }}>{sel.age} ans • {sel.profession}</div></div></div><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{[{ l: "Situation", v: sel.situation }, { l: "Personnalité", v: sel.personality }, { l: "Motivations", v: sel.motivations }, { l: "Freins", v: sel.obstacles }, { l: "Style", v: sel.communication_style || sel.style }].map((x, i) => <div key={i} style={{ padding: 10, background: "#1a1e27", borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 700, color: "#63c397", marginBottom: 4, textTransform: "uppercase" }}>{x.l}</div><div style={{ fontSize: 12, color: "#ccc", lineHeight: 1.4 }}>{x.v}</div></div>)}</div></div>}
@@ -628,11 +635,11 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
 
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Produit / Service <span style={{ fontSize: 11, color: "#8b95a5", fontWeight: 400 }}>(optionnel)</span></div>{fId && <button onClick={() => setFId(null)} style={bS("#8b95a5")}>Aucun (mode libre)</button>}</div>
     {formations.some((f: any) => f.alternative_sales_process?.length > 0) && <div style={{ fontSize: 14, color: "rgb(222, 225, 231)", marginBottom: 12, fontStyle: 'italic' }}>Les produits marqués d'un ⦿ suivent un processus de vente spécifique qui peut être différent du processus classique.</div>}
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 24 }}>{
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 10, marginBottom: 24 }}>{
               
               formations.map((f: any) => <button key={f.id} onClick={() => setFId(fId === f.id ? null : f.id)} style={{ padding: "14px 16px", background: fId === f.id ? "rgba(99,195,151,0.1)" : "#111621", border: `1px solid ${fId === f.id ? "#63c397" : "#1e2530"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", color: "#fff" }}><div style={{ fontSize: 14, fontWeight: 700 }}>{f.alternative_sales_process?.length > 0 ? '⦿ ' : ''}{f.name}</div><div style={{ fontSize: 11, color: "#8b95a5", marginTop: 4, lineHeight: 1.3 }}>{f.description?.slice(0, 80)}...</div></button>)}</div>
 
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20, marginBottom: 28 }}>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Niveau</div><div style={{ display: "flex", gap: 8 }}>{[{ v: 1, l: "Ouvert" }, { v: 2, l: "Sceptique" }, { v: 3, l: "Hostile" }].map(d => <button key={d.v} onClick={() => setLevel(d.v)} style={{ flex: 1, padding: "10px 8px", background: level === d.v ? "rgba(99,195,151,0.15)" : "#111621", border: `1px solid ${level === d.v ? "#63c397" : "#1e2530"}`, borderRadius: 10, color: level === d.v ? "#63c397" : "#8b95a5", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{d.l}</button>)}</div></div>
       <div><div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Durée</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}><div style={{ display: "flex", alignItems: "center", gap: 12 }}><input type="range" min="1" max="60" value={unlimited ? 20 : durMin} onChange={e => { setDurMin(parseInt(e.target.value)); setUnlimited(false) }} style={{ flex: 1, accentColor: "#63c397", cursor: "pointer" }} /><span style={{ fontSize: 15, fontWeight: 800, color: unlimited ? "#555" : "#63c397", minWidth: 56, textAlign: "right" }}>{durMin + " min"}</span></div><div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#555", marginTop: 2 }}><span>1 min</span><span>30 min</span><span>60 min</span></div></div>
