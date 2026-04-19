@@ -659,7 +659,7 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
   const [msgs, setMsgs] = useState<any[]>([]); const [input, setInput] = useState(''); const [thinking, setThinking] = useState(false); const [timeLeft, setTimeLeft] = useState(sd.duration || -1); const [ended, setEnded] = useState(false); const [result, setResult] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(true); const [listening, setListening] = useState(false); const [speaking, setSpeaking] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLInputElement>(null); const timerRef = useRef<any>(null)
-  const sessionDbIdRef = useRef<string | null>(null); const startRef = useRef(Date.now()); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
+  const sessionDbIdRef = useRef<string | null>(null); const startRef = useRef(Date.now()); const countedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null); const recRef = useRef<any>(null); const audioRef = useRef<HTMLAudioElement | null>(null)
   const inputAccRef = useRef(''); const sttFinalRef = useRef(''); const listeningRef = useRef(false); const usedMicRef = useRef(false)
   const p = personas.find((x: any) => x.id === sd.personaId); const f = sd.formationId ? formations.find((x: any) => x.id === sd.formationId) : null
   const sys = buildSystemPrompt(p, f, sd.level, scoring, config)
@@ -727,7 +727,8 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
       if (data?.id) {
         sessionDbIdRef.current = data.id
         // Après 30 secondes : marquer counted=true (comptabilisée même si le browser ferme)
-        setTimeout(async () => {
+        // La ref permet d'annuler le timeout si l'utilisateur arrête avant 30s
+        countedTimeoutRef.current = setTimeout(async () => {
           if (sessionDbIdRef.current) {
             await supabase.from('sessions').update({ counted: true }).eq('id', sessionDbIdRef.current)
           }
@@ -789,7 +790,16 @@ function ChatSession({ profile, personas, formations, scoring, config, sd, supab
     if (recRef.current) recRef.current.stop()
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     clearInterval(timerRef.current)
-    if (el < 30) { if (onCancel) onCancel() }
+    if (el < 30) {
+      // Annuler le timeout de décompte (évite que counted passe à true en arrière-plan)
+      if (countedTimeoutRef.current) { clearTimeout(countedTimeoutRef.current); countedTimeoutRef.current = null }
+      // Supprimer la session en DB comme si elle n'avait jamais eu lieu
+      if (sessionDbIdRef.current) {
+        supabase.from('sessions').delete().eq('id', sessionDbIdRef.current).then(() => {})
+        sessionDbIdRef.current = null
+      }
+      if (onCancel) onCancel()
+    }
     else { setEnded(true); setResult("not_signed") }
   }
     const send = async () => {
