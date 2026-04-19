@@ -331,6 +331,14 @@ export default function DashboardPage() {
   const [sessionQuota, setSessionQuota] = useState<any>(null)
   const [planCatalog, setPlanCatalog] = useState<any[]>([])
   const [lightMode, setLightMode] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   useEffect(() => { const saved = localStorage.getItem('thot-light-mode'); if (saved === 'true') setLightMode(true) }, [])
   useEffect(() => { localStorage.setItem('thot-light-mode', String(lightMode)); document.body.style.filter = lightMode ? 'invert(1) hue-rotate(180deg)' : 'none'; document.body.style.background = lightMode ? '#000' : '#0f1219' }, [lightMode])
   const [org, setOrg] = useState(null)
@@ -422,7 +430,7 @@ export default function DashboardPage() {
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin'; const initials = profile.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: "#0f1219", minHeight: "100vh", color: "#fff" }}>
-      <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100 }}>
+      <div style={{ position: "fixed", left: 0, top: 0, width: 220, height: "100vh", background: "#111621", borderRight: "1px solid #1e2530", display: "flex", flexDirection: "column", zIndex: 100, transform: isMobile && !drawerOpen ? "translateX(-100%)" : "translateX(0)", transition: "transform 0.25s ease-out" }}>
         <div style={{ padding: "20px 16px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #1e2530" }}><Logo size={28} /><div><div style={{ fontSize: 15, fontWeight: 700 }}>Thot</div><div style={{ fontSize: 10, color: "#63c397" }}>{profile.role === 'super_admin' ? 'Super Admin' : (config.company_name || 'Plateforme')}</div></div></div>
         <div style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {(profile.role === 'super_admin' ? [
@@ -440,14 +448,14 @@ export default function DashboardPage() {
               { id: "admin",   icon: <I.Settings />, label: "Administration" },
               { id: "billing", icon: <I.Target />,   label: "Abonnement"    },
             ] : []),
-          ]).map(item => <button key={item.id} onClick={() => setScreen(item.id)} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background: screen===item.id ? "rgba(99,195,151,0.1)" : "transparent", border:"none", borderRadius:8, color: screen===item.id ? "#63c397" : "#8b95a5", fontSize:13, fontWeight: screen===item.id ? 600 : 400, cursor:"pointer", textAlign:"left", width:"100%" }}>{item.icon} {item.label}</button>)}
+          ]).map(item => <button key={item.id} onClick={() => { setScreen(item.id); if (isMobile) setDrawerOpen(false) }} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background: screen===item.id ? "rgba(99,195,151,0.1)" : "transparent", border:"none", borderRadius:8, color: screen===item.id ? "#63c397" : "#8b95a5", fontSize:13, fontWeight: screen===item.id ? 600 : 400, cursor:"pointer", textAlign:"left", width:"100%" }}>{item.icon} {item.label}</button>)}
         </div>
         {org?.status === 'trialing' && (profile?.role === 'admin' || profile?.role === 'super_admin') && (
           <div style={{ padding: "14px 16px", borderTop: "1px solid #1e2530", background: "linear-gradient(135deg, rgba(99,195,151,0.12), rgba(99,195,151,0.04))" }}>
             <div style={{ fontSize: 10, color: "#63c397", fontWeight: 800, letterSpacing: 0.5, marginBottom: 8 }}>🎁 PÉRIODE D'ESSAI</div>
             <div style={{ fontSize: 12, color: "#e8eaed", lineHeight: 1.5, marginBottom: 6 }}>Encore <strong style={{ color: "#63c397" }}>{org?.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 7}</strong> jours sur 7 avant début de la facturation.</div>
             <div style={{ fontSize: 13, color: "#8b95a5", marginBottom: 10 }}>{org?.sessions_used || 0} / {org?.sessions_limit || 7} sessions d'essai utilisées</div>
-            <button onClick={() => setScreen("billing")} style={{ padding: "9px 12px", background: "#63c397", color: "#0a0a0b", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit" }}>Activer mon forfait →</button>
+            <button onClick={() => { setScreen("billing"); if (isMobile) setDrawerOpen(false) }} style={{ padding: "9px 12px", background: "#63c397", color: "#0a0a0b", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit" }}>Activer mon forfait →</button>
           </div>
         )}
         <div style={{ padding: "12px 16px", borderTop: "1px solid #1e2530" }}>{org && (() => { const isV=profile.role==='vendor'; const vU=isV?new Set(sessions.filter((s:any)=>s.vendor_id===profile.id&&s.counted).map((s:any)=>s.id)).size:0; const vA=isV?(profile.sessions_allocated||0):0; const u=isV?vU:org.sessions_used; const l=isV?vA:org.sessions_limit; const w=l>0&&u>=l*0.9; return <div style={{ marginBottom: 12, padding: "10px 12px", background: "#0f1219", borderRadius: 8 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><span style={{ fontSize: 11, color: "#8b95a5" }}>{isV?"Mes sessions":"Sessions"}</span><span style={{ fontSize: 11, fontWeight: 700, color: w ? "#ef4444" : "#63c397" }}>{u}/{l}</span></div><div style={{ height: 4, background: "#1e2530", borderRadius: 2 }}><div style={{ width: Math.min(100, (u/Math.max(1,l))*100) + "%", height: "100%", background: w ? "#ef4444" : "#63c397", borderRadius: 2 }} /></div></div> })()}<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div><div><div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{profile.full_name}</div><div style={{ color: "#8b95a5", fontSize: 11 }}>{profile.role === 'super_admin' ? "Super Admin" : isAdmin ? "Manager" : "Vendeur"}</div></div></div>
@@ -458,7 +466,29 @@ export default function DashboardPage() {
         </div>
 <button onClick={async () => { await supabase.auth.signOut(); router.push('/'); router.refresh() }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#8b95a5", fontSize: 12, cursor: "pointer", padding: "4px 0" }}><I.LogOut /> Déconnexion</button></div>
       </div>
-      <div style={{ marginLeft: 220, minHeight: "100vh" }}>
+      {isMobile && drawerOpen && (
+        <div onClick={() => setDrawerOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 99 }} />
+      )}
+      {isMobile && (
+        <div style={{ position: "sticky", top: 0, zIndex: 90, height: 56, background: "#111621", borderBottom: "1px solid #1e2530", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => setDrawerOpen(true)} aria-label="Menu" style={{ background: "none", border: "none", padding: 6, cursor: "pointer", display: "flex", flexDirection: "column", justifyContent: "space-between", width: 24, height: 18 }}>
+              <span style={{ display: "block", height: 2, background: "#fff", borderRadius: 1 }} />
+              <span style={{ display: "block", height: 2, background: "#fff", borderRadius: 1 }} />
+              <span style={{ display: "block", height: 2, background: "#fff", borderRadius: 1 }} />
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Logo size={24} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.1 }}>Thot</div>
+                <div style={{ fontSize: 10, color: "#63c397", lineHeight: 1.1, marginTop: 2 }}>{profile.role === 'super_admin' ? 'Super Admin' : (config.company_name || 'Plateforme')}</div>
+              </div>
+            </div>
+          </div>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isAdmin ? "#63c397" : "#8b95a5" }}>{initials}</div>
+        </div>
+      )}
+      <div style={{ marginLeft: isMobile ? 0 : 220, minHeight: "100vh" }}>
         {screen === "dashboard" && <Dashboard profile={profile} sessions={sessions} personas={personas} formations={formations} config={config} profiles={profiles} setScreen={setScreen} />}
         {screen === "new_session" && <NewSession personas={personas} formations={formations} config={config} onStart={(sd: any) => { if(profile.role==='vendor'){ const usedCount=new Set(sessions.filter((s:any)=>s.vendor_id===profile.id&&s.counted).map((s:any)=>s.id)).size; if(usedCount>=(profile.sessions_allocated||0)){ alert('Vous n\'avez plus de crédits de session disponibles. Contactez votre manager pour en obtenir.'); return } } setSessionData(sd); setScreen("chat") }} />}
         {screen === "chat" && sessionData && <ChatSession profile={profile} personas={personas} formations={formations} scoring={scoring} config={config} sd={sessionData} supabase={supabase} saleDocuments={saleDocuments} onCancel={() => setScreen("new_session")} onEnd={async (sess: any) => {
