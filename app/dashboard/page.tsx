@@ -885,6 +885,13 @@ function HistoryScreen({ profile, sessions, personas, formations, profiles, supa
 
 function Replay({ session, personas, formations, profiles, goBack }: any) {
   const [visibleCount, setVisibleCount] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
   const timerRef = useRef<any>(null)
@@ -913,23 +920,23 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
 
   return (<div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
     {/* Header */}
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer" }}>← Retour</button>
+    <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", padding: isMobile ? "10px 14px" : "12px 24px", background: "#111621", borderBottom: "1px solid #1e2530", gap: isMobile ? 10 : 0 }}>
+      <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 8 : 12, flex: 1, minWidth: 0 }}>
+        <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer", padding: 0, flexShrink: 0 }}>{isMobile ? "←" : "← Retour"}</button>
         <span style={{ fontSize: 20 }}>{p?.emoji}</span>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{u?.full_name || "?"} → {p?.name} — {p?.subtitle}</div>
+          <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, lineHeight: 1.25, wordBreak: "break-word" }}>{u?.full_name || "?"} → {p?.name}{!isMobile && p?.subtitle ? " — " + p.subtitle : ""}</div>
           <div style={{ fontSize: 11, color: "#8b95a5" }}>Niveau {session.level} • {f?.name || "Libre"} • {session.result === "signed" ? "✅ Signé" : session.result === "hung_up" ? "📵 Raccroché" : session.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"} • Score: {session.performance_score || "—"}</div>
         </div>
       </div>
-      <div style={{ fontSize: 12, color: "#8b95a5" }}>{visibleCount}/{msgs.length} messages</div>
+      <div style={{ fontSize: isMobile ? 11 : 12, color: "#8b95a5", whiteSpace: "nowrap", flexShrink: 0 }}>{visibleCount}/{msgs.length}{!isMobile ? " messages" : ""}</div>
     </div>
 
     {/* Messages */}
-    <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+    <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: isMobile ? "14px 12px" : "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
       {msgs.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucun message enregistré pour cette session</div>}
       {msgs.slice(0, visibleCount).map((m: any, i: number) => (
-        <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start", animation: "fadeIn 0.3s ease" }}>
+        <div key={i} style={{ display: "flex", justifyContent: m.sender === "vendor" ? "flex-end" : "flex-start", maxWidth: isMobile ? "88%" : "75%", alignSelf: m.sender === "vendor" ? "flex-end" : "flex-start", animation: "fadeIn 0.3s ease" }}>
           <div style={{ padding: "12px 16px", borderRadius: 16, background: m.sender === "vendor" ? "#2563eb" : "#1e2530", borderBottomRightRadius: m.sender === "vendor" ? 4 : 16, borderBottomLeftRadius: m.sender === "prospect" ? 4 : 16, color: "#fff", fontSize: 14, lineHeight: 1.5 }}>
             <div style={{ fontSize: 9, color: m.sender === "vendor" ? "rgba(255,255,255,0.5)" : "#555", marginBottom: 4 }}>{m.sender === "vendor" ? (u?.full_name || "Vendeur") : (p?.name || "Prospect")}</div>
             {m.content}
@@ -940,8 +947,8 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
     </div>
 
     {/* Controls */}
-    <div style={{ padding: "14px 24px", background: "#111621", borderTop: "1px solid #1e2530" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+    <div style={{ padding: isMobile ? "12px 14px" : "14px 24px", background: "#111621", borderTop: "1px solid #1e2530" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: isMobile ? 8 : 12, flexWrap: isMobile ? "wrap" : "nowrap" }}>
         <button onClick={reset} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>⏮ Début</button>
         {playing ? (
           <button onClick={pause} style={{ padding: "10px 24px", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, color: "#ef4444", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>⏸ Pause</button>
@@ -949,7 +956,7 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
           <button onClick={play} style={{ padding: "10px 24px", background: "linear-gradient(135deg, #63c397, #4aa87a)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{visibleCount >= msgs.length ? "⏮ Rejouer" : "▶ Lecture"}</button>
         )}
         <button onClick={showAll} style={{ padding: "8px 14px", background: "#1a1e27", border: "1px solid #2a2f3a", borderRadius: 8, color: "#8b95a5", fontSize: 12, cursor: "pointer" }}>⏭ Tout</button>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: isMobile ? 0 : 12, flexBasis: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
           <span style={{ fontSize: 11, color: "#8b95a5" }}>Vitesse:</span>
           {[0.5, 1, 2, 4].map(s => <button key={s} onClick={() => setSpeed(s)} style={{ padding: "4px 8px", background: speed === s ? "rgba(99,195,151,0.15)" : "transparent", border: `1px solid ${speed === s ? "#63c397" : "#2a2f3a"}`, borderRadius: 6, color: speed === s ? "#63c397" : "#8b95a5", fontSize: 11, cursor: "pointer" }}>x{s}</button>)}
         </div>
