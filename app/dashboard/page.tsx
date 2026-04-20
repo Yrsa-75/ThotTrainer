@@ -859,14 +859,21 @@ function Analysis({ session, personas, formations, config, goBack }: any) {
 
 function HistoryScreen({ profile, sessions, personas, formations, profiles, supabase, onView, onReplay }: any) {
   const isAdmin = profile.role === 'admin' || profile.role === 'super_admin'
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const loadReplay = async (s: any) => {
     const { data: msgs } = await supabase.from('messages').select('*').eq('session_id', s.id).order('sequence_number', { ascending: true })
     onReplay({ ...s, messages: msgs || [] })
   }
-  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Historique{isAdmin ? " (toutes)" : ""}</div>
-    {sessions.filter((s: any) => s.result !== 'in_progress').length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : sessions.filter((s: any) => s.result !== 'in_progress').map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = profiles.find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}>
-      <div onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer" }}><span style={{ fontSize: 22 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} • ` : ""}Niv {s.level} • {s.result === "signed" ? "✅" : s.result === "hung_up" ? "📵" : s.result === "timeout" ? "⏰" : "❌"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900 }}><div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 800, marginBottom: isMobile ? 18 : 24 }}>Historique{isAdmin ? " (toutes)" : ""}</div>
+    {sessions.filter((s: any) => s.result !== 'in_progress').length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : sessions.filter((s: any) => s.result !== 'in_progress').map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = profiles.find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", gap: isMobile ? 12 : 0, padding: isMobile ? "12px 14px" : "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}>
+      <div onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer", minWidth: 0 }}><span style={{ fontSize: 22 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} • ` : ""}Niv {s.level} • {s.result === "signed" ? "✅" : s.result === "hung_up" ? "📵" : s.result === "timeout" ? "⏰" : "❌"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: isMobile ? "wrap" : "nowrap", justifyContent: isMobile ? "space-between" : "flex-end" }}>
         <button onClick={()=>setSelected(s)} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 14px",background:"rgba(99,195,151,0.1)",border:"1px solid rgba(99,195,151,0.4)",borderRadius:8,color:"#63c397",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Voir le rapport</button>
         {isAdmin && <button onClick={(e) => { e.stopPropagation(); loadReplay(s) }} style={{ padding: "5px 10px", background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: 6, color: "#60a5fa", fontSize: 11, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}><I.Play /> Replay</button>}
         {isAdmin && <button onClick={async (e) => { e.stopPropagation(); if(confirm('Supprimer cette session de l\'historique ?')) { await supabase.from('messages').delete().eq('session_id', s.id); await supabase.from('sessions').delete().eq('id', s.id); window.location.reload() } }} style={{ padding: '5px 10px', background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.3)', borderRadius: 6, color: '#f85149', fontSize: 11, cursor: 'pointer' }}>Supprimer</button>}
@@ -1931,6 +1938,13 @@ function SuperAdminClients({ orgs, onRefresh }) {
 function BillingScreen({ org, profile, onRefresh , planCatalog}) {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   const PL = { trial:'Trial', starter:'Starter', business:'Business', premium:'Premium', cancelled:'Annule' }
   const PC = { trial:'#f59e0b', starter:'#63c397', business:'#3b82f6', premium:'#a78bfa', cancelled:'#8b95a5' }
@@ -1970,8 +1984,8 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
   }
 
   if (!org) return (
-    <div style={{ padding:'32px 40px', color:'#8b95a5' }}>
-      <div style={{ fontSize:22, fontWeight:800, marginBottom:8, color:'#fff' }}>Abonnement</div>
+    <div style={{ padding: isMobile ? '20px 16px' : '32px 40px', color:'#8b95a5' }}>
+      <div style={{ fontSize: isMobile ? 20 : 22, fontWeight:800, marginBottom:8, color:'#fff' }}>Abonnement</div>
       Aucune information d'abonnement disponible.
     </div>
   )
@@ -1984,16 +1998,16 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
   const currentPlan = PLANS.find(p => p.id === org.plan)
 
   return (
-    <div style={{ padding:'32px 40px', maxWidth:860 }}>
-      <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Abonnement</div>
+    <div style={{ padding: isMobile ? '20px 16px' : '32px 40px', maxWidth:860 }}>
+      <div style={{ fontSize: isMobile ? 22 : 24, fontWeight:800, marginBottom:4 }}>Abonnement</div>
       <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Gerez votre forfait et suivez votre consommation</div>
 
       {/* Carte statut actuel */}
-      <div style={{ background:'#111621', borderRadius:16, border:'1px solid #1e2530', padding:28, marginBottom:28 }}>
-        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20 }}>
+      <div style={{ background:'#111621', borderRadius:16, border:'1px solid #1e2530', padding: isMobile ? 18 : 28, marginBottom: isMobile ? 20 : 28 }}>
+        <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'flex-start', justifyContent:'space-between', gap: isMobile ? 14 : 0, marginBottom: isMobile ? 16 : 20 }}>
           <div>
-            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
-              <div style={{ fontSize:22, fontWeight:800 }}>{org.name}</div>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: isMobile ? 20 : 22, fontWeight:800 }}>{org.name}</div>
               <span style={{ fontSize:12, fontWeight:700, padding:'4px 10px', borderRadius:20, background:(PC[org.plan]||'#8b95a5')+'22', color:PC[org.plan]||'#8b95a5', border:'1px solid '+(PC[org.plan]||'#8b95a5')+'44' }}>{PL[org.plan]||org.plan}</span>
               <span style={{ fontSize:12, fontWeight:700, padding:'4px 10px', borderRadius:20, background:(SC[org.status]||'#8b95a5')+'22', color:SC[org.status]||'#8b95a5', border:'1px solid '+(SC[org.status]||'#8b95a5')+'44' }}>{SL[org.status]||org.status}</span>
             </div>
@@ -2008,7 +2022,7 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
 
                 {/* CTA Activation trial */}
         {org.status === 'trialing' && <div style={{ marginTop:0, marginBottom:24, padding:28, background:'linear-gradient(135deg, rgba(99,195,151,0.08), rgba(59,130,246,0.08))', borderRadius:14, border:'1px solid rgba(99,195,151,0.25)', textAlign:'center' }}>
-          <div style={{ fontSize:20, fontWeight:800, color:'#fff', marginBottom:8 }}>Débloquez toutes vos sessions</div>
+          <div style={{ fontSize: isMobile ? 17 : 20, fontWeight:800, color:'#fff', marginBottom:8 }}>Débloquez toutes vos sessions</div>
           <div style={{ fontSize:13, color:'#8b95a5', marginBottom:20, maxWidth:500, margin:'0 auto 20px' }}>Pendant l'essai gratuit, vous êtes limité à {org.sessions_limit} session{org.sessions_limit > 1 ? 's' : ''}. Activez votre forfait pour accéder à toutes vos sessions et fonctionnalités.</div>
           <button onClick={async () => { setLoading(true); try { const r = await fetch('/api/activate-subscription', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orgId:org.id,adminEmail:profile?.email})}); const d = await r.json(); if(d.url) window.location.href = d.url; else setMsg(d.error||'Erreur'); } catch(e){ setMsg(e.message) } setLoading(false) }} disabled={loading} style={{ padding:'16px 36px', background:'#63c397', border:'none', borderRadius:12, color:'#0f1219', fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(99,195,151,0.35)' }}>
             Activer mon forfait et débloquer mes sessions
@@ -2033,7 +2047,7 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
 
       {/* Grille des forfaits */}
       <div style={{ fontSize:16, fontWeight:700, marginBottom:16 }}>Changer de forfait</div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap:16 }}>
         {PLANS.map(plan => {
           const isCurrent = org.plan === plan.id
           return (
@@ -2041,7 +2055,7 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
               {plan.popular && !isCurrent && <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#3b82f6', color:'#fff', fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>Populaire</div>}
               {isCurrent && <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', display:'flex', gap:6, whiteSpace:'nowrap' }}><div style={{ background:plan.color, color:'#0f1219', fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>Forfait actuel</div>{org.status === 'trialing' && <div style={{ background:'#f59e0b', color:'#0f1219', fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>Période d'essai</div>}</div>}
               <div style={{ fontSize:18, fontWeight:700 }}>{plan.name}</div>
-              <div style={{ fontSize:32, fontWeight:800, color:plan.color, margin:'10px 0 4px' }}>{plan.price}€</div>
+              <div style={{ fontSize: isMobile ? 28 : 32, fontWeight:800, color:plan.color, margin:'10px 0 4px' }}>{plan.price}€</div>
               <div style={{ fontSize:12, color:'#8b95a5', marginBottom:14 }}>par mois HT</div>
               <div style={{ fontSize:13, fontWeight:600, color:plan.color, marginBottom:14 }}>{plan.sessions} sessions / mois</div>
               {plan.features.map(f => (
