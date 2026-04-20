@@ -23,16 +23,15 @@ async function sendThotEmail(
 ): Promise<void> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!supabaseUrl || !serviceKey) {
-      console.error('[sendThotEmail] Missing SUPABASE_URL or SERVICE_ROLE_KEY')
+    const thotSecret = process.env.THOT_WEBHOOK_SECRET
+    if (!supabaseUrl || !thotSecret) {
+      console.error('[sendThotEmail] Missing NEXT_PUBLIC_SUPABASE_URL or THOT_WEBHOOK_SECRET')
       return
     }
     const res = await fetch(`${supabaseUrl}/functions/v1/send-thot-email`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${serviceKey}`,
-        'apikey': serviceKey,
+        'x-thot-secret': thotSecret,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ template, to, variables }),
