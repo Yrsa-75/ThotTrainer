@@ -111,7 +111,8 @@ export async function POST(req: NextRequest) {
       if (adminProfile?.email && org?.name) {
         const firstName = (adminProfile.full_name || '').split(' ')[0] || adminProfile.full_name || ''
         const planDisplay = PLAN_DISPLAY_NAMES[plan] ?? plan
-        const sessionsLimit = String(isTrialing ? 7 : (PLAN_LIMITS[plan] || 50))
+        // Afficher la valeur mensuelle du forfait dans l'email (pas les 7 d'essai)
+        const sessionsLimit = String(PLAN_LIMITS[plan] || 50)
 
         if (isTrialing && trialEnd) {
           // Signup initial avec essai gratuit
