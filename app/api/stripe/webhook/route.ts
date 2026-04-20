@@ -52,7 +52,8 @@ function formatFrDate(date: Date): string {
 function buildTrialStatusLine(plan: string, trialEndsAt: Date): string {
   const priceHT = PLAN_PRICES_HT[plan] ?? 0
   const displayName = PLAN_DISPLAY_NAMES[plan] ?? plan
-  return `Essai gratuit jusqu'au ${formatFrDate(trialEndsAt)}. Votre abonnement ${displayName} (${priceHT} € HT / mois) sera automatiquement activé à cette date depuis la carte que vous avez enregistrée. Vous pouvez annuler à tout moment depuis votre espace Abonnement.`
+  const monthlySessions = PLAN_LIMITS[plan] ?? 0
+  return `Essai gratuit jusqu'au ${formatFrDate(trialEndsAt)}. Votre forfait ${displayName} vous donnera ${monthlySessions} sessions par mois dès l'activation (${priceHT} € HT / mois), qui se fera automatiquement à cette date depuis la carte que vous avez enregistrée. Vous pouvez annuler à tout moment depuis votre espace Abonnement.`
 }
 
 function buildActiveStatusLine(plan: string, nextRenewalAt: Date): string {
