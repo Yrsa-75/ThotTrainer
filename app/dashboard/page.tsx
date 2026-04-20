@@ -536,7 +536,7 @@ function Dashboard({ profile, sessions, personas, formations, config, profiles, 
     return { ...u, total: vs.length, signed: vSigned, rate: vs.length ? Math.round((vSigned / vs.length) * 100) : 0, avg: vs.length ? Math.round(vs.reduce((a: number, s: any) => a + (s.performance_score || 0), 0) / vs.length) : 0 }
   }) : []
 
-  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
+  return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ marginBottom: 32 }}><div style={{ fontSize: 24, fontWeight: 800 }}>Bienvenue, {profile.full_name?.split(' ')[0]}</div><div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{isAdmin ? `Vue d'ensemble — ${config.company_name || 'Plateforme'}` : `Entraîne-toi à convertir des prospects pour ${config.company_name || 'ton entreprise'}`}</div></div>
 
     {isAdmin && (!config?.company_name || config.company_name === 'Mon Entreprise' || config.company_name === '') && (
@@ -614,7 +614,7 @@ function NewSession({ personas, formations, config, onStart, profile, sessions }
     onStart({ formationId: fId, personaId: actualPId, level, duration: unlimited ? 0 : durMin * 60, isMystery: isRandom })
   }
 
-  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
+  return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Nouvelle session</div>{(() => { if(profile?.role==='vendor'){ const used=new Set((sessions||[]).filter((s:any)=>s.vendor_id===profile.id&&s.counted).map((s:any)=>s.id)).size; const alloc=profile.sessions_allocated||0; const rem=Math.max(0,alloc-used); return (<div id="quotaWarning" style={{marginBottom:16}}>{rem===0?<div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:10,padding:'12px 16px',fontSize:13,color:'#ef4444'}}>⚠️ Vous n&apos;avez aucun crédit de session. Contactez votre manager.</div>:<div style={{background:'rgba(99,195,151,0.06)',border:'1px solid rgba(99,195,151,0.2)',borderRadius:10,padding:'12px 16px',fontSize:13,color:'#63c397'}}>🎯 {rem} session{rem>1?'s':''} disponible{rem>1?'s':''} sur {alloc} allouée{alloc>1?'s':''}</div>}</div>)} return null })()}<div style={{ fontSize: 13, color: "#8b95a5", marginBottom: 28 }}>Choisis un prospect et optionnellement un produit/service cible</div>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}><div style={{ fontSize: 14, fontWeight: 700 }}>Prospect à convaincre</div><button onClick={pickRandom} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: isRandom ? "rgba(99,195,151,0.15)" : "rgba(99,195,151,0.1)", border: `1px solid ${isRandom ? "#63c397" : "rgba(99,195,151,0.3)"}`, borderRadius: 10, color: "#63c397", fontSize: 13, fontWeight: 600, cursor: "pointer" }}><I.Shuffle /> Aléatoire</button></div>
 
@@ -842,7 +842,7 @@ function Analysis({ session, personas, formations, config, goBack }: any) {
   const a = session.analysis_data || session.analysis; const p = personas.find((x: any) => x.id === (session.persona_id || session.personaId)); const f = formations.find((x: any) => x.id === (session.formation_id || session.formationId))
   if (!a) return <div style={{ padding: 40, color: "#8b95a5" }}>Analyse non disponible</div>
   const sc = a.score >= 70 ? "#63c397" : a.score >= 45 ? "#f59e0b" : "#ef4444"; const phases = a.phase_coverage || {}
-  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900 }}>
+  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 1000 }}>
     <button onClick={goBack} style={{ background: "none", border: "none", color: "#63c397", fontSize: 13, cursor: "pointer", marginBottom: isMobile ? 16 : 20, padding: 0 }}>← Retour</button>
     <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 14 : 20, marginBottom: isMobile ? 20 : 28 }}><div style={{ minWidth: isMobile ? 64 : 80, width: isMobile ? 64 : 80, height: isMobile ? 64 : 80, borderRadius: "50%", background: "#111621", border: `3px solid ${sc}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: isMobile ? 22 : 28, fontWeight: 800, color: sc, flexShrink: 0 }}>{a.score}</div><div><div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 800, lineHeight: 1.25 }}>{p?.name} — {p?.subtitle}</div><div style={{ fontSize: 13, color: "#8b95a5" }}>Niveau {session.level} • {f?.name || "Mode libre"} • {session.result === "signed" ? "✅ Signé" : session.result === "hung_up" ? "📵 Raccroché" : session.result === "timeout" ? "⏰ Temps écoulé" : "❌ Non signé"}</div><div style={{ fontSize: 14, color: "#ccc", marginTop: 8, lineHeight: 1.5 }}>{a.summary}</div></div></div>
     {Object.keys(phases).length > 0 && <div style={{ background: "#111621", borderRadius: 14, border: "1px solid #1e2530", padding: 24, marginBottom: 20 }}><div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Couverture des phases du RDV</div><div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 10 }}>{Object.entries(phases).map(([key, ph]: [string, any]) => { const cov = ph?.covered; const q = ph?.quality; const qc = q === "bien" ? "#63c397" : q === "moyen" ? "#f59e0b" : "#ef4444"; return <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#1a1e27", borderRadius: 10, border: `1px solid ${cov ? "rgba(99,195,151,0.2)" : "#2a2f3a"}` }}><div style={{ width: 20, height: 20, borderRadius: "50%", background: cov ? "rgba(99,195,151,0.2)" : "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>{cov ? <I.Check /> : <I.X />}</div><div style={{ flex: 1 }}><div style={{ fontSize: 12, fontWeight: 600, color: cov ? "#fff" : "#555" }}>{key.replace(/_/g, ' ')}</div>{ph?.note && <div style={{ fontSize: 10, color: "#8b95a5", marginTop: 2 }}>{ph.note}</div>}</div>{cov && <span style={{ fontSize: 10, fontWeight: 700, color: qc, textTransform: "uppercase" }}>{q}</span>}</div> })}</div></div>}
@@ -877,7 +877,7 @@ function HistoryScreen({ profile, sessions, personas, formations, profiles, supa
     const { data: msgs } = await supabase.from('messages').select('*').eq('session_id', s.id).order('sequence_number', { ascending: true })
     onReplay({ ...s, messages: msgs || [] })
   }
-  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900 }}><div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 800, marginBottom: isMobile ? 18 : 24 }}>Historique{isAdmin ? " (toutes)" : ""}</div>
+  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 1000 }}><div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 800, marginBottom: isMobile ? 18 : 24 }}>Historique{isAdmin ? " (toutes)" : ""}</div>
     {sessions.filter((s: any) => s.result !== 'in_progress').length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : sessions.filter((s: any) => s.result !== 'in_progress').map((s: any) => { const p = personas.find((x: any) => x.id === s.persona_id); const f = formations.find((x: any) => x.id === s.formation_id); const u = profiles.find((x: any) => x.id === s.vendor_id); return <div key={s.id} style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", gap: isMobile ? 12 : 0, padding: isMobile ? "12px 14px" : "14px 18px", background: "#111621", borderRadius: 12, border: "1px solid #1e2530", marginBottom: 8 }}>
       <div onClick={() => onView(s)} style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, cursor: "pointer", minWidth: 0 }}><span style={{ fontSize: 22 }}>{p?.emoji || "👤"}</span><div><div style={{ fontSize: 14, fontWeight: 600 }}>{p?.name || "?"} — {f?.name || "Libre"}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{isAdmin && u ? `${u.full_name} • ` : ""}Niv {s.level} • {s.result === "signed" ? "✅" : s.result === "hung_up" ? "📵" : s.result === "timeout" ? "⏰" : "❌"} {new Date(s.created_at).toLocaleDateString("fr-FR")}</div></div></div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: isMobile ? "wrap" : "nowrap", justifyContent: isMobile ? "space-between" : "flex-end" }}>
@@ -992,9 +992,9 @@ function Leaderboard({ supabase, userId }: any) {
     load()
   }, [supabase])
 
-  if (loading) return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900, color: "#8b95a5" }}>Chargement du classement...</div>)
+  if (loading) return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 1000, color: "#8b95a5" }}>Chargement du classement...</div>)
 
-  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900 }}>
+  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 1000 }}>
     <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 800, marginBottom: isMobile ? 18 : 24 }}>Classement</div>
     {rows.length === 0 ? (
       <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session pour le moment. Faites une session pour apparaître au classement !</div>
@@ -1020,7 +1020,7 @@ function BadgesScreen({ sessions, personas, profile, allSessions }: any) {
   const { earned, progress } = computeBadges(sessions, personas, profile.id, allSessions)
   const categories = Array.from(new Set(BADGES.map(b => b.cat)))
 
-  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}>
+  return (<div style={{ padding: "32px 40px", maxWidth: 1000 }}>
     <div style={{ marginBottom: 28 }}>
       <div style={{ fontSize: 22, fontWeight: 800 }}>Badges</div>
       <div style={{ fontSize: 14, color: "#8b95a5", marginTop: 4 }}>{earned.length} / {BADGES.length} débloqués</div>
@@ -1829,7 +1829,7 @@ function SuperAdminClients({ orgs, onRefresh }) {
   const iS = { width:'100%', padding:'10px 14px', background:'#0f1219', border:'1px solid #2a2f3a', borderRadius:8, color:'#fff', fontSize:13, outline:'none', marginBottom:12, boxSizing:'border-box' }
 
   return (
-    <div style={{ padding:"32px 40px", maxWidth:960 }}>
+    <div style={{ padding:"32px 40px", maxWidth:1000 }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
         <div>
           <div style={{ fontSize:24, fontWeight:800 }}>Clients</div>
@@ -2048,7 +2048,7 @@ function BillingScreen({ org, profile, onRefresh , planCatalog}) {
   const currentPlan = PLANS.find(p => p.id === org.plan)
 
   return (
-    <div style={{ padding: isMobile ? '20px 16px' : '32px 40px', maxWidth:860 }}>
+    <div style={{ padding: isMobile ? '20px 16px' : '32px 40px', maxWidth:1000 }}>
       <div style={{ fontSize: isMobile ? 22 : 24, fontWeight:800, marginBottom:4 }}>Abonnement</div>
       <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Gerez votre forfait et suivez votre consommation</div>
 
@@ -2149,7 +2149,7 @@ function SuperAdminOverview({ orgs }: any) {
   const totalSessions = (orgs||[]).reduce((a:number,o:any) => a+(o.sessions_used||0), 0)
 
   return (
-    <div style={{ padding:'32px 40px', maxWidth:960 }}>
+    <div style={{ padding:'32px 40px', maxWidth:1000 }}>
       <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Vue globale</div>
       <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Indicateurs clés de la plateforme</div>
 
@@ -2233,7 +2233,7 @@ function SuperAdminRevenue({ orgs }: any) {
   const pastDueOrgs = (orgs||[]).filter((o:any) => o.status==='past_due')
 
   return (
-    <div style={{ padding:'32px 40px', maxWidth:960 }}>
+    <div style={{ padding:'32px 40px', maxWidth:1000 }}>
       <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Revenus</div>
       <div style={{ fontSize:14, color:'#8b95a5', marginBottom:32 }}>Suivi financier et facturation Stripe</div>
 
@@ -2460,7 +2460,7 @@ function SuperAdminSettings({ orgs, onRefresh, planCatalog }: any) {
   const iS: any = { padding:'10px 14px', background:'#0f1219', border:'1px solid #2a2f3a', borderRadius:8, color:'#fff', fontSize:14, fontWeight:700, outline:'none', width:'100%', boxSizing:'border-box' }
 
   return (
-    <div style={{ padding:'32px 40px', maxWidth:900 }}>
+    <div style={{ padding:'32px 40px', maxWidth:1000 }}>
       <div style={{ fontSize:24, fontWeight:800, marginBottom:4 }}>Paramètres globaux</div>
       <div style={{ fontSize:14, color:'#8b95a5', marginBottom:8 }}>Modifier les forfaits — les changements se répercutent sur Stripe et tous les abonnements actifs.</div>
       <div style={{ fontSize:12, color:'#f59e0b', marginBottom:32, padding:'10px 14px', background:'rgba(245,158,11,0.1)', borderRadius:8, border:'1px solid rgba(245,158,11,0.2)' }}>
