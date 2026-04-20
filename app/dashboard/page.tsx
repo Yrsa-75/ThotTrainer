@@ -510,7 +510,7 @@ export default function DashboardPage() {
         {screen === "analysis" && viewSession && <Analysis session={viewSession} personas={personas} formations={formations} config={config} goBack={() => setScreen("dashboard")} />}
         {screen === "history" && <HistoryScreen profile={profile} sessions={sessions} personas={personas} formations={formations} profiles={profiles} supabase={supabase} onView={(s: any) => { setViewSession(s); setScreen("analysis") }} onReplay={(s: any) => { setViewSession(s); setScreen("replay") }} />}
         {screen === "replay" && viewSession && <Replay session={viewSession} personas={personas} formations={formations} profiles={profiles} goBack={() => setScreen("history")} />}
-        {screen === "leaderboard" && <Leaderboard sessions={sessions} profiles={profiles} userId={profile.id} />}
+        {screen === "leaderboard" && <Leaderboard supabase={supabase} userId={profile.id} />}
         {screen === "badges" && <BadgesScreen sessions={sessions} personas={personas} profile={profile} allSessions={sessions} />}
         {screen === "clients" && profile.role === "super_admin" && <SuperAdminClients orgs={allOrgs} onRefresh={loadData} />}
         {screen === "overview" && profile.role === "super_admin" && <SuperAdminOverview orgs={allOrgs} />}
@@ -972,9 +972,45 @@ function Replay({ session, personas, formations, profiles, goBack }: any) {
     <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}`}</style>
   </div>)
 }
-function Leaderboard({ sessions, profiles, userId }: any) {
-  const stats = profiles.map((u: any) => { const s = sessions.filter((x: any) => x.vendor_id === u.id && x.result !== 'in_progress'); return { ...u, sessions: s.length, avg: s.length ? Math.round(s.reduce((a: number, x: any) => a + (x.performance_score || 0), 0) / s.length) : 0, signed: s.filter((x: any) => x.result === 'signed').length, rate: s.length ? Math.round((s.filter((x: any) => x.result === 'signed').length / s.length) * 100) : 0 } }).filter((u: any) => u.sessions > 0).sort((a: any, b: any) => b.avg - a.avg)
-  return (<div style={{ padding: "32px 40px", maxWidth: 900 }}><div style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Classement</div>{stats.length === 0 ? <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session</div> : stats.map((u: any, i: number) => <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", background: u.id === userId ? "rgba(99,195,151,0.05)" : "#111621", borderRadius: 12, border: `1px solid ${u.id === userId ? "rgba(99,195,151,0.3)" : "#1e2530"}`, marginBottom: 8 }}><div style={{ display: "flex", alignItems: "center", gap: 14 }}><div style={{ width: 32, height: 32, borderRadius: "50%", background: i < 3 ? `rgba(${i === 0 ? "255,215,0" : i === 1 ? "192,192,192" : "205,127,50"},0.2)` : "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: i === 0 ? "#ffd700" : i === 1 ? "#c0c0c0" : i === 2 ? "#cd7f32" : "#8b95a5" }}>{i + 1}</div><div><div style={{ fontSize: 14, fontWeight: 600 }}>{u.full_name}</div><div style={{ fontSize: 11, color: "#8b95a5" }}>{u.sessions} sessions • {u.signed} signés • {u.rate}%</div></div></div><div style={{ fontSize: 22, fontWeight: 800, color: u.avg >= 70 ? "#63c397" : u.avg >= 45 ? "#f59e0b" : "#ef4444" }}>{u.avg}</div></div>)}</div>)
+function Leaderboard({ supabase, userId }: any) {
+  const [rows, setRows] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const { data, error } = await supabase.rpc('get_leaderboard_for_my_org')
+      if (!error && data) setRows(data.filter((r: any) => r.sessions_count > 0))
+      setLoading(false)
+    }
+    load()
+  }, [supabase])
+
+  if (loading) return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900, color: "#8b95a5" }}>Chargement du classement...</div>)
+
+  return (<div style={{ padding: isMobile ? "20px 16px" : "32px 40px", maxWidth: 900 }}>
+    <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 800, marginBottom: isMobile ? 18 : 24 }}>Classement</div>
+    {rows.length === 0 ? (
+      <div style={{ textAlign: "center", padding: 40, color: "#8b95a5" }}>Aucune session pour le moment. Faites une session pour apparaître au classement !</div>
+    ) : rows.map((r: any, i: number) => (
+      <div key={r.user_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "12px 14px" : "16px 18px", background: r.is_me ? "rgba(99,195,151,0.05)" : "#111621", borderRadius: 12, border: `1px solid ${r.is_me ? "rgba(99,195,151,0.3)" : "#1e2530"}`, marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 10 : 14, flex: 1, minWidth: 0 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: i < 3 ? `rgba(${i === 0 ? "255,215,0" : i === 1 ? "192,192,192" : "205,127,50"},0.2)` : "#1e2530", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: i === 0 ? "#ffd700" : i === 1 ? "#c0c0c0" : i === 2 ? "#cd7f32" : "#8b95a5", flexShrink: 0 }}>{i + 1}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.display_name}</div>
+            <div style={{ fontSize: 11, color: "#8b95a5" }}>{r.sessions_count} sessions • {r.signed_count} signé{r.signed_count > 1 ? 's' : ''} • {r.success_rate}%</div>
+          </div>
+        </div>
+        <div style={{ fontSize: isMobile ? 20 : 22, fontWeight: 800, color: r.avg_score >= 70 ? "#63c397" : r.avg_score >= 45 ? "#f59e0b" : "#ef4444", flexShrink: 0, marginLeft: 10 }}>{r.avg_score}</div>
+      </div>
+    ))}
+  </div>)
 }
 
 // ============================================
